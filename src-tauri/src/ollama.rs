@@ -10,7 +10,6 @@ use thiserror::Error;
 
 const OLLAMA_BASE: &str = "http://127.0.0.1:11434";
 
-#[derive(Default)]
 pub struct OllamaState {
     pub client: reqwest::Client,
 }
