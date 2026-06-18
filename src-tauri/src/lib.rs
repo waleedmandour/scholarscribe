@@ -1,0 +1,50 @@
+// ScholarScribe — library entry point.
+//
+// ETHICAL DESIGN NOTICE:
+// This software does NOT include any feature whose purpose is to evade
+// AI-detection systems (Turnitin, GPTZero, Originality.ai, etc.). The
+// style-analysis module compares a draft against the *author's own* prior
+// writing — it is not designed to lower detector scores. See README.md
+// "Ethical Use" section for the full policy.
+
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod commands;
+mod disclosure;
+mod ollama;
+mod style;
+
+pub fn run() {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .format_timestamp_secs()
+        .init();
+
+    tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
+        .manage(ollama::OllamaState::default())
+        .setup(|app| {
+            log::info!(
+                "ScholarScribe v{} starting up. All processing is local.",
+                app.package_info().version
+            );
+            log::info!("No telemetry. No cloud calls. No third-party APIs.");
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::app_info,
+            commands::ollama_status,
+            commands::ollama_list_models,
+            commands::ollama_pull_model,
+            commands::ollama_delete_model,
+            commands::ollama_chat,
+            commands::recommended_models,
+            commands::read_text_file,
+            commands::analyze_style,
+            commands::compare_style,
+            commands::list_venue_templates,
+            commands::generate_disclosure,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running ScholarScribe");
+}

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+build/
+.svelte-kit/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+*.msi
+*.exe
+*.dmg
+*.AppImage
+*.deb

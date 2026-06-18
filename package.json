@@ -1,0 +1,28 @@
+{
+  "name": "scholarscribe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@tauri-apps/cli": "^2.0.0",
+    "@tsconfig/svelte": "^5.0.8",
+    "svelte": "^4.2.19",
+    "svelte-check": "^4.0.0",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0"
+  }
+}

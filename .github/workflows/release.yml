@@ -1,0 +1,98 @@
+# ScholarScribe — automated release builds on Windows.
+#
+# When you push a tag matching v* (e.g. v0.1.0-pre), this workflow:
+#   1. Spins up a Windows runner.
+#   2. Installs Rust, Node, Ollama prerequisites.
+#   3. Builds the .msi and .exe (NSIS) installers via `tauri build`.
+#   4. Uploads both installers to the matching GitHub Release.
+#
+# No tokens needed in the repo — `GITHUB_TOKEN` is automatically provided
+# by Actions and has permission to write releases.
+#
+# To trigger:
+#   git tag v0.1.0-pre
+#   git push origin v0.1.0-pre
+# Or create a release from the GitHub web UI with tag v0.1.0-pre.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (must already exist)"
+        required: true
+        type: string
+
+permissions:
+  contents: write   # needed to upload assets to a release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify frontend type-checks
+        run: npm run check
+
+      - name: Build Tauri app (produces .msi and NSIS .exe)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: "${{ inputs.tag || github.ref_name }} (Pre-release)"
+          releaseBody: |
+            Automated build of ScholarScribe ${{ inputs.tag || github.ref_name }}.
+
+            ## What's included
+
+            - **Models tab** — Download and manage open LLMs (Gemma 2, Qwen 2.5, Llama 3.1, Phi-3) via Ollama.
+            - **Chat tab** — Local-only chat with system-prompt guardrail (refuses evasion requests).
+            - **Style Analysis tab** — Compare a draft to your own prior writing.
+            - **Disclosure Assistant tab** — Generate venue-compliant AI-use statements (ICMJE, Nature, IEEE, Elsevier, ACL).
+            - **Detector Literacy tab** — Educational content on how detectors work and where they fail.
+
+            ## Install
+
+            1. Install [Ollama](https://ollama.com/download).
+            2. Download and run the ScholarScribe installer attached below.
+            3. Open ScholarScribe → Models tab → download a model.
+            4. See [USER_MANUAL.md](USER_MANUAL.md) for the full walkthrough.
+
+            ## Privacy
+
+            Zero telemetry. Single outbound host (registry.ollama.ai, only on model download). All inference runs locally via Ollama. See [SECURITY.md](SECURITY.md).
+
+            ## Ethical use
+
+            ScholarScribe does **not** include detection-evasion features. See [docs/ETHICS.md](docs/ETHICS.md).
+          releaseDraft: false
+          prerelease: true
