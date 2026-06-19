@@ -281,9 +281,15 @@ pub struct ImportGgufArgs {
 }
 
 /// Import a local .gguf file into Ollama's model registry.
-/// Creates a temp Modelfile that references the GGUF via `FROM`, then calls
-/// `ollama create <name> -f <modelfile>`. The model then shows up in the
-/// installed-models list just like one downloaded from the catalog.
+///
+/// Calls Ollama's `/api/create` endpoint. Ollama 0.5+ accepts a structured
+/// `from` field pointing directly at the GGUF file path; older versions
+/// require the `modelfile` field with `FROM <path>` text. We send both so
+/// the call works across versions.
+///
+/// Windows path handling: Ollama's Modelfile parser sometimes mishandles
+/// backslashes. We convert to forward slashes AND wrap in a `file://` URL
+/// for the `from` field, which is the documented form for absolute paths.
 #[tauri::command]
 pub async fn ollama_import_gguf(
     args: ImportGgufArgs,
@@ -317,25 +323,40 @@ pub async fn ollama_import_gguf(
         0,
     );
 
-    // Build the Modelfile content. We use an absolute path with forward
-    // slashes (works on Windows too — Ollama handles path normalization).
-    let abs_path = p
-        .canonicalize()
-        .map_err(|e| format!("Cannot resolve path: {}", e))?
-        .to_string_lossy()
-        .replace('\\', "/");
+    // Canonicalize to an absolute path. On Windows this returns a `\\?\`
+    // prefix (e.g. `\\?\C:\Users\...`) which Ollama's parser doesn't like.
+    // We strip it and normalize backslashes to forward slashes.
+    let abs_path = {
+        let raw = p
+            .canonicalize()
+            .map_err(|e| format!("Cannot resolve path: {}", e))?
+            .to_string_lossy()
+            .to_string();
+        // Strip the Windows extended-length path prefix if present.
+        let stripped = raw
+            .strip_prefix(r"\\?\")
+            .or_else(|| raw.strip_prefix(r"\\.\"))
+            .unwrap_or(&raw);
+        stripped.replace('\\', "/")
+    };
+
+    // Modelfile text (older Ollama API): "FROM /path/to/file.gguf"
     let modelfile = format!("FROM {}\n", abs_path);
 
-    let body = serde_json::json!({
+    let create_url = format!("{}/api/create", ollama::base_url());
+
+    // Attempt 1: modern API — `from` field + `modelfile` text.
+    let body_v1 = serde_json::json!({
         "name": name,
+        "from": abs_path,
         "modelfile": modelfile,
         "stream": false,
     });
 
     let resp = state
         .client
-        .post(format!("{}/api/create", ollama::base_url()))
-        .json(&body)
+        .post(&create_url)
+        .json(&body_v1)
         .timeout(std::time::Duration::from_secs(600))
         .send()
         .await
@@ -343,8 +364,38 @@ pub async fn ollama_import_gguf(
 
     if !resp.status().is_success() {
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Ollama returned HTTP {}: {}", status, body));
+        let body_text = resp.text().await.unwrap_or_default();
+
+        // If the modern API rejected our request, try the legacy API:
+        // modelfile text only, no `from` field. This handles older Ollama
+        // versions that don't recognize `from` and reject the whole request.
+        if status == 400 {
+            let body_v2 = serde_json::json!({
+                "name": name,
+                "modelfile": modelfile,
+                "stream": false,
+            });
+            let resp2 = state
+                .client
+                .post(&create_url)
+                .json(&body_v2)
+                .timeout(std::time::Duration::from_secs(600))
+                .send()
+                .await
+                .map_err(|e| format!("Failed to call Ollama (retry): {}", e))?;
+
+            if resp2.status().is_success() {
+                return Ok(());
+            }
+            let status2 = resp2.status();
+            let body2 = resp2.text().await.unwrap_or_default();
+            return Err(format!(
+                "Ollama rejected the import on both API variants.\n\nAttempt 1 (modern `from` field): HTTP {} — {}\nAttempt 2 (legacy `modelfile` only): HTTP {} — {}\n\nLikely causes:\n  • Your Ollama version is older than 0.5. Update from https://ollama.com/download\n  • The GGUF file is corrupt or incomplete. Re-download it from the source.\n  • The file path contains characters Ollama can't parse. Move the file to a simple path like C:\\\\models\\\\model.gguf and retry.",
+                status, body_text, status2, body2
+            ));
+        }
+
+        return Err(format!("Ollama returned HTTP {}: {}", status, body_text));
     }
 
     Ok(())

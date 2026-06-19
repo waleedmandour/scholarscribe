@@ -14,6 +14,27 @@
   let ollamaOk = false;
   let checking = true;
 
+  // Theme: "light" | "dark" | "auto". Persisted to localStorage.
+  let theme: "light" | "dark" | "auto" = "auto";
+
+  function applyTheme(t: "light" | "dark" | "auto") {
+    if (t === "auto") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", t);
+    }
+    try {
+      localStorage.setItem("scholarscribe-theme", t);
+    } catch {
+      // localStorage may be unavailable in some embedded contexts; non-fatal.
+    }
+  }
+
+  function cycleTheme() {
+    theme = theme === "light" ? "dark" : theme === "dark" ? "auto" : "light";
+    applyTheme(theme);
+  }
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "models", label: "Models", icon: "M" },
     { id: "style", label: "Style Analysis", icon: "S" },
@@ -36,6 +57,16 @@
   }
 
   onMount(() => {
+    // Restore saved theme on startup.
+    try {
+      const saved = localStorage.getItem("scholarscribe-theme") as "light" | "dark" | "auto" | null;
+      if (saved) {
+        theme = saved;
+        applyTheme(saved);
+      }
+    } catch {
+      // ignore
+    }
     refreshStatus();
     const id = setInterval(refreshStatus, 5000);
     return () => clearInterval(id);
@@ -47,6 +78,15 @@
     <div class="brand">
       <span class="dot"></span>
       ScholarScribe
+      <div class="spacer"></div>
+      <button
+        class="theme-toggle"
+        on:click={cycleTheme}
+        title="Theme: {theme}"
+        aria-label="Toggle theme"
+      >
+        {#if theme === "light"}☀️{:else if theme === "dark"}🌙{:else}🌗{/if}
+      </button>
     </div>
 
     {#each tabs as t}
@@ -77,7 +117,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.1 · MIT · local-only
+        v0.1.2 · MIT · local-only
       </div>
     </div>
   </aside>
@@ -100,3 +140,22 @@
     {/if}
   </main>
 </div>
+
+<style>
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .theme-toggle:hover {
+    background: var(--bg-elev-2);
+  }
+  .sidebar .brand {
+    gap: 8px;
+    align-items: center;
+  }
+</style>

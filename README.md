@@ -7,12 +7,13 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- Run open LLMs (Gemma, Qwen, Llama, Phi) **fully offline** on Windows.
+- Run open LLMs (Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more) **fully offline** on Windows.
 - **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - Analyze whether a draft sounds like **their own** prior writing, with standard readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
 - Generate **venue-compliant AI-use disclosure statements** (ICMJE, Nature, IEEE, Elsevier, ACL).
 - Understand **how AI detectors actually work** — and where they fail.
 - Verify the app's own privacy claims via an in-app **Privacy Audit log** of every file read and outbound HTTP call.
+- **Light, dark, and auto themes** — click the icon in the sidebar to cycle.
 
 ---
 
@@ -161,7 +162,8 @@ scholarscribe/
 ## Roadmap
 
 - **v0.1.0** — Models, Chat, Style Analysis, Disclosure, Detector Literacy.
-- **v0.1.1** (this release) — Fixed console-window-on-launch bug. Added GGUF import with compatibility check. Added reading-level metrics. Added Privacy Audit log. Added About/Credits.
+- **v0.1.1** — Fixed console-window-on-launch bug. Added GGUF import with compatibility check. Added reading-level metrics. Added Privacy Audit log. Added About/Credits.
+- **v0.1.2** (this release) — Fixed GGUF import HTTP 400 ("neither 'from' or 'files' was specified"). Added manual dark/light/auto theme toggle. Expanded models catalog with latest academic-focused open LLMs (Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3).
 - **v0.2** — `.docx` and `.pdf` file reading (planned via `docx-rs` and `pdf-extract` crates).
 - **v0.3** — Bundled llama.cpp option, so users who can't install Ollama separately still get a working app.
 - **v0.4** — Multi-reference style profile (analyze against a folder of your papers rather than one).
@@ -171,7 +173,7 @@ scholarscribe/
 
 ## Credits
 
-ScholarScribe v0.1.1 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v0.1.2 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 Designed and directed by Dr. Waleed Mandour, 2026, with engineering support from **GLM 5.2** (Z.ai).
 
