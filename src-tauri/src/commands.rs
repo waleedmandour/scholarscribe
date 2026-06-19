@@ -190,7 +190,8 @@ pub fn system_info() -> SystemInfo {
         .map(|c| c.brand().to_string())
         .unwrap_or_else(|| "unknown".into());
     let cpu_cores = sys.cpus().len();
-    let os_name = System::name().unwrap_or_else(|_| "unknown".into());
+    // sysinfo 0.32: System::name() returns Option<String>
+    let os_name = System::name().unwrap_or_else(|| "unknown".to_string());
 
     SystemInfo {
         total_ram_gb,
