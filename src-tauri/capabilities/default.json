@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.tauri.app/acl/2",
+  "identifier": "default",
+  "description": "Default permission set for ScholarScribe. Minimal scope: dialog (file picker), shell (open external links). All other capabilities go through Rust commands.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "shell:default"
+  ]
+}

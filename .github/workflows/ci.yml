@@ -1,0 +1,53 @@
+# ScholarScribe — continuous integration.
+# Runs on every push to main and on every pull request.
+# Verifies the frontend type-checks and the Rust code compiles.
+# Does NOT build installers — that's release.yml's job.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm run build
+
+  check-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Install Tauri Linux deps (for cargo check only)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: cargo fmt check
+        working-directory: src-tauri
+        run: cargo fmt -- --check
+      - name: cargo clippy
+        working-directory: src-tauri
+        run: cargo clippy -- -D warnings
+        continue-on-error: true   # don't block PRs on clippy yet during pre-release
+      - name: cargo check
+        working-directory: src-tauri
+        run: cargo check

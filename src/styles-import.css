@@ -1,0 +1,3 @@
+/* Re-export the global stylesheet. The actual rules live in /static/app.css
+   and are loaded via <link> in index.html. This file exists only so the
+   Svelte toolchain has a valid import target. */
