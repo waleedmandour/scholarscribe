@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { open } from "@tauri-apps/plugin-dialog";
+  import { open, save } from "@tauri-apps/plugin-dialog";
   import { api, type CleanOptions, type CleanResult, defaultCleanOptions } from "../lib/api";
 
   let inputText = "";
@@ -10,6 +10,16 @@
   let error = "";
   let copied = false;
   let docxSourcePath = "";
+
+  // Result from the preserve-format .docx cleaning (separate from `result`)
+  let preserveResult: {
+    output_path: string;
+    parts_cleaned: string[];
+    runs_cleaned: number;
+    stats: any;
+    transformations_applied: string[];
+    skipped_operations: string[];
+  } | null = null;
 
   let opts: CleanOptions = { ...defaultCleanOptions };
 
@@ -41,7 +51,9 @@
       inputPath = selected;
       inputKind = "docx";
       docxSourcePath = selected;
-      inputText = `[.docx file loaded: ${selected}]\nText will be extracted when you click "Clean text".`;
+      inputText = `[.docx file loaded: ${selected}]\nChoose an action below:\n  • "Extract & clean text" — extract text and clean it (loses formatting)\n  • "Clean & save as .docx" — clean in place, preserving all tables/images/formatting`;
+      result = null;
+      preserveResult = null;
     } else {
       try {
         const text = await api.readTextFile(selected);
@@ -49,6 +61,8 @@
         inputPath = selected;
         inputKind = "text";
         docxSourcePath = "";
+        result = null;
+        preserveResult = null;
       } catch (e) {
         error = String(e);
       }
@@ -66,6 +80,7 @@
     }
     error = "";
     busy = true;
+    preserveResult = null;
     try {
       if (inputKind === "docx") {
         const out = await api.cleanDocxFile(docxSourcePath, opts);
@@ -73,6 +88,37 @@
       } else {
         result = await api.cleanText(inputText, opts);
       }
+    } catch (e) {
+      error = String(e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  // v0.1.5: clean the .docx in place, preserving all formatting, tables,
+  // images, hyperlinks, headers/footers. Saves to a new .docx file the user
+  // picks via a save dialog.
+  async function cleanAndSaveDocx() {
+    if (!docxSourcePath) {
+      error = "Pick a .docx file first.";
+      return;
+    }
+    // Suggest a default output name based on the input.
+    const inputName = docxSourcePath.split(/[\\/]/).pop() || "document.docx";
+    const stem = inputName.replace(/\.docx$/i, "");
+    const defaultOutput = `${stem}-cleaned.docx`;
+
+    const outputPath = await save({
+      defaultPath: defaultOutput,
+      filters: [{ name: "Word document", extensions: ["docx"] }],
+    });
+    if (!outputPath) return;  // user cancelled
+
+    error = "";
+    busy = true;
+    result = null;
+    try {
+      preserveResult = await api.cleanDocxPreserveFormat(docxSourcePath, outputPath, opts);
     } catch (e) {
       error = String(e);
     } finally {
@@ -98,6 +144,7 @@
     inputPath = "";
     docxSourcePath = "";
     result = null;
+    preserveResult = null;
   }
 
   function resetToDefaults() {
@@ -118,8 +165,8 @@
   Cleans common artifacts from text you paste or import — especially from copy-pasting out of
   PDFs, scanned documents, web pages, and word processors. All cleaning runs locally on your
   device as deterministic rule-based transformations. No text is sent to any server.
-  <strong>Now supports .docx files directly</strong> — pick a Word document and ScholarScribe
-  extracts its text and runs all enabled cleaners in one step.
+  <strong>Two .docx modes</strong>: extract text only (loses formatting), or clean in place
+  (preserves all tables, images, hyperlinks, headers, footers, and styles).
 </p>
 
 <div class="callout info">
@@ -151,7 +198,7 @@
     <textarea bind:value={inputText} rows="14" placeholder="Paste your text here, or use Open file… to load a .txt/.md/.docx file"></textarea>
     <div class="dim" style="font-size: 11px; margin-top: 4px;">
       {inputText.length.toLocaleString()} characters
-      {#if inputKind === "docx"}· .docx — text will be extracted on clean{/if}
+      {#if inputKind === "docx"}· .docx loaded — pick an action below{/if}
     </div>
   </div>
 
@@ -176,14 +223,31 @@
   </div>
 </div>
 
-<div class="row" style="margin: 12px 0;">
-  <button class="primary" on:click={clean} disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}>
-    {busy ? "Cleaning…" : inputKind === "docx" ? "Extract & clean .docx" : "Clean text"}
+<h2>Action</h2>
+<div class="row" style="margin: 8px 0 16px; gap: 12px;">
+  <button
+    class="primary"
+    on:click={clean}
+    disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
+    title={inputKind === "docx" ? "Extract text from the .docx and clean it. Tables, images, and formatting are lost — output is plain text." : "Clean the pasted/loaded text."}
+  >
+    {busy ? "Working…" : inputKind === "docx" ? "Extract & clean text" : "Clean text"}
   </button>
+
+  {#if inputKind === "docx"}
+    <button
+      class="primary"
+      on:click={cleanAndSaveDocx}
+      disabled={busy || !docxSourcePath}
+      title="Clean the .docx in place — modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
+    >
+      {busy ? "Working…" : "Clean & save as .docx (preserves format)"}
+    </button>
+  {/if}
 </div>
 
 {#if result}
-  <h2>Result</h2>
+  <h2>Result — extracted text</h2>
   <div class="card">
     <div class="row" style="margin-bottom: 12px;">
       <div>
@@ -246,5 +310,57 @@
   <div class="card">
     <div class="card-title">Cleaned output</div>
     <pre style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">{result.cleaned}</pre>
+  </div>
+{/if}
+
+{#if preserveResult}
+  <h2>Result — .docx cleaned in place</h2>
+  <div class="callout info">
+    <strong>Saved:</strong> <code>{preserveResult.output_path}</code><br />
+    <strong>Text runs cleaned:</strong> {preserveResult.runs_cleaned.toLocaleString()}<br />
+    <strong>Document parts modified:</strong> {preserveResult.parts_cleaned.length} ({preserveResult.parts_cleaned.join(", ")})
+  </div>
+
+  <div class="card">
+    <div class="card-title">What was changed</div>
+    {#if preserveResult.transformations_applied.length > 0}
+      <ul style="margin: 6px 0 0 16px; padding: 0;">
+        {#each preserveResult.transformations_applied as t}
+          <li style="font-size: 13px;">{t}</li>
+        {/each}
+      </ul>
+    {:else}
+      <div class="no-data">No per-run transformations were needed.</div>
+    {/if}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Skipped operations (don't apply to in-place .docx cleaning)</div>
+    <ul style="margin: 6px 0 0 16px; padding: 0;">
+      {#each preserveResult.skipped_operations as s}
+        <li style="font-size: 13px;" class="muted">{s}</li>
+      {/each}
+    </ul>
+    <p class="muted" style="font-size: 12px; margin-top: 10px;">
+      These operations require cross-paragraph context (e.g. joining sentences that span
+      paragraph breaks). Applying them would require restructuring the document, which would
+      defeat the purpose of preserving your formatting. To apply them, use
+      "Extract &amp; clean text" instead — output is plain text but all transformations run.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">What's preserved in the output .docx</div>
+    <ul style="margin: 6px 0 0 16px; padding: 0; line-height: 1.7;">
+      <li>All tables (structure, cells, formatting)</li>
+      <li>All images and embedded figures</li>
+      <li>All hyperlinks (link targets and anchor text)</li>
+      <li>Headers and footers (also cleaned for consistency)</li>
+      <li>Footnotes and endnotes (also cleaned)</li>
+      <li>All character and paragraph styles</li>
+      <li>Track changes, comments, and review markup</li>
+      <li>Document theme, fonts, colors</li>
+      <li>Page setup, margins, orientation</li>
+    </ul>
   </div>
 {/if}

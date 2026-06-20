@@ -250,6 +250,22 @@ export const api = {
     invoke<{ source_path: string; extracted: CleanResult }>("clean_docx_file", {
       args: { path, options: options || defaultCleanOptions },
     }),
+  // v0.1.5+
+  cleanDocxPreserveFormat: (inputPath: string, outputPath: string, options?: CleanOptions) =>
+    invoke<{
+      output_path: string;
+      parts_cleaned: string[];
+      runs_cleaned: number;
+      stats: CleanStats;
+      transformations_applied: string[];
+      skipped_operations: string[];
+    }>("clean_docx_preserve_format", {
+      args: {
+        input_path: inputPath,
+        output_path: outputPath,
+        options: options || defaultCleanOptions,
+      },
+    }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
   persistenceEnable: () => invoke<void>("persistence_enable"),

@@ -491,3 +491,345 @@ pub async fn clean_docx_file(
         extracted: result,
     })
 }
+
+// ---------------- v0.1.5 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct CleanDocxPreserveArgs {
+    pub input_path: String,
+    pub output_path: String,
+    #[serde(default)]
+    pub options: Option<text_cleaner::CleanOptions>,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct CleanDocxPreserveResult {
+    pub output_path: String,
+    pub parts_cleaned: Vec<String>,
+    pub runs_cleaned: usize,
+    pub stats: text_cleaner::CleanStats,
+    pub transformations_applied: Vec<String>,
+    pub skipped_operations: Vec<String>,
+}
+
+/// Clean a .docx file in place, preserving ALL formatting (tables, images,
+/// hyperlinks, headers/footers, styles, theme, embedded objects).
+///
+/// How it works: a .docx is a ZIP of XML parts. We unzip, find every XML
+/// part that contains document text (document.xml, header*.xml, footer*.xml,
+/// footnotes.xml, endnotes.xml), and for each `<w:t>` element inside those
+/// parts, apply per-run cleaning operations to the text content. Then we
+/// write a new .docx ZIP with the modified XML parts, copying every other
+/// part (images, styles, etc.) byte-for-byte from the original.
+#[tauri::command]
+pub async fn clean_docx_preserve_format(
+    args: CleanDocxPreserveArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<CleanDocxPreserveResult, String> {
+    let input = PathBuf::from(&args.input_path);
+    let output = PathBuf::from(&args.output_path);
+
+    if !input.exists() {
+        return Err(format!("Input file not found: {}", args.input_path));
+    }
+    let in_ext = input
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    if in_ext != "docx" {
+        return Err(format!("Expected input .docx, got .{}", in_ext));
+    }
+    let out_ext = output
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    if out_ext != "docx" {
+        return Err(format!("Output path must end in .docx, got .{}", out_ext));
+    }
+
+    audit.record(
+        "file_read",
+        &args.input_path,
+        "in-place clean .docx (preserve format)",
+        0,
+        0,
+    );
+    audit.record("file_write", &args.output_path, "write cleaned .docx", 0, 0);
+
+    let opts = args.options.unwrap_or_default();
+    let input_for_task = input.clone();
+    let output_for_task = output.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        clean_docx_in_place(&input_for_task, &output_for_task, &opts)
+    })
+    .await
+    .map_err(|e| format!("docx preserve-format task failed: {}", e))??;
+
+    Ok(result)
+}
+
+/// Implementation: walks every relevant XML part in the .docx, applies
+/// per-run cleaning to each `<w:t>` element, writes a new .docx ZIP.
+fn clean_docx_in_place(
+    input: &Path,
+    output: &Path,
+    opts: &text_cleaner::CleanOptions,
+) -> Result<CleanDocxPreserveResult, String> {
+    use std::io::{Read, Write};
+
+    let bytes = std::fs::read(input).map_err(|e| format!("read input: {}", e))?;
+    let cursor = std::io::Cursor::new(bytes.clone());
+    let mut archive =
+        zip::ZipArchive::new(cursor).map_err(|e| format!("open input .docx: {}", e))?;
+
+    let text_part_pattern =
+        regex::Regex::new(r"^word/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$")
+            .unwrap();
+
+    let mut parts_cleaned: Vec<String> = Vec::new();
+    let mut runs_cleaned: usize = 0;
+    let mut stats = text_cleaner::CleanStats::default();
+    let mut modified_parts: std::collections::HashMap<String, Vec<u8>> =
+        std::collections::HashMap::new();
+
+    for i in 0..archive.len() {
+        let mut entry = archive
+            .by_index(i)
+            .map_err(|e| format!("zip entry {}: {}", i, e))?;
+        let name = entry.name().to_string();
+        if text_part_pattern.is_match(&name) {
+            let mut xml = String::new();
+            entry
+                .read_to_string(&mut xml)
+                .map_err(|e| format!("read {}: {}", name, e))?;
+            let (cleaned_xml, run_count) = apply_per_run_cleaning(&xml, opts, &mut stats);
+            runs_cleaned += run_count;
+            parts_cleaned.push(name.clone());
+            modified_parts.insert(name, cleaned_xml.into_bytes());
+        }
+    }
+
+    // Write a new .docx by copying all entries from the original,
+    // substituting the cleaned XML for the parts we modified.
+    let output_cursor = std::io::Cursor::new(Vec::new());
+    let mut writer = zip::ZipWriter::new(output_cursor);
+    let opts_zip = zip::write::SimpleFileOptions::default();
+
+    let cursor2 = std::io::Cursor::new(bytes);
+    let mut archive2 =
+        zip::ZipArchive::new(cursor2).map_err(|e| format!("reopen input .docx: {}", e))?;
+
+    for i in 0..archive2.len() {
+        let mut entry = archive2
+            .by_index(i)
+            .map_err(|e| format!("zip entry {} (pass 2): {}", i, e))?;
+        let name = entry.name().to_string();
+        let mut data: Vec<u8> = Vec::new();
+        entry
+            .read_to_end(&mut data)
+            .map_err(|e| format!("read {} for copy: {}", name, e))?;
+        drop(entry);
+
+        let final_data: Vec<u8> = if let Some(cleaned) = modified_parts.remove(&name) {
+            cleaned
+        } else {
+            data
+        };
+
+        writer
+            .start_file(&name, opts_zip)
+            .map_err(|e| format!("start_file {}: {}", name, e))?;
+        writer
+            .write_all(&final_data)
+            .map_err(|e| format!("write {}: {}", name, e))?;
+    }
+
+    let final_bytes = writer
+        .finish()
+        .map_err(|e| format!("finalize .docx: {}", e))?
+        .into_inner();
+    std::fs::write(output, &final_bytes).map_err(|e| format!("write output file: {}", e))?;
+
+    let mut transformations_applied = Vec::new();
+    if opts.fix_mojibake && stats.mojibake_fixed > 0 {
+        transformations_applied.push(format!(
+            "Fixed mojibake ({} substitutions)",
+            stats.mojibake_fixed
+        ));
+    }
+    if opts.expand_ligatures && stats.ligatures_expanded > 0 {
+        transformations_applied.push(format!(
+            "Expanded ligatures ({} substitutions)",
+            stats.ligatures_expanded
+        ));
+    }
+    if opts.normalize_quotes && stats.quotes_normalized > 0 {
+        transformations_applied.push(format!(
+            "Normalized quotes ({} substitutions)",
+            stats.quotes_normalized
+        ));
+    }
+    if opts.normalize_dashes && stats.dashes_normalized > 0 {
+        transformations_applied.push(format!(
+            "Normalized dashes ({} substitutions)",
+            stats.dashes_normalized
+        ));
+    }
+    if opts.strip_zero_width && stats.zero_width_chars_stripped > 0 {
+        transformations_applied.push(format!(
+            "Stripped zero-width chars ({} removed)",
+            stats.zero_width_chars_stripped
+        ));
+    }
+    if opts.strip_control_chars && stats.control_chars_stripped > 0 {
+        transformations_applied.push(format!(
+            "Stripped control chars ({} removed)",
+            stats.control_chars_stripped
+        ));
+    }
+    if opts.join_hyphenated_words && stats.hyphenated_words_joined > 0 {
+        transformations_applied.push(format!(
+            "Joined hyphenated line breaks ({} joined)",
+            stats.hyphenated_words_joined
+        ));
+    }
+    if opts.collapse_whitespace && stats.whitespace_collapsed > 0 {
+        transformations_applied.push(format!(
+            "Collapsed whitespace ({} runs trimmed)",
+            stats.whitespace_collapsed
+        ));
+    }
+    if transformations_applied.is_empty() {
+        transformations_applied
+            .push("No per-run transformations needed — document was already clean.".into());
+    }
+
+    Ok(CleanDocxPreserveResult {
+        output_path: output.to_string_lossy().into_owned(),
+        parts_cleaned,
+        runs_cleaned,
+        stats,
+        transformations_applied,
+        skipped_operations: text_cleaner::skipped_docx_operations()
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
+    })
+}
+
+/// Apply per-run cleaning to every `<w:t>` element in the XML.
+/// Returns (cleaned_xml, number_of_runs_cleaned).
+fn apply_per_run_cleaning(
+    xml: &str,
+    opts: &text_cleaner::CleanOptions,
+    stats: &mut text_cleaner::CleanStats,
+) -> (String, usize) {
+    let re = regex::Regex::new(r"(<w:t[^>]*>)([^<]*)(</w:t>)").unwrap();
+    let mut runs_cleaned: usize = 0;
+
+    let cleaned_xml = re
+        .replace_all(xml, |caps: &regex::Captures| {
+            let open = &caps[1];
+            let text = &caps[2];
+            let close = &caps[3];
+
+            if text.is_empty() {
+                return format!("{}{}{}", open, text, close);
+            }
+
+            let before = stats.clone();
+            let cleaned = text_cleaner::clean_text_run(text, opts, stats);
+            let changed = stats.mojibake_fixed != before.mojibake_fixed
+                || stats.ligatures_expanded != before.ligatures_expanded
+                || stats.quotes_normalized != before.quotes_normalized
+                || stats.dashes_normalized != before.dashes_normalized
+                || stats.zero_width_chars_stripped != before.zero_width_chars_stripped
+                || stats.control_chars_stripped != before.control_chars_stripped
+                || stats.hyphenated_words_joined != before.hyphenated_words_joined
+                || stats.whitespace_collapsed != before.whitespace_collapsed;
+            if changed {
+                runs_cleaned += 1;
+            }
+
+            let escaped = xml_escape_safe(&cleaned);
+            format!("{}{}{}", open, escaped, close)
+        })
+        .into_owned();
+
+    (cleaned_xml, runs_cleaned)
+}
+
+/// XML-escape a string for safe insertion into OOXML. Only escapes chars
+/// that aren't already part of a valid XML entity reference.
+fn xml_escape_safe(s: &str) -> String {
+    if !s.contains('&') && !s.contains('<') && !s.contains('>') {
+        return s.to_string();
+    }
+    let mut out = String::with_capacity(s.len() + 16);
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        let c = bytes[i];
+        if c == b'&' {
+            if let Some(end) = s[i..].find(';') {
+                let entity = &s[i..i + end + 1];
+                if is_valid_entity(entity) {
+                    out.push_str(entity);
+                    i += end + 1;
+                    continue;
+                }
+            }
+            out.push_str("&amp;");
+            i += 1;
+        } else if c == b'<' {
+            out.push_str("&lt;");
+            i += 1;
+        } else if c == b'>' {
+            out.push_str("&gt;");
+            i += 1;
+        } else {
+            let ch_len = utf8_char_len(c);
+            if i + ch_len <= bytes.len() {
+                if let Ok(slice) = std::str::from_utf8(&bytes[i..i + ch_len]) {
+                    out.push_str(slice);
+                }
+                i += ch_len;
+            } else {
+                i += 1;
+            }
+        }
+    }
+    out
+}
+
+fn is_valid_entity(s: &str) -> bool {
+    if !s.starts_with('&') || !s.ends_with(';') {
+        return false;
+    }
+    let inner = &s[1..s.len() - 1];
+    if inner.is_empty() {
+        return false;
+    }
+    if let Some(num) = inner.strip_prefix('#') {
+        return num.chars().all(|c| c.is_ascii_digit())
+            || num
+                .strip_prefix('x')
+                .map(|h| h.chars().all(|c| c.is_ascii_hexdigit()))
+                .unwrap_or(false);
+    }
+    inner.chars().all(|c| c.is_ascii_alphanumeric())
+}
+
+fn utf8_char_len(first_byte: u8) -> usize {
+    if first_byte < 0x80 {
+        1
+    } else if first_byte < 0xC0 {
+        1
+    } else if first_byte < 0xE0 {
+        2
+    } else if first_byte < 0xF0 {
+        3
+    } else {
+        4
+    }
+}

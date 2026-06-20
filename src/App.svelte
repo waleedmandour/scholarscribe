@@ -121,7 +121,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.4 · MIT · local-only
+        v0.1.5 · MIT · local-only
       </div>
     </div>
   </aside>

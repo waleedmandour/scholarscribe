@@ -196,6 +196,66 @@ impl CleanResult {
     }
 }
 
+// ---------- In-place .docx cleaning (preserves formatting) ----------
+
+/// Apply per-run cleaning operations to a single text run's content.
+/// Used by clean_docx_preserve_format to modify `<w:t>` element text
+/// in place without disturbing surrounding OOXML markup.
+///
+/// Only operations that make sense on a single text run are applied.
+/// Cross-paragraph operations (join_broken_lines, join_broken_urls,
+/// fix_broken_citations, remove_page_numbers) are skipped — they would
+/// require restructuring the document, which would defeat the purpose
+/// of preserving formatting.
+pub fn clean_text_run(text: &str, opts: &CleanOptions, stats: &mut CleanStats) -> String {
+    let mut current = text.to_string();
+    if opts.fix_mojibake {
+        current = fix_mojibake(&current, stats);
+    }
+    if opts.expand_ligatures {
+        current = expand_ligatures(&current, stats);
+    }
+    if opts.normalize_quotes {
+        current = normalize_quotes(&current, stats);
+    }
+    if opts.normalize_dashes {
+        current = normalize_dashes(&current, stats);
+    }
+    if opts.strip_zero_width {
+        current = strip_zero_width(&current, stats);
+    }
+    if opts.strip_control_chars {
+        current = strip_control_chars(&current, stats);
+    }
+    if opts.join_hyphenated_words {
+        // Within a single text run, "exam-\nple" can occur if the run
+        // contains an explicit line break. Join it.
+        current = join_hyphenated_words(&current, stats);
+    }
+    if opts.collapse_whitespace {
+        // Collapse multiple spaces within the run (don't touch newlines
+        // — those might be meaningful inside a single run).
+        let before = current.len();
+        let re = regex::Regex::new(r"[ \t]{2,}").unwrap();
+        current = re.replace_all(&current, " ").into_owned();
+        if current.len() < before {
+            stats.whitespace_collapsed += 1;
+        }
+    }
+    current
+}
+
+/// Returns the list of operations that are skipped when cleaning a .docx
+/// in place (because they require cross-paragraph context).
+pub fn skipped_docx_operations() -> Vec<&'static str> {
+    vec![
+        "join_broken_lines (requires cross-paragraph context)",
+        "join_broken_urls (requires cross-paragraph context)",
+        "fix_broken_citations (requires cross-paragraph context)",
+        "remove_page_numbers (page numbers in .docx are usually fields, not text)",
+    ]
+}
+
 // ---------- Individual cleaning functions ----------
 
 fn fix_mojibake(text: &str, stats: &mut CleanStats) -> String {

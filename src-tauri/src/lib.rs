@@ -54,6 +54,7 @@ pub fn run() {
             commands::check_gguf_compatibility,
             commands::clean_text,
             commands::clean_docx_file,
+            commands::clean_docx_preserve_format,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,
