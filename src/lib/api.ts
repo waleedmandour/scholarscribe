@@ -139,6 +139,85 @@ export interface AuditSummary {
   outbound_hosts: string[];
 }
 
+// v0.1.3+
+
+export interface CleanOptions {
+  collapse_whitespace: boolean;
+  join_hyphenated_words: boolean;
+  join_broken_lines: boolean;
+  expand_ligatures: boolean;
+  strip_zero_width: boolean;
+  strip_control_chars: boolean;
+  remove_page_numbers: boolean;
+  normalize_quotes: boolean;
+  normalize_dashes: boolean;
+  fix_mojibake: boolean;
+  join_broken_urls: boolean;
+  fix_broken_citations: boolean;
+}
+
+export interface CleanStats {
+  whitespace_collapsed: number;
+  line_breaks_joined: number;
+  hyphenated_words_joined: number;
+  ligatures_expanded: number;
+  zero_width_chars_stripped: number;
+  control_chars_stripped: number;
+  page_numbers_removed: number;
+  quotes_normalized: number;
+  dashes_normalized: number;
+  mojibake_fixed: number;
+  urls_joined: number;
+  citations_fixed: number;
+}
+
+export interface CleanResult {
+  cleaned: string;
+  original_length: number;
+  cleaned_length: number;
+  transformations_applied: string[];
+  stats: CleanStats;
+}
+
+export interface Settings {
+  persistence_enabled: boolean;
+  theme: string;
+  version: string;
+}
+
+export interface Draft {
+  id: string;
+  title: string;
+  kind: string;
+  content: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface DraftMeta {
+  id: string;
+  title: string;
+  kind: string;
+  created_at: number;
+  updated_at: number;
+  size_bytes: number;
+}
+
+export const defaultCleanOptions: CleanOptions = {
+  collapse_whitespace: true,
+  join_hyphenated_words: true,
+  join_broken_lines: true,
+  expand_ligatures: true,
+  strip_zero_width: true,
+  strip_control_chars: true,
+  remove_page_numbers: true,
+  normalize_quotes: false,
+  normalize_dashes: true,
+  fix_mojibake: true,
+  join_broken_urls: true,
+  fix_broken_citations: true,
+};
+
 export const api = {
   appInfo: () => invoke<Record<string, unknown>>("app_info"),
   ollamaStatus: () => invoke<boolean>("ollama_status"),
@@ -163,6 +242,23 @@ export const api = {
   auditList: () => invoke<AuditEntry[]>("audit_list"),
   auditClear: () => invoke<void>("audit_clear"),
   auditSummary: () => invoke<AuditSummary>("audit_summary"),
+  // v0.1.3+
+  cleanText: (text: string, options?: CleanOptions) =>
+    invoke<CleanResult>("clean_text", { args: { text, options: options || defaultCleanOptions } }),
+  settingsGet: () => invoke<Settings>("settings_get"),
+  settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
+  persistenceEnable: () => invoke<void>("persistence_enable"),
+  persistenceDisable: () => invoke<void>("persistence_disable"),
+  persistenceStatus: () => invoke<boolean>("persistence_status"),
+  draftSave: (title: string, kind: string, content: string) =>
+    invoke<Draft>("draft_save", { title, kind, content }),
+  draftUpdate: (id: string, title?: string, content?: string) =>
+    invoke<Draft>("draft_update", { id, title, content }),
+  draftLoad: (id: string) => invoke<Draft>("draft_load", { id }),
+  draftList: () => invoke<DraftMeta[]>("draft_list"),
+  draftDelete: (id: string) => invoke<void>("draft_delete", { id }),
+  draftDeleteAll: () => invoke<number>("draft_delete_all"),
+  dataDirPath: () => invoke<string>("data_dir_path"),
   onPullProgress: (cb: (p: PullProgress) => void): Promise<UnlistenFn> =>
     listen<PullProgress>("ollama://pull-progress", (e) => cb(e.payload)),
   onPullStart: (cb: (name: string) => void): Promise<UnlistenFn> =>

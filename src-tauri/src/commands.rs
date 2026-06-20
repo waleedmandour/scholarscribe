@@ -1,6 +1,6 @@
 //! Tauri command handlers — the bridge between the Svelte frontend and Rust backend.
 
-use crate::{audit, disclosure, ollama, style};
+use crate::{audit, disclosure, ollama, style, text_cleaner};
 use serde::Deserialize;
 use std::path::PathBuf;
 use sysinfo::System;
@@ -399,4 +399,19 @@ pub async fn ollama_import_gguf(
     }
 
     Ok(())
+}
+
+// ---------------- v0.1.3 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct CleanTextArgs {
+    pub text: String,
+    #[serde(default)]
+    pub options: Option<text_cleaner::CleanOptions>,
+}
+
+#[tauri::command]
+pub fn clean_text(args: CleanTextArgs) -> text_cleaner::CleanResult {
+    let opts = args.options.unwrap_or_default();
+    text_cleaner::clean(&args.text, &opts)
 }

@@ -6,10 +6,12 @@
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
   import Chat from "./components/Chat.svelte";
   import PrivacyAudit from "./components/PrivacyAudit.svelte";
+  import AITextCleaner from "./components/AITextCleaner.svelte";
+  import SavedWork from "./components/SavedWork.svelte";
   import About from "./components/About.svelte";
   import { api } from "./lib/api";
 
-  type Tab = "models" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "about";
+  type Tab = "models" | "cleaner" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -37,11 +39,13 @@
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "models", label: "Models", icon: "M" },
+    { id: "cleaner", label: "Text Cleaner", icon: "T" },
     { id: "style", label: "Style Analysis", icon: "S" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
     { id: "literacy", label: "Detector Literacy", icon: "L" },
     { id: "audit", label: "Privacy Audit", icon: "P" },
+    { id: "saved", label: "Saved Work", icon: "W" },
     { id: "about", label: "About", icon: "A" },
   ];
 
@@ -117,7 +121,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.2 · MIT · local-only
+        v0.1.3 · MIT · local-only
       </div>
     </div>
   </aside>
@@ -125,6 +129,8 @@
   <main class="main">
     {#if active === "models"}
       <Models {ollamaOk} on:changed={refreshStatus} />
+    {:else if active === "cleaner"}
+      <AITextCleaner />
     {:else if active === "style"}
       <StyleAnalysis />
     {:else if active === "chat"}
@@ -135,6 +141,8 @@
       <DetectorLiteracy />
     {:else if active === "audit"}
       <PrivacyAudit />
+    {:else if active === "saved"}
+      <SavedWork />
     {:else if active === "about"}
       <About />
     {/if}

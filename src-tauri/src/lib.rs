@@ -11,7 +11,9 @@ mod audit;
 mod commands;
 mod disclosure;
 mod ollama;
+mod persistence;
 mod style;
+mod text_cleaner;
 
 pub use audit::AuditLog;
 
@@ -49,9 +51,22 @@ pub fn run() {
             commands::system_info,
             commands::ollama_import_gguf,
             commands::check_gguf_compatibility,
+            commands::clean_text,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,
+            persistence::settings_get,
+            persistence::settings_set,
+            persistence::persistence_enable,
+            persistence::persistence_disable,
+            persistence::persistence_status,
+            persistence::draft_save,
+            persistence::draft_update,
+            persistence::draft_load,
+            persistence::draft_list,
+            persistence::draft_delete,
+            persistence::draft_delete_all,
+            persistence::data_dir_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");
