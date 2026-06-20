@@ -10,6 +10,7 @@
 mod audit;
 mod commands;
 mod disclosure;
+mod docx_reading;
 mod ollama;
 mod persistence;
 mod style;
@@ -52,6 +53,7 @@ pub fn run() {
             commands::ollama_import_gguf,
             commands::check_gguf_compatibility,
             commands::clean_text,
+            commands::clean_docx_file,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,

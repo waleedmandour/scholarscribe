@@ -20,7 +20,7 @@
     const selected = await open({
       multiple: false,
       filters: [
-        { name: "Text", extensions: ["txt", "md", "markdown", "tex", "rst", "csv", "json"] },
+        { name: "Text + Word documents", extensions: ["txt", "md", "markdown", "tex", "rst", "csv", "json", "docx"] },
       ],
     });
     if (!selected || typeof selected !== "string") return;

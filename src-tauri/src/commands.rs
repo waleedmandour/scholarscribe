@@ -1,6 +1,6 @@
 //! Tauri command handlers — the bridge between the Svelte frontend and Rust backend.
 
-use crate::{audit, disclosure, ollama, style, text_cleaner};
+use crate::{audit, disclosure, docx_reading, ollama, style, text_cleaner};
 use serde::Deserialize;
 use std::path::PathBuf;
 use sysinfo::System;
@@ -121,8 +121,6 @@ pub async fn read_text_file(
             tokio::fs::read_to_string(&path)
                 .await
                 .map(|content| {
-                    // Update the audit entry's bytes_in retroactively would require mut access;
-                    // simpler: record a second entry reflecting the actual byte count.
                     audit.record(
                         "file_read",
                         &args.path,
@@ -134,9 +132,27 @@ pub async fn read_text_file(
                 })
                 .map_err(|e| format!("Failed to read {}: {}", path.display(), e))
         }
-        "docx" => Err("ScholarScribe cannot read .docx directly yet. Please export your document as .txt, .md, or .pdf-extracted text. Support for .docx is planned for v0.2.".into()),
+        "docx" => {
+            // .docx files are ZIP archives containing XML — we use the
+            // `docx-rs` crate to extract plain text. The extracted text is
+            // suitable for cleaning, style analysis, or any other text op.
+            let path_for_extract = path.clone();
+            let extracted =
+                tokio::task::spawn_blocking(move || docx_reading::extract_text_from_docx(&path_for_extract))
+                    .await
+                    .map_err(|e| format!("docx extraction task failed: {}", e))??;
+            audit.record(
+                "file_read",
+                &args.path,
+                "extracted text from .docx",
+                extracted.len() as u64,
+                0,
+            );
+            Ok(extracted)
+        }
+        "doc" => Err("ScholarScribe cannot read legacy .doc files (binary Word format). Please re-save as .docx in Word, or export as .txt/.md.".into()),
         other => Err(format!(
-            "Unsupported file type: .{}. Supported: .txt, .md, .tex, .rst, .csv, .json",
+            "Unsupported file type: .{}. Supported: .txt, .md, .tex, .rst, .csv, .json, .docx",
             other
         )),
     }
@@ -414,4 +430,64 @@ pub struct CleanTextArgs {
 pub fn clean_text(args: CleanTextArgs) -> text_cleaner::CleanResult {
     let opts = args.options.unwrap_or_default();
     text_cleaner::clean(&args.text, &opts)
+}
+
+// ---------------- v0.1.4 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct CleanDocxArgs {
+    pub path: String,
+    #[serde(default)]
+    pub options: Option<text_cleaner::CleanOptions>,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct CleanDocxResult {
+    pub source_path: String,
+    pub extracted: text_cleaner::CleanResult,
+}
+
+/// One-shot: read a .docx file, extract its text, run the text cleaner on it.
+/// Returns the cleaned text plus transformation stats. The original .docx is
+/// never modified — output is plain text the user can copy or save.
+#[tauri::command]
+pub async fn clean_docx_file(
+    args: CleanDocxArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<CleanDocxResult, String> {
+    let path = PathBuf::from(&args.path);
+    if !path.exists() {
+        return Err(format!("File not found: {}", args.path));
+    }
+    let ext = path
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    if ext != "docx" {
+        return Err(format!(
+            "Expected a .docx file, got .{}. Use clean_text for plain-text input.",
+            ext
+        ));
+    }
+
+    audit.record("file_read", &args.path, "extract + clean .docx", 0, 0);
+
+    // Extract text in a blocking task (docx-rs is sync).
+    let path_for_extract = path.clone();
+    let text = tokio::task::spawn_blocking(move || {
+        docx_reading::extract_text_from_docx(&path_for_extract)
+    })
+    .await
+    .map_err(|e| format!("docx extraction task failed: {}", e))??;
+
+    // Run the cleaner (CPU-bound, also blocking).
+    let opts = args.options.unwrap_or_default();
+    let result = tokio::task::spawn_blocking(move || text_cleaner::clean(&text, &opts))
+        .await
+        .map_err(|e| format!("clean task failed: {}", e))?;
+
+    Ok(CleanDocxResult {
+        source_path: args.path,
+        extracted: result,
+    })
 }

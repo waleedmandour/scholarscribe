@@ -245,6 +245,11 @@ export const api = {
   // v0.1.3+
   cleanText: (text: string, options?: CleanOptions) =>
     invoke<CleanResult>("clean_text", { args: { text, options: options || defaultCleanOptions } }),
+  // v0.1.4+
+  cleanDocxFile: (path: string, options?: CleanOptions) =>
+    invoke<{ source_path: string; extracted: CleanResult }>("clean_docx_file", {
+      args: { path, options: options || defaultCleanOptions },
+    }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
   persistenceEnable: () => invoke<void>("persistence_enable"),

@@ -4,12 +4,13 @@
 
   let inputText = "";
   let inputPath = "";
+  let inputKind: "text" | "docx" = "text";
   let result: CleanResult | null = null;
   let busy = false;
   let error = "";
   let copied = false;
+  let docxSourcePath = "";
 
-  // Per-option toggles, initialized to defaults
   let opts: CleanOptions = { ...defaultCleanOptions };
 
   const optionLabels: { key: keyof CleanOptions; label: string; hint: string }[] = [
@@ -30,27 +31,48 @@
   async function pickFile() {
     const selected = await open({
       multiple: false,
-      filters: [{ name: "Text files", extensions: ["txt", "md", "markdown", "tex", "rst", "csv", "json"] }],
+      filters: [
+        { name: "Text + Word documents", extensions: ["txt", "md", "markdown", "tex", "rst", "csv", "json", "docx"] },
+      ],
     });
     if (!selected || typeof selected !== "string") return;
-    try {
-      const text = await api.readTextFile(selected);
-      inputText = text;
+    const lower = selected.toLowerCase();
+    if (lower.endsWith(".docx")) {
       inputPath = selected;
-    } catch (e) {
-      error = String(e);
+      inputKind = "docx";
+      docxSourcePath = selected;
+      inputText = `[.docx file loaded: ${selected}]\nText will be extracted when you click "Clean text".`;
+    } else {
+      try {
+        const text = await api.readTextFile(selected);
+        inputText = text;
+        inputPath = selected;
+        inputKind = "text";
+        docxSourcePath = "";
+      } catch (e) {
+        error = String(e);
+      }
     }
   }
 
   async function clean() {
-    if (!inputText.trim()) {
+    if (inputKind === "docx" && !docxSourcePath) {
+      error = "Pick a .docx file first.";
+      return;
+    }
+    if (inputKind === "text" && !inputText.trim()) {
       error = "Paste some text or open a file first.";
       return;
     }
     error = "";
     busy = true;
     try {
-      result = await api.cleanText(inputText, opts);
+      if (inputKind === "docx") {
+        const out = await api.cleanDocxFile(docxSourcePath, opts);
+        result = out.extracted;
+      } else {
+        result = await api.cleanText(inputText, opts);
+      }
     } catch (e) {
       error = String(e);
     } finally {
@@ -72,6 +94,9 @@
   function useCleanedAsInput() {
     if (!result) return;
     inputText = result.cleaned;
+    inputKind = "text";
+    inputPath = "";
+    docxSourcePath = "";
     result = null;
   }
 
@@ -86,12 +111,6 @@
     });
     opts = allOn;
   }
-
-  function fmtBytes(n: number): string {
-    if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-    return `${(n / 1024 / 1024).toFixed(2)} MB`;
-  }
 </script>
 
 <h1>AI Text Cleaner</h1>
@@ -99,6 +118,8 @@
   Cleans common artifacts from text you paste or import — especially from copy-pasting out of
   PDFs, scanned documents, web pages, and word processors. All cleaning runs locally on your
   device as deterministic rule-based transformations. No text is sent to any server.
+  <strong>Now supports .docx files directly</strong> — pick a Word document and ScholarScribe
+  extracts its text and runs all enabled cleaners in one step.
 </p>
 
 <div class="callout info">
@@ -114,14 +135,23 @@
 <div class="row" style="align-items: flex-start;">
   <div class="card" style="flex: 1;">
     <div class="card-title">Input</div>
-    <div class="card-subtitle">Paste the text you want to clean, or open a file.</div>
+    <div class="card-subtitle">
+      Paste text, or open a file. Supports <code>.txt</code>, <code>.md</code>, <code>.tex</code>,
+      <code>.rst</code>, <code>.csv</code>, <code>.json</code>, and <code>.docx</code>.
+    </div>
     <div class="row" style="margin-bottom: 8px;">
       <button class="shrink" on:click={pickFile}>Open file…</button>
-      {#if inputPath}<span class="dim" style="font-size: 11px; word-break: break-all;">{inputPath}</span>{/if}
+      {#if inputPath}
+        <span class="dim" style="font-size: 11px; word-break: break-all;">
+          {inputPath}
+          {#if inputKind === "docx"}<span class="tag" style="margin-left: 6px;">.docx</span>{/if}
+        </span>
+      {/if}
     </div>
-    <textarea bind:value={inputText} rows="14" placeholder="Paste your text here…"></textarea>
+    <textarea bind:value={inputText} rows="14" placeholder="Paste your text here, or use Open file… to load a .txt/.md/.docx file"></textarea>
     <div class="dim" style="font-size: 11px; margin-top: 4px;">
-      {inputText.length.toLocaleString()} characters · {fmtBytes(new Blob([inputText]).size)}
+      {inputText.length.toLocaleString()} characters
+      {#if inputKind === "docx"}· .docx — text will be extracted on clean{/if}
     </div>
   </div>
 
@@ -147,8 +177,8 @@
 </div>
 
 <div class="row" style="margin: 12px 0;">
-  <button class="primary" on:click={clean} disabled={busy || !inputText.trim()}>
-    {busy ? "Cleaning…" : "Clean text"}
+  <button class="primary" on:click={clean} disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}>
+    {busy ? "Cleaning…" : inputKind === "docx" ? "Extract & clean .docx" : "Clean text"}
   </button>
 </div>
 
