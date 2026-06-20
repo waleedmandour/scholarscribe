@@ -36,7 +36,7 @@ pub struct CleanStats {
 }
 
 /// Options to enable/disable specific cleaning operations.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, serde::Deserialize)]
 pub struct CleanOptions {
     pub collapse_whitespace: bool,
     pub join_hyphenated_words: bool,

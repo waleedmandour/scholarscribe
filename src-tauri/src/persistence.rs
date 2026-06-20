@@ -12,13 +12,12 @@
 //! - The user can view, delete, or "open in file explorer" any saved data from
 //!   the Saved Work tab in the UI.
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager};
 
 const DATA_DIR_NAME: &str = "data";
 const DRAFTS_DIR_NAME: &str = "drafts";
