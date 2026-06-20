@@ -2,7 +2,7 @@
 
 use crate::{audit, disclosure, docx_reading, ollama, style, text_cleaner};
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use sysinfo::System;
 use tauri::{AppHandle, Emitter, State};
 
