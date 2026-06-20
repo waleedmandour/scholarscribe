@@ -33,6 +33,18 @@ pub struct CleanStats {
     pub mojibake_fixed: usize,
     pub urls_joined: usize,
     pub citations_fixed: usize,
+    // v0.1.7 strict-cleaning stats
+    pub ellipsis_converted: usize,
+    pub asterisks_removed: usize,
+    pub markdown_headings_removed: usize,
+    pub nbsp_converted: usize,
+    pub bom_stripped: usize,
+    pub unicode_whitespace_normalized: usize,
+    pub soft_hyphens_stripped: usize,
+    pub variation_selectors_stripped: usize,
+    pub bullets_normalized: usize,
+    pub line_endings_normalized: usize,
+    pub repeated_punctuation_collapsed: usize,
 }
 
 /// Options to enable/disable specific cleaning operations.
@@ -50,12 +62,28 @@ pub struct CleanOptions {
     pub fix_mojibake: bool,
     pub join_broken_urls: bool,
     pub fix_broken_citations: bool,
+    // v0.1.7 — strict-cleaning operations
+    pub convert_ellipsis: bool,
+    pub remove_asterisks: bool,
+    pub remove_markdown_headings: bool,
+    pub convert_nbsp: bool,
+    pub strip_bom: bool,
+    pub normalize_unicode_whitespace: bool,
+    pub strip_soft_hyphens: bool,
+    pub strip_variation_selectors: bool,
+    pub normalize_bullets: bool,
+    pub normalize_line_endings: bool,
+    pub collapse_repeated_punctuation: bool,
+    pub strip_variation_selectors_emoji: bool,
 }
 
 impl Default for CleanOptions {
     fn default() -> Self {
         // Sensible defaults — turn on everything except quote normalization
         // (some users prefer curly quotes preserved in academic writing).
+        // The v0.1.7 strict-cleaning operations are OFF by default — they're
+        // opinionated (e.g. removing asterisks) and the user should opt in
+        // via the "Strict" preset button in the UI.
         Self {
             collapse_whitespace: true,
             join_hyphenated_words: true,
@@ -69,7 +97,52 @@ impl Default for CleanOptions {
             fix_mojibake: true,
             join_broken_urls: true,
             fix_broken_citations: true,
+            // v0.1.7 strict-cleaning ops — OFF in default preset
+            convert_ellipsis: false,
+            remove_asterisks: false,
+            remove_markdown_headings: false,
+            convert_nbsp: false,
+            strip_bom: false,
+            normalize_unicode_whitespace: false,
+            strip_soft_hyphens: false,
+            strip_variation_selectors: false,
+            normalize_bullets: false,
+            normalize_line_endings: false,
+            collapse_repeated_punctuation: false,
+            strip_variation_selectors_emoji: false,
         }
+    }
+}
+
+/// The "Strict" preset — turns on every operation including the v0.1.7 ones.
+/// Use this when you want a maximally-clean plain-text version of the input.
+pub fn strict_options() -> CleanOptions {
+    CleanOptions {
+        collapse_whitespace: true,
+        join_hyphenated_words: true,
+        join_broken_lines: true,
+        expand_ligatures: true,
+        strip_zero_width: true,
+        strip_control_chars: true,
+        remove_page_numbers: true,
+        normalize_quotes: true,
+        normalize_dashes: true,
+        fix_mojibake: true,
+        join_broken_urls: true,
+        fix_broken_citations: true,
+        // v0.1.7 strict ops — all ON
+        convert_ellipsis: true,
+        remove_asterisks: true,
+        remove_markdown_headings: true,
+        convert_nbsp: true,
+        strip_bom: true,
+        normalize_unicode_whitespace: true,
+        strip_soft_hyphens: true,
+        strip_variation_selectors: true,
+        normalize_bullets: true,
+        normalize_line_endings: true,
+        collapse_repeated_punctuation: true,
+        strip_variation_selectors_emoji: true,
     }
 }
 
@@ -179,6 +252,104 @@ pub fn clean(text: &str, opts: &CleanOptions) -> CleanResult {
         }
     }
 
+    // ============ v0.1.7 strict-cleaning operations ============
+
+    if opts.strip_bom {
+        let before_len = current.len();
+        current = strip_bom(&current, &mut stats);
+        if current.len() < before_len || stats.bom_stripped > 0 {
+            transformations_applied
+                .push("Stripped Byte Order Mark (BOM, U+FEFF) at start of file".into());
+        }
+    }
+
+    if opts.normalize_line_endings {
+        let before = stats.line_endings_normalized;
+        current = normalize_line_endings(&current, &mut stats);
+        if stats.line_endings_normalized > before {
+            transformations_applied
+                .push("Normalized line endings (CRLF → LF, lone CR → LF)".into());
+        }
+    }
+
+    if opts.convert_nbsp {
+        let before = stats.nbsp_converted;
+        current = convert_nbsp(&current, &mut stats);
+        if stats.nbsp_converted > before {
+            transformations_applied.push(
+                "Converted non-breaking spaces (U+00A0, U+2007, U+202F) to regular spaces".into(),
+            );
+        }
+    }
+
+    if opts.normalize_unicode_whitespace {
+        let before = stats.unicode_whitespace_normalized;
+        current = normalize_unicode_whitespace(&current, &mut stats);
+        if stats.unicode_whitespace_normalized > before {
+            transformations_applied.push("Normalized Unicode whitespace (en/em/thin/hair/figure/ideographic spaces) to ASCII space".into());
+        }
+    }
+
+    if opts.strip_soft_hyphens {
+        let before_len = current.len();
+        current = strip_soft_hyphens(&current, &mut stats);
+        if current.len() < before_len || stats.soft_hyphens_stripped > 0 {
+            transformations_applied.push("Stripped soft hyphens (U+00AD)".into());
+        }
+    }
+
+    if opts.strip_variation_selectors || opts.strip_variation_selectors_emoji {
+        let before_len = current.len();
+        current = strip_variation_selectors(&current, &mut stats);
+        if current.len() < before_len || stats.variation_selectors_stripped > 0 {
+            transformations_applied
+                .push("Stripped variation selectors (U+FE00–FE0F, U+E0100–E01EF)".into());
+        }
+    }
+
+    if opts.convert_ellipsis {
+        let before = stats.ellipsis_converted;
+        current = convert_ellipsis(&current, &mut stats);
+        if stats.ellipsis_converted > before {
+            transformations_applied
+                .push("Converted Unicode ellipsis (…) to three ASCII dots (...)".into());
+        }
+    }
+
+    if opts.remove_asterisks {
+        let before_len = current.len();
+        current = remove_asterisks(&current, &mut stats);
+        if current.len() < before_len || stats.asterisks_removed > 0 {
+            transformations_applied.push("Removed asterisks (*)".into());
+        }
+    }
+
+    if opts.remove_markdown_headings {
+        let before = stats.markdown_headings_removed;
+        current = remove_markdown_headings(&current, &mut stats);
+        if stats.markdown_headings_removed > before {
+            transformations_applied.push("Removed markdown heading markers (#, ##, ###...)".into());
+        }
+    }
+
+    if opts.normalize_bullets {
+        let before = stats.bullets_normalized;
+        current = normalize_bullets(&current, &mut stats);
+        if stats.bullets_normalized > before {
+            transformations_applied
+                .push("Normalized Unicode bullet chars (• ◦ ▪ ‣ ⁃) to ASCII hyphen (-)".into());
+        }
+    }
+
+    if opts.collapse_repeated_punctuation {
+        let before = stats.repeated_punctuation_collapsed;
+        current = collapse_repeated_punctuation(&current, &mut stats);
+        if stats.repeated_punctuation_collapsed > before {
+            transformations_applied
+                .push("Collapsed repeated punctuation (!!! → !, ??? → ?, ...)".into());
+        }
+    }
+
     CleanResult {
         cleaned: current,
         original_length,
@@ -241,6 +412,38 @@ pub fn clean_text_run(text: &str, opts: &CleanOptions, stats: &mut CleanStats) -
         if current.len() < before {
             stats.whitespace_collapsed += 1;
         }
+    }
+    // v0.1.7 per-run strict operations (these are safe to apply per-run
+    // because they don't cross paragraph boundaries)
+    if opts.strip_bom {
+        current = strip_bom(&current, stats);
+    }
+    if opts.convert_nbsp {
+        current = convert_nbsp(&current, stats);
+    }
+    if opts.normalize_unicode_whitespace {
+        current = normalize_unicode_whitespace(&current, stats);
+    }
+    if opts.strip_soft_hyphens {
+        current = strip_soft_hyphens(&current, stats);
+    }
+    if opts.strip_variation_selectors || opts.strip_variation_selectors_emoji {
+        current = strip_variation_selectors(&current, stats);
+    }
+    if opts.convert_ellipsis {
+        current = convert_ellipsis(&current, stats);
+    }
+    if opts.remove_asterisks {
+        current = remove_asterisks(&current, stats);
+    }
+    if opts.remove_markdown_headings {
+        current = remove_markdown_headings(&current, stats);
+    }
+    if opts.normalize_bullets {
+        current = normalize_bullets(&current, stats);
+    }
+    if opts.collapse_repeated_punctuation {
+        current = collapse_repeated_punctuation(&current, stats);
     }
     current
 }
@@ -519,5 +722,202 @@ fn collapse_whitespace(text: &str, stats: &mut CleanStats) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
+    out
+}
+
+// ---------- v0.1.7 strict-cleaning operations ----------
+
+/// Strip the Byte Order Mark (U+FEFF) if it appears at the start of the text.
+fn strip_bom(text: &str, stats: &mut CleanStats) -> String {
+    if text.starts_with('\u{FEFF}') {
+        stats.bom_stripped += 1;
+        text[3..].to_string() // U+FEFF is 3 bytes in UTF-8
+    } else {
+        text.to_string()
+    }
+}
+
+/// Normalize line endings: CRLF (\r\n) → LF (\n), lone \r → \n.
+fn normalize_line_endings(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\r' {
+            // CRLF or lone CR
+            stats.line_endings_normalized += 1;
+            // Peek and consume \n if present (CRLF case counts as one normalization)
+            if chars.peek() == Some(&'\n') {
+                chars.next();
+            }
+            out.push('\n');
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+/// Convert non-breaking spaces (U+00A0, U+2007 figure space, U+202F narrow nbsp)
+/// to regular ASCII spaces.
+fn convert_nbsp(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        match ch {
+            '\u{00A0}' | '\u{2007}' | '\u{202F}' => {
+                out.push(' ');
+                stats.nbsp_converted += 1;
+            }
+            _ => out.push(ch),
+        }
+    }
+    out
+}
+
+/// Normalize various Unicode whitespace chars (en space, em space, thin space,
+/// hair space, figure space, punctuation space, ideographic space, etc.) to
+/// regular ASCII spaces.
+fn normalize_unicode_whitespace(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        // U+2000–U+200A (en/em/thin/hair/punct/figure spaces), U+205F (medium math),
+        // U+3000 (ideographic space), U+1680 (ogham space)
+        let code = ch as u32;
+        let is_unicode_ws =
+            (0x2000..=0x200A).contains(&code) || code == 0x205F || code == 0x3000 || code == 0x1680;
+        if is_unicode_ws {
+            out.push(' ');
+            stats.unicode_whitespace_normalized += 1;
+        } else {
+            out.push(ch);
+        }
+    }
+    out
+}
+
+/// Strip soft hyphens (U+00AD) — invisible chars that indicate optional
+/// hyphenation points but cause search/replace misses.
+fn strip_soft_hyphens(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        if ch == '\u{00AD}' {
+            stats.soft_hyphens_stripped += 1;
+        } else {
+            out.push(ch);
+        }
+    }
+    out
+}
+
+/// Strip variation selectors (U+FE00–FE0F, U+E0100–E01EF) — emoji/symbol
+/// modifiers that show as garbage in plain text.
+fn strip_variation_selectors(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        let code = ch as u32;
+        let is_vs = (0xFE00..=0xFE0F).contains(&code) || (0xE0100..=0xE01EF).contains(&code);
+        if is_vs {
+            stats.variation_selectors_stripped += 1;
+        } else {
+            out.push(ch);
+        }
+    }
+    out
+}
+
+/// Convert Unicode ellipsis (U+2026, "…") to three ASCII dots (...).
+fn convert_ellipsis(text: &str, stats: &mut CleanStats) -> String {
+    let count = text.matches('\u{2026}').count();
+    if count == 0 {
+        return text.to_string();
+    }
+    stats.ellipsis_converted += count;
+    text.replace('\u{2026}', "...")
+}
+
+/// Remove asterisks. Also collapses the double-space that often remains
+/// when " **bold** " loses its asterisks.
+fn remove_asterisks(text: &str, stats: &mut CleanStats) -> String {
+    let count = text.matches('*').count();
+    if count == 0 {
+        return text.to_string();
+    }
+    stats.asterisks_removed += count;
+    let out = text.replace('*', "");
+    // Collapse the double-space that markdown bold (**text**) leaves behind
+    let out = out.replace("  ", " ");
+    out
+}
+
+/// Remove markdown heading markers (#, ##, ###, etc.) at the start of lines.
+/// Preserves the heading text — just strips the leading #'s and any space
+/// immediately after them.
+fn remove_markdown_headings(text: &str, stats: &mut CleanStats) -> String {
+    let re = regex::Regex::new(r"(?m)^#{1,6}\s+").unwrap();
+    let count = re.find_iter(text).count();
+    if count == 0 {
+        return text.to_string();
+    }
+    stats.markdown_headings_removed += count;
+    re.replace_all(text, "").into_owned()
+}
+
+/// Normalize Unicode bullet characters (•, ◦, ▪, ‣, ⁃, ‣, ●, ○, ■, □, ►, ▶)
+/// to ASCII hyphen (-) for consistency.
+fn normalize_bullets(text: &str, stats: &mut CleanStats) -> String {
+    let bullets: &[(char, &str)] = &[
+        ('\u{2022}', "-"), // •
+        ('\u{2023}', "-"), // ‣
+        ('\u{25E6}', "-"), // ◦
+        ('\u{2043}', "-"), // ⁃
+        ('\u{204C}', "-"), // ⁌
+        ('\u{204D}', "-"), // ⁍
+        ('\u{2219}', "-"), // ∙
+        ('\u{25AA}', "-"), // ▪
+        ('\u{25AB}', "-"), // ▫
+        ('\u{25CF}', "-"), // ●
+        ('\u{25CB}', "-"), // ○
+        ('\u{25A0}', "-"), // ■
+        ('\u{25A1}', "-"), // □
+        ('\u{25B6}', "-"), // ▶
+        ('\u{25B8}', "-"), // ▸
+    ];
+    let mut total = 0;
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        if let Some((_, replacement)) = bullets.iter().find(|(b, _)| *b == ch) {
+            out.push_str(replacement);
+            total += 1;
+        } else {
+            out.push(ch);
+        }
+    }
+    stats.bullets_normalized += total;
+    out
+}
+
+/// Collapse repeated punctuation: !!! → !, ??? → ?, .. or .... → ... (ASCII),
+/// ;;  → ;, ,, → ,. Preserves intentional ... (three dots).
+fn collapse_repeated_punctuation(text: &str, stats: &mut CleanStats) -> String {
+    let mut out = String::with_capacity(text.len());
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    let mut count = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if matches!(c, '!' | '?' | ';' | ',') {
+            // Output one of this char, skip any subsequent identical chars
+            out.push(c);
+            let mut j = i + 1;
+            while j < chars.len() && chars[j] == c {
+                count += 1;
+                j += 1;
+            }
+            i = j;
+        } else {
+            out.push(c);
+            i += 1;
+        }
+    }
+    stats.repeated_punctuation_collapsed += count;
     out
 }

@@ -8,8 +8,10 @@
 // "Ethical Use" section for the full policy.
 
 mod audit;
+mod citation_manager;
 mod commands;
 mod disclosure;
+mod document_stats;
 mod docx_reading;
 mod ollama;
 mod persistence;
@@ -53,8 +55,12 @@ pub fn run() {
             commands::ollama_import_gguf,
             commands::check_gguf_compatibility,
             commands::clean_text,
+            commands::clean_text_strict,
+            commands::strict_clean_options,
             commands::clean_docx_file,
             commands::clean_docx_preserve_format,
+            commands::validate_citations,
+            commands::document_stats,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,

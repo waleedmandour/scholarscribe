@@ -1,6 +1,12 @@
 <script lang="ts">
   import { open, save } from "@tauri-apps/plugin-dialog";
-  import { api, type CleanOptions, type CleanResult, defaultCleanOptions } from "../lib/api";
+  import {
+    api,
+    type CleanOptions,
+    type CleanResult,
+    defaultCleanOptions,
+    strictCleanOptions,
+  } from "../lib/api";
 
   let inputText = "";
   let inputPath = "";
@@ -11,7 +17,6 @@
   let copied = false;
   let docxSourcePath = "";
 
-  // Result from the preserve-format .docx cleaning (separate from `result`)
   let preserveResult: {
     output_path: string;
     parts_cleaned: string[];
@@ -23,7 +28,7 @@
 
   let opts: CleanOptions = { ...defaultCleanOptions };
 
-  const optionLabels: { key: keyof CleanOptions; label: string; hint: string }[] = [
+  const optionLabels: { key: keyof CleanOptions; label: string; hint: string; strict?: boolean }[] = [
     { key: "fix_mojibake", label: "Fix mojibake", hint: "Repair text decoded with the wrong charset (e.g. â€” → —)" },
     { key: "expand_ligatures", label: "Expand ligatures", hint: "ﬁ → fi, ﬂ → fl, ﬀ → ff, etc." },
     { key: "normalize_quotes", label: "Normalize quotes", hint: "Curly → straight quotes (off by default; preserves academic style)" },
@@ -36,6 +41,18 @@
     { key: "fix_broken_citations", label: "Fix broken citations", hint: "(Smith,\\n2020) → (Smith, 2020)" },
     { key: "remove_page_numbers", label: "Remove page numbers", hint: "Strip lines that are just numbers (PDF extraction artifact)" },
     { key: "collapse_whitespace", label: "Collapse whitespace", hint: "Multiple spaces → one, trim trailing, collapse 3+ newlines to 2" },
+    // v0.1.7 strict-cleaning operations
+    { key: "strip_bom", label: "Strip BOM", hint: "Remove Byte Order Mark (U+FEFF) at start of file", strict: true },
+    { key: "normalize_line_endings", label: "Normalize line endings", hint: "CRLF (\\r\\n) → LF (\\n), lone \\r → \\n", strict: true },
+    { key: "convert_nbsp", label: "Convert non-breaking spaces", hint: "U+00A0, U+2007, U+202F → regular ASCII space", strict: true },
+    { key: "normalize_unicode_whitespace", label: "Normalize Unicode whitespace", hint: "en/em/thin/hair/figure/ideographic spaces → ASCII space", strict: true },
+    { key: "strip_soft_hyphens", label: "Strip soft hyphens", hint: "Remove U+00AD (invisible chars that cause search misses)", strict: true },
+    { key: "strip_variation_selectors", label: "Strip variation selectors", hint: "Remove U+FE00–FE0F and U+E0100–E01EF (emoji modifiers)", strict: true },
+    { key: "convert_ellipsis", label: "Convert ellipsis", hint: "Unicode … → three ASCII dots (...)", strict: true },
+    { key: "remove_asterisks", label: "Remove asterisks", hint: "Strip all * characters (markdown bold/italic markers, footnote refs)", strict: true },
+    { key: "remove_markdown_headings", label: "Remove markdown headings", hint: "Strip leading #, ##, ### from lines (preserves heading text)", strict: true },
+    { key: "normalize_bullets", label: "Normalize bullets", hint: "• ◦ ▪ ‣ ⁃ → ASCII hyphen (-)", strict: true },
+    { key: "collapse_repeated_punctuation", label: "Collapse repeated punctuation", hint: "!!! → !, ??? → ?, ;;  → ;", strict: true },
   ];
 
   async function pickFile() {
@@ -95,15 +112,40 @@
     }
   }
 
-  // v0.1.5: clean the .docx in place, preserving all formatting, tables,
-  // images, hyperlinks, headers/footers. Saves to a new .docx file the user
-  // picks via a save dialog.
+  // v0.1.7: one-click strict cleaning — applies ALL 24 operations
+  async function cleanStrict() {
+    if (inputKind === "docx" && !docxSourcePath) {
+      error = "Pick a .docx file first.";
+      return;
+    }
+    if (inputKind === "text" && !inputText.trim()) {
+      error = "Paste some text or open a file first.";
+      return;
+    }
+    error = "";
+    busy = true;
+    preserveResult = null;
+    // Apply strict preset to the checkboxes too, so the user sees what was applied
+    opts = { ...strictCleanOptions };
+    try {
+      if (inputKind === "docx") {
+        const out = await api.cleanDocxFile(docxSourcePath, opts);
+        result = out.extracted;
+      } else {
+        result = await api.cleanTextStrict(inputText);
+      }
+    } catch (e) {
+      error = String(e);
+    } finally {
+      busy = false;
+    }
+  }
+
   async function cleanAndSaveDocx() {
     if (!docxSourcePath) {
       error = "Pick a .docx file first.";
       return;
     }
-    // Suggest a default output name based on the input.
     const inputName = docxSourcePath.split(/[\\/]/).pop() || "document.docx";
     const stem = inputName.replace(/\.docx$/i, "");
     const defaultOutput = `${stem}-cleaned.docx`;
@@ -112,7 +154,7 @@
       defaultPath: defaultOutput,
       filters: [{ name: "Word document", extensions: ["docx"] }],
     });
-    if (!outputPath) return;  // user cancelled
+    if (!outputPath) return;
 
     error = "";
     busy = true;
@@ -151,6 +193,10 @@
     opts = { ...defaultCleanOptions };
   }
 
+  function applyStrictPreset() {
+    opts = { ...strictCleanOptions };
+  }
+
   function enableAll() {
     const allOn = {} as CleanOptions;
     (Object.keys(opts) as (keyof CleanOptions)[]).forEach((k) => {
@@ -172,9 +218,9 @@
 <div class="callout info">
   <strong>What this does — and doesn't — do.</strong>
   The cleaner fixes <em>artifacts</em> (broken hyphens, ligatures, mojibake, page numbers,
-  control characters) but does <strong>not</strong> rewrite the content or change its meaning.
-  It is not a paraphraser and not an AI-detector evader. For rephrasing, use the Chat tab
-  with a local LLM.
+  control characters, hidden chars, asterisks, markdown headings) but does <strong>not</strong>
+  rewrite the content or change its meaning. It is not a paraphraser and not an AI-detector
+  evader. For rephrasing, use the Chat tab with a local LLM.
 </div>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
@@ -204,39 +250,49 @@
 
   <div class="card" style="flex: 1;">
     <div class="card-title">Cleaning options</div>
-    <div class="card-subtitle">Toggle which transformations to apply. Defaults are sensible for most academic text.</div>
+    <div class="card-subtitle">Toggle which transformations to apply, or use a preset below.</div>
+    <div class="row" style="margin: 8px 0; gap: 8px;">
+      <button class="shrink" on:click={resetToDefaults} title="Sensible defaults for most academic text">Default</button>
+      <button class="shrink primary" on:click={applyStrictPreset} title="Turn on ALL 24 operations (including hidden chars, asterisks, markdown headings, ellipsis, etc.)">Strict (all 24)</button>
+      <button class="shrink" on:click={enableAll}>Enable all</button>
+    </div>
     <div style="display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px;">
       {#each optionLabels as o}
         <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; cursor: pointer;">
           <input type="checkbox" bind:checked={opts[o.key]} style="flex: 0 0 auto; margin-top: 3px;" />
           <span>
-            <strong>{o.label}</strong><br />
+            <strong>{o.label}</strong>
+            {#if o.strict}<span class="tag" style="margin-left: 4px; font-size: 9px;">strict</span>{/if}
+            <br />
             <span class="dim" style="font-size: 11px;">{o.hint}</span>
           </span>
         </label>
       {/each}
     </div>
-    <div class="row" style="margin-top: 12px;">
-      <button class="shrink" on:click={resetToDefaults}>Reset to defaults</button>
-      <button class="shrink" on:click={enableAll}>Enable all</button>
-    </div>
   </div>
 </div>
 
 <h2>Action</h2>
-<div class="row" style="margin: 8px 0 16px; gap: 12px;">
+<div class="row" style="margin: 8px 0 16px; gap: 12px; flex-wrap: wrap;">
   <button
-    class="primary"
     on:click={clean}
     disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
-    title={inputKind === "docx" ? "Extract text from the .docx and clean it. Tables, images, and formatting are lost — output is plain text." : "Clean the pasted/loaded text."}
+    title={inputKind === "docx" ? "Extract text from the .docx and clean it with the options above. Tables, images, and formatting are lost — output is plain text." : "Clean the pasted/loaded text with the options above."}
   >
     {busy ? "Working…" : inputKind === "docx" ? "Extract & clean text" : "Clean text"}
   </button>
 
+  <button
+    class="primary"
+    on:click={cleanStrict}
+    disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
+    title="Apply ALL 24 cleaning operations (default + strict: hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, soft hyphens, variation selectors, line endings, repeated punctuation)"
+  >
+    {busy ? "Working…" : "⚡ Strict clean (all 24 ops)"}
+  </button>
+
   {#if inputKind === "docx"}
     <button
-      class="primary"
       on:click={cleanAndSaveDocx}
       disabled={busy || !docxSourcePath}
       title="Clean the .docx in place — modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
@@ -302,6 +358,17 @@
           <tr><td>Mojibake fixed</td><td>{result.stats.mojibake_fixed}</td></tr>
           <tr><td>URLs joined</td><td>{result.stats.urls_joined}</td></tr>
           <tr><td>Citations fixed</td><td>{result.stats.citations_fixed}</td></tr>
+          <tr><td>BOM stripped</td><td>{result.stats.bom_stripped}</td></tr>
+          <tr><td>Line endings normalized</td><td>{result.stats.line_endings_normalized}</td></tr>
+          <tr><td>Non-breaking spaces converted</td><td>{result.stats.nbsp_converted}</td></tr>
+          <tr><td>Unicode whitespace normalized</td><td>{result.stats.unicode_whitespace_normalized}</td></tr>
+          <tr><td>Soft hyphens stripped</td><td>{result.stats.soft_hyphens_stripped}</td></tr>
+          <tr><td>Variation selectors stripped</td><td>{result.stats.variation_selectors_stripped}</td></tr>
+          <tr><td>Ellipsis converted</td><td>{result.stats.ellipsis_converted}</td></tr>
+          <tr><td>Asterisks removed</td><td>{result.stats.asterisks_removed}</td></tr>
+          <tr><td>Markdown headings removed</td><td>{result.stats.markdown_headings_removed}</td></tr>
+          <tr><td>Bullets normalized</td><td>{result.stats.bullets_normalized}</td></tr>
+          <tr><td>Repeated punctuation collapsed</td><td>{result.stats.repeated_punctuation_collapsed}</td></tr>
         </tbody>
       </table>
     </details>
@@ -364,3 +431,4 @@
     </ul>
   </div>
 {/if}
+

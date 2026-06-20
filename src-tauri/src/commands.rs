@@ -432,6 +432,29 @@ pub fn clean_text(args: CleanTextArgs) -> text_cleaner::CleanResult {
     text_cleaner::clean(&args.text, &opts)
 }
 
+// ---------------- v0.1.7 strict cleaning ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct CleanTextStrictArgs {
+    pub text: String,
+}
+
+/// Strict cleaning — applies ALL 24 cleaning operations (the 12 default ones
+/// plus the 11 new v0.1.7 strict ones, with normalize_quotes also enabled).
+/// Use this when you want a maximally-clean plain-text version of the input.
+#[tauri::command]
+pub fn clean_text_strict(args: CleanTextStrictArgs) -> text_cleaner::CleanResult {
+    let opts = text_cleaner::strict_options();
+    text_cleaner::clean(&args.text, &opts)
+}
+
+/// Returns the strict-cleaning options preset (so the UI can show the user
+/// which operations will be applied before they click "Strict clean").
+#[tauri::command]
+pub fn strict_clean_options() -> text_cleaner::CleanOptions {
+    text_cleaner::strict_options()
+}
+
 // ---------------- v0.1.4 new commands ----------------
 
 #[derive(Debug, Deserialize)]
@@ -832,4 +855,69 @@ fn utf8_char_len(first_byte: u8) -> usize {
     } else {
         4
     }
+}
+
+// ---------------- v0.1.6 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct ValidateCitationsArgs {
+    pub draft_path: String,
+    pub bib_path: String,
+}
+
+#[tauri::command]
+pub async fn validate_citations(
+    args: ValidateCitationsArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<crate::citation_manager::CitationReport, String> {
+    use crate::citation_manager;
+
+    let draft_path = PathBuf::from(&args.draft_path);
+    let bib_path = PathBuf::from(&args.bib_path);
+
+    if !draft_path.exists() {
+        return Err(format!("Draft file not found: {}", args.draft_path));
+    }
+    if !bib_path.exists() {
+        return Err(format!(".bib file not found: {}", args.bib_path));
+    }
+
+    audit.record("file_read", &args.draft_path, "citation validation", 0, 0);
+    audit.record("file_read", &args.bib_path, "citation validation", 0, 0);
+
+    let draft_path_for_task = draft_path.clone();
+    let bib_path_for_task = bib_path.clone();
+
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<crate::citation_manager::CitationReport, String> {
+            // Read draft (handles .docx and text)
+            let draft_text = if draft_path_for_task
+                .extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                == Some("docx".into())
+            {
+                crate::docx_reading::extract_text_from_docx(&draft_path_for_task)?
+            } else {
+                std::fs::read_to_string(&draft_path_for_task)
+                    .map_err(|e| format!("read draft: {}", e))?
+            };
+            let bib_content = citation_manager::read_bib_file(&bib_path_for_task)?;
+            let mut report = citation_manager::validate(&draft_text, &bib_content);
+            report.draft_path = Some(draft_path_for_task.to_string_lossy().into_owned());
+            report.bib_path = Some(bib_path_for_task.to_string_lossy().into_owned());
+            Ok(report)
+        },
+    )
+    .await
+    .map_err(|e| format!("citation validation task failed: {}", e))??;
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn document_stats(text: String) -> Result<crate::document_stats::DocStats, String> {
+    let result = tokio::task::spawn_blocking(move || crate::document_stats::analyze(&text))
+        .await
+        .map_err(|e| format!("document stats task failed: {}", e))?;
+    Ok(result)
 }

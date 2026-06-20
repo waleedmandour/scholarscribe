@@ -1,17 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Models from "./components/Models.svelte";
+  import AITextCleaner from "./components/AITextCleaner.svelte";
+  import CitationManager from "./components/CitationManager.svelte";
+  import DocumentStats from "./components/DocumentStats.svelte";
   import StyleAnalysis from "./components/StyleAnalysis.svelte";
   import Disclosure from "./components/Disclosure.svelte";
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
   import Chat from "./components/Chat.svelte";
   import PrivacyAudit from "./components/PrivacyAudit.svelte";
-  import AITextCleaner from "./components/AITextCleaner.svelte";
   import SavedWork from "./components/SavedWork.svelte";
   import About from "./components/About.svelte";
   import { api } from "./lib/api";
 
-  type Tab = "models" | "cleaner" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "citations" | "stats" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -40,6 +42,8 @@
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "models", label: "Models", icon: "M" },
     { id: "cleaner", label: "Text Cleaner", icon: "T" },
+    { id: "citations", label: "Citations", icon: "C" },
+    { id: "stats", label: "Stats", icon: "#" },
     { id: "style", label: "Style Analysis", icon: "S" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
@@ -121,7 +125,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.5 · MIT · local-only
+        v0.1.7 · MIT · local-only
       </div>
     </div>
   </aside>
@@ -131,6 +135,10 @@
       <Models {ollamaOk} on:changed={refreshStatus} />
     {:else if active === "cleaner"}
       <AITextCleaner />
+    {:else if active === "citations"}
+      <CitationManager />
+    {:else if active === "stats"}
+      <DocumentStats />
     {:else if active === "style"}
       <StyleAnalysis />
     {:else if active === "chat"}

@@ -1,6 +1,6 @@
 [package]
 name = "scholarscribe"
-version = "0.1.5"
+version = "0.1.7"
 description = "Privacy-first local LLM writing companion for researchers"
 authors = ["Waleed Mandour"]
 license = "MIT"

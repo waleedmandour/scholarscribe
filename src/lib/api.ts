@@ -154,6 +154,19 @@ export interface CleanOptions {
   fix_mojibake: boolean;
   join_broken_urls: boolean;
   fix_broken_citations: boolean;
+  // v0.1.7 strict-cleaning operations
+  convert_ellipsis: boolean;
+  remove_asterisks: boolean;
+  remove_markdown_headings: boolean;
+  convert_nbsp: boolean;
+  strip_bom: boolean;
+  normalize_unicode_whitespace: boolean;
+  strip_soft_hyphens: boolean;
+  strip_variation_selectors: boolean;
+  normalize_bullets: boolean;
+  normalize_line_endings: boolean;
+  collapse_repeated_punctuation: boolean;
+  strip_variation_selectors_emoji: boolean;
 }
 
 export interface CleanStats {
@@ -169,6 +182,18 @@ export interface CleanStats {
   mojibake_fixed: number;
   urls_joined: number;
   citations_fixed: number;
+  // v0.1.7
+  ellipsis_converted: number;
+  asterisks_removed: number;
+  markdown_headings_removed: number;
+  nbsp_converted: number;
+  bom_stripped: number;
+  unicode_whitespace_normalized: number;
+  soft_hyphens_stripped: number;
+  variation_selectors_stripped: number;
+  bullets_normalized: number;
+  line_endings_normalized: number;
+  repeated_punctuation_collapsed: number;
 }
 
 export interface CleanResult {
@@ -216,7 +241,102 @@ export const defaultCleanOptions: CleanOptions = {
   fix_mojibake: true,
   join_broken_urls: true,
   fix_broken_citations: true,
+  // v0.1.7 strict ops — OFF in default preset (opt in via Strict button)
+  convert_ellipsis: false,
+  remove_asterisks: false,
+  remove_markdown_headings: false,
+  convert_nbsp: false,
+  strip_bom: false,
+  normalize_unicode_whitespace: false,
+  strip_soft_hyphens: false,
+  strip_variation_selectors: false,
+  normalize_bullets: false,
+  normalize_line_endings: false,
+  collapse_repeated_punctuation: false,
+  strip_variation_selectors_emoji: false,
 };
+
+export const strictCleanOptions: CleanOptions = {
+  collapse_whitespace: true,
+  join_hyphenated_words: true,
+  join_broken_lines: true,
+  expand_ligatures: true,
+  strip_zero_width: true,
+  strip_control_chars: true,
+  remove_page_numbers: true,
+  normalize_quotes: true,
+  normalize_dashes: true,
+  fix_mojibake: true,
+  join_broken_urls: true,
+  fix_broken_citations: true,
+  // v0.1.7 strict ops — all ON
+  convert_ellipsis: true,
+  remove_asterisks: true,
+  remove_markdown_headings: true,
+  convert_nbsp: true,
+  strip_bom: true,
+  normalize_unicode_whitespace: true,
+  strip_soft_hyphens: true,
+  strip_variation_selectors: true,
+  normalize_bullets: true,
+  normalize_line_endings: true,
+  collapse_repeated_punctuation: true,
+  strip_variation_selectors_emoji: true,
+};
+
+// v0.1.6+
+
+export interface BibEntry {
+  key: string;
+  entry_type: string;
+  title: string;
+  author: string;
+  year: string;
+}
+
+export interface InTextCitation {
+  raw: string;
+  author: string;
+  year: string;
+  numeric: number | null;
+  position: number;
+}
+
+export interface CitationReport {
+  bib_entries: BibEntry[];
+  in_text_citations: InTextCitation[];
+  undefined_citations: InTextCitation[];
+  unused_references: BibEntry[];
+  citation_counts: [BibEntry, number][];
+  bib_parse_errors: string[];
+  draft_path: string | null;
+  bib_path: string | null;
+}
+
+export interface JournalComparison {
+  venue: string;
+  typical_word_count: number;
+  status: string; // "under" | "near" | "over"
+  delta: number;
+}
+
+export interface DocStats {
+  word_count: number;
+  sentence_count: number;
+  paragraph_count: number;
+  section_count: number;
+  citation_count: number;
+  figure_count: number;
+  table_count: number;
+  avg_sentence_length: number;
+  type_token_ratio: number;
+  complex_word_ratio: number;
+  estimated_reading_time_minutes: number;
+  flesch_reading_ease: number;
+  flesch_kincaid_grade: number;
+  gunning_fog: number;
+  journal_comparison: JournalComparison[];
+}
 
 export const api = {
   appInfo: () => invoke<Record<string, unknown>>("app_info"),
@@ -245,6 +365,10 @@ export const api = {
   // v0.1.3+
   cleanText: (text: string, options?: CleanOptions) =>
     invoke<CleanResult>("clean_text", { args: { text, options: options || defaultCleanOptions } }),
+  // v0.1.7+
+  cleanTextStrict: (text: string) =>
+    invoke<CleanResult>("clean_text_strict", { args: { text } }),
+  strictCleanOptions: () => invoke<CleanOptions>("strict_clean_options"),
   // v0.1.4+
   cleanDocxFile: (path: string, options?: CleanOptions) =>
     invoke<{ source_path: string; extracted: CleanResult }>("clean_docx_file", {
@@ -266,6 +390,12 @@ export const api = {
         options: options || defaultCleanOptions,
       },
     }),
+  // v0.1.6+
+  validateCitations: (draftPath: string, bibPath: string) =>
+    invoke<CitationReport>("validate_citations", {
+      args: { draft_path: draftPath, bib_path: bibPath },
+    }),
+  documentStats: (text: string) => invoke<DocStats>("document_stats", { text }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
   persistenceEnable: () => invoke<void>("persistence_enable"),
