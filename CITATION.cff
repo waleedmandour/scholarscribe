@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use ScholarScribe in your research, please cite it as below."
+title: "ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers"
+abstract: >-
+  ScholarScribe is a desktop application that supports researchers in the
+  preparation of scholarly manuscripts through a suite of local,
+  privacy-preserving tools. The application runs entirely on the user's
+  device, requires no cloud-based APIs, collects no telemetry, and transmits
+  no user-generated content to any external host. It offers transparent,
+  auditable tools for text cleaning, citation validation, document structure
+  analysis, style analysis, AI-use disclosure generation, and structured
+  abstract drafting.
+authors:
+  - family-names: Mandour
+    given-names: Waleed
+    title: "Dr."
+    website: "https://github.com/waleedmandour"
+  - name: "GLM 5.1"
+    website: "https://z.ai"
+  - name: "GLM 5.2"
+    website: "https://z.ai"
+keywords:
+  - privacy
+  - LLM
+  - academic writing
+  - Ollama
+  - Tauri
+  - citation management
+  - research integrity
+  - local AI
+  - text cleaning
+  - disclosure
+license: MIT
+type: software
+version: "0.1.8"
+date-released: "2026-06-21"
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Mandour
+      given-names: Waleed
+      title: "Dr."
+  title: "ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers"
+  version: "0.1.8"
+  year: 2026
+  publisher:
+    name: Zenodo
+  doi: "10.5281/zenodo.20781043"
+  url: "https://github.com/waleedmandour/scholarscribe"
+repository-code: "https://github.com/waleedmandour/scholarscribe"
+url: "https://github.com/waleedmandour/scholarscribe"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20781043"
+    description: "Archived version on Zenodo"

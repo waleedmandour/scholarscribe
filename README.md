@@ -1,6 +1,14 @@
 # ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers
-https://doi.org/10.5281/zenodo.20781043
+
 **Version 0.1.8 (Pre-release) · MIT License · © 2026 Dr. Waleed Mandour**
+
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20781043-blue.svg)](https://doi.org/10.5281/zenodo.20781043)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Status: Pre-release](https://img.shields.io/badge/Status-Pre--release-orange.svg)]()
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+> **Mandour, W.** (2026). *ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers* (Version 0.1.8) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20781043
 
 ---
 
@@ -308,6 +316,8 @@ ScholarScribe is released under the **MIT License**. See [`LICENSE`](LICENSE) fo
 
 © 2026 Dr. Waleed Mandour. All rights are reserved to the extent permitted by the MIT License.
 
+**Persistent identifier:** https://doi.org/10.5281/zenodo.20781043
+
 ---
 
 ## 10. References
@@ -318,6 +328,8 @@ International Committee of Medical Journal Editors. (2024). *Recommendations for
 
 Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). GPT detectors are biased against non-native English writers. *Patterns, 4*(7), 100779. https://doi.org/10.1016/j.patter.2023.100779
 
+Mandour, W. (2026). *ScholarScribe: A privacy-first local LLM writing companion for researchers* (Version 0.1.8) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.20781043
+
 *Nature* Editorial Policy. (2024). *Tools such as ChatGPT threaten transparent science*. Retrieved from <https://www.nature.com/editorial-policies/ai>
 
 Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., Foltýnek, T., Guerrero-Dib, J., Popoola, O., Šigut, P., & Waddington, L. (2023). Testing of detection tools for AI-generated text. *International Journal for Educational Integrity, 19*, 26. https://doi.org/10.1007/s40979-023-00146-z
@@ -327,6 +339,8 @@ Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., Foltýnek, T., Guerrero-Dib
 International Committee of Medical Journal Editors. "Recommendations for the Conduct, Reporting, Editing, and Publication of Scholarly Work in Medical Journals." *ICMJE*, 2024, www.icmje.org/recommendations/. Accessed 21 June 2026.
 
 Liang, Weixin, et al. "GPT Detectors Are Biased against Non-Native English Writers." *Patterns*, vol. 4, no. 7, 2023, article 100779, https://doi.org/10.1016/j.patter.2023.100779.
+
+Mandour, Waleed. *ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers.* Version 0.1.8, Zenodo, 2026, https://doi.org/10.5281/zenodo.20781043.
 
 "Tools Such as ChatGPT Threaten Transparent Science." *Nature Editorial Policy*, 2024, www.nature.com/editorial-policies/ai. Accessed 21 June 2026.
 
@@ -340,6 +354,6 @@ Weber-Wulff, Debora, et al. "Testing of Detection Tools for AI-Generated Text." 
 
 ---
 
-*Built with ❤️ to the Academic Community.*
+*Built with LOVE to the Academic Community.*
 
 </footer>

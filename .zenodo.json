@@ -1,0 +1,49 @@
+{
+  "title": "ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers",
+  "description": "<p>ScholarScribe is a desktop application that supports researchers in the preparation of scholarly manuscripts through a suite of local, privacy-preserving tools. The application runs entirely on the user's device, requires no cloud-based application programming interfaces (APIs), collects no telemetry, and transmits no user-generated content to any external host.</p><p>Drawing on contemporary research into the limitations of AI-generated text detectors (Liang et al., 2023; Weber-Wulff et al., 2023), ScholarScribe is explicitly designed <em>not</em> to facilitate the evasion of such detectors. Instead, it offers transparent, auditable tools for text cleaning, citation validation, document structure analysis, style analysis, AI-use disclosure generation, and structured abstract drafting—functions that align with established norms of research integrity.</p><p>The application is built on the Tauri 2 framework (Rust backend, Svelte frontend) and uses Ollama as its local large language model (LLM) runtime, enabling the use of open-weight models such as Google's Gemma 3, Alibaba's Qwen 3, Microsoft's Phi-4, DeepSeek R1, and Meta's Llama 3.3 without reliance on proprietary inference services.</p>",
+  "license": "MIT",
+  "upload_type": "software",
+  "version": "0.1.8",
+  "publication_date": "2026-06-21",
+  "creators": [
+    {
+      "name": "Mandour, Waleed",
+      "affiliation": "Independent Scholar",
+      "gnd": ""
+    },
+    {
+      "name": "GLM 5.1",
+      "affiliation": "Z.ai"
+    },
+    {
+      "name": "GLM 5.2",
+      "affiliation": "Z.ai"
+    }
+  ],
+  "keywords": [
+    "privacy",
+    "LLM",
+    "academic writing",
+    "Ollama",
+    "Tauri",
+    "citation management",
+    "research integrity",
+    "local AI",
+    "text cleaning",
+    "disclosure"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/waleedmandour/scholarscribe",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/waleedmandour/scholarscribe/releases/tag/v0.1.8-pre",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ],
+  "access_right": "open",
+  "language": "eng"
+}
