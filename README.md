@@ -1,84 +1,99 @@
-# ScholarScribe
+# ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers
 
-> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: Pre-release](https://img.shields.io/badge/Status-Pre--release-orange.svg)]()
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-
-ScholarScribe helps researchers who are writing their own manuscripts to:
-
-- **Run open LLMs fully offline** — Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google calls.
-- **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
-- **Clean messy text** with the AI Text Cleaner — 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
-- **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
-- **Validate citations** against your `.bib` file — lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
-- **See document statistics** — word count, section count, citation count, reading time, and comparison with common journal targets.
-- **Analyze document structure** — extract heading tree, get suggestions for missing sections (Introduction, Methods, Results, Discussion, Conclusion, etc.), spot short sections.
-- **Generate a structured abstract** — local LLM produces a Background/Methods/Results/Conclusions abstract from your draft. Runs entirely on your device.
-- **Analyze whether a draft sounds like *your own* prior writing** — descriptive statistics including sentence length, hedging, passive voice, plus readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
-- **Generate venue-compliant AI-use disclosure statements** for ICMJE, Nature, IEEE, Elsevier, ACL, and more.
-- **Understand how AI detectors actually work** — and where they fail. Educational content with peer-reviewed citations.
-- **Verify the app's own privacy claims** via an in-app Privacy Audit log of every file read and outbound HTTP call.
-- **Save drafts locally** — opt-in persistence stores your work as plain JSON files on your device. Never synced to the cloud.
-- **Light, dark, and auto themes** — click the icon in the sidebar to cycle.
+**Version 0.1.8 (Pre-release) · MIT License · © 2026 Dr. Waleed Mandour**
 
 ---
 
-## Ethical Use — please read
+## Abstract
 
-ScholarScribe is designed for researchers who have genuinely written or substantially contributed to a manuscript and wish to work with AI assistance transparently and on their own device.
+ScholarScribe is a desktop application that supports researchers in the preparation of scholarly manuscripts through a suite of local, privacy-preserving tools. The application runs entirely on the user's device, requires no cloud-based application programming interfaces (APIs), collects no telemetry, and transmits no user-generated content to any external host. Drawing on contemporary research into the limitations of AI-generated text detectors (Liang et al., 2023; Weber-Wulff et al., 2023), ScholarScribe is explicitly designed *not* to facilitate the evasion of such detectors. Instead, it offers transparent, auditable tools for text cleaning, citation validation, document structure analysis, style analysis, AI-use disclosure generation, and structured abstract drafting—functions that align with established norms of research integrity.
 
-### What ScholarScribe does
-
-- Helps you draft, paraphrase, and refine **your own** writing with a local LLM.
-- Compares a draft's stylistic profile to a sample of **your own prior writing** so you can decide whether the draft still sounds like you.
-- Generates **disclosure statements** so you can comply with journal and conference AI-use policies.
-- Educates you about how AI-detection tools work and what their known limitations are.
-- Validates your citations against your `.bib` file — reducing the risk of fabricated references in your manuscript.
-- Cleans text artifacts from copy-pasted content without rewriting it.
-
-### What ScholarScribe explicitly does NOT do
-
-- **Does not target or attempt to lower AI-detection scores.** No "marker-targeting" engine. No Turnitin/GPTZero/Originality score-reduction pipeline. No stealth modes.
-- **Does not help misrepresent AI-generated text as original human work.** The chat module's system prompt explicitly refuses requests to evade detectors or submit AI output as one's own.
-- **Does not contact any third-party API.** The only network call is to `registry.ollama.ai` when you choose to download a model — and that call carries no text, no prompts, no usage data.
-- **Does not collect telemetry, analytics, or crash reports.**
-- **Does not read any file you didn't explicitly pick in a file dialog.**
-- **Does not fabricate citations.** The Chat tab's system prompt forbids this. The new Citation Manager feature exists precisely to catch accidental fabrication by listing every in-text citation that doesn't match a real `.bib` entry.
-
-If you are looking for a tool to "humanize" AI text to bypass Turnitin, this is not that tool. The author of this project believes detection-evasion tools cause net harm to research integrity — and disproportionately harm honest researchers, especially non-native English writers, who are most likely to be falsely accused of AI use and would be most harmed by an arms race between evaders and detectors.
-
-### Your responsibility
-
-Users are responsible for compliance with their institution's AI-use policies and the policies of any venue to which they submit. When in doubt, disclose AI assistance. When still in doubt, ask your editor.
-
-See [`docs/ETHICS.md`](docs/ETHICS.md) for the full ethical-use policy.
+The application is built on the Tauri 2 framework (Rust backend, Svelte frontend) and uses Ollama as its local large language model (LLM) runtime, enabling the use of open-weight models such as Google's Gemma 3, Alibaba's Qwen 3, Microsoft's Phi-4, DeepSeek R1, and Meta's Llama 3.3 without reliance on proprietary inference services.
 
 ---
 
-## Installation
+## Table of Contents
 
-### 1. Install Ollama (the local LLM runtime)
+1. [Introduction and Ethical Framework](#1-introduction-and-ethical-framework)
+2. [System Requirements and Installation](#2-system-requirements-and-installation)
+3. [Feature Inventory](#3-feature-inventory)
+4. [Privacy and Security Architecture](#4-privacy-and-security-architecture)
+5. [Project Structure](#5-project-structure)
+6. [Development Roadmap](#6-development-roadmap)
+7. [Contributing](#7-contributing)
+8. [Acknowledgments](#8-acknowledgments)
+9. [License](#9-license)
+10. [References](#10-references)
 
-ScholarScribe uses [Ollama](https://ollama.com) as its backend — a free, open-source local LLM runner.
+---
 
-1. Download Ollama from <https://ollama.com/download> (Windows installer, ~150 MB).
-2. Run the installer. Ollama starts automatically as a background service.
-3. Look for the Ollama icon (a llama) in your system tray.
+## 1. Introduction and Ethical Framework
 
-That's it — you don't need to use Ollama directly. ScholarScribe talks to it on `http://127.0.0.1:11434`.
+### 1.1 Purpose
 
-### 2. Install ScholarScribe
+ScholarScribe is designed for researchers who have authored or substantially contributed to a manuscript and who seek to work with AI assistance in a manner that is transparent, locally verifiable, and consistent with institutional and journal policies on research integrity. The application provides a consolidated environment for common writing-support tasks without compromising user privacy or facilitating academic misconduct.
 
-**Option A — download the pre-built installer (recommended for most users)**
+### 1.2 What ScholarScribe Does
 
-Grab the latest `.msi` or `.exe` from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases). Double-click to install. ScholarScribe will appear in your Start menu.
+The application offers eleven modules:
 
-**Option B — build from source**
+- **Local LLM Management** — Installation and execution of open-weight LLMs via Ollama, including compatibility checking for user-supplied GGUF model files.
+- **AI Text Cleaner** — Twenty-four rule-based text transformations for the remediation of artifacts introduced by PDF extraction, optical character recognition (OCR), and cross-application copy-paste operations.
+- **In-place .docx Cleaning** — Modification of Word Open XML (OOXML) text runs while preserving document formatting, tables, images, hyperlinks, headers, footers, and tracked changes.
+- **Citation Manager** — Validation of in-text citations against a user-supplied BibTeX bibliography, identifying undefined citations, unused references, and per-reference citation counts.
+- **Document Statistics** — Quantitative analysis of draft documents including word counts, readability metrics (Flesch Reading Ease, Flesch–Kincaid Grade Level, Gunning Fog Index), and comparison with typical journal length expectations.
+- **Structure Analyzer** — Extraction of document heading hierarchies and identification of potentially missing sections (e.g., Introduction, Methods, Results, Discussion, Conclusion).
+- **Abstract Generator** — LLM-assisted generation of structured abstracts (Background, Methods, Results, Conclusions) using locally-installed models.
+- **Style Analysis** — Comparison of a draft's stylistic profile against a sample of the author's own prior writing, including sentence-length statistics, hedging density, passive-voice density, and vocabulary diversity.
+- **Local Chat** — A conversational interface to installed LLMs with a system prompt that explicitly refuses requests to evade AI detectors or fabricate citations.
+- **Disclosure Assistant** — Generation of venue-compliant AI-use disclosure statements for ICMJE-affiliated journals, *Nature* Portfolio, IEEE, Elsevier, and ACL/EMNLP/NAACL.
+- **Detector Literacy** — An educational module summarizing the operational principles and documented failure modes of AI-generated text detectors, with references to peer-reviewed evaluations.
+- **Privacy Audit Log** — A real-time, in-session log of all file reads and outbound network calls, enabling users to verify the application's privacy claims directly.
 
-Requires Rust 1.77+, Node.js 18+, and the Tauri prerequisites (Microsoft Visual Studio C++ Build Tools, WebView2 — see the [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/)).
+### 1.3 What ScholarScribe Does Not Do
+
+The following capabilities are deliberately excluded from ScholarScribe, irrespective of user demand, because their inclusion would facilitate academic misconduct or undermine research integrity:
+
+1. **Detection-evasion functionality.** No feature targets the reduction of AI-detection scores (e.g., Turnitin AI, GPTZero, Originality.ai). No "marker-targeting" engine, no stealth modes, no adversarial-perturbation pipeline.
+2. **Misrepresentation aids.** No feature whose purpose is to obscure the use of AI assistance, including fabricated revision histories or false draft-trail generators.
+3. **Citation fabrication.** The chat module's system prompt explicitly forbids the generation of fictitious references. The Citation Manager exists to detect and surface accidental fabrication.
+4. **Third-party AI APIs.** No calls to OpenAI, Anthropic, Google AI, or any other hosted inference service. The only outbound network call is to `registry.ollama.ai` when a user elects to download a model, and that call carries no user text or usage data.
+5. **Telemetry.** No analytics, no crash reporting that transmits data, no usage tracking.
+
+### 1.4 Ethical Rationale
+
+The decision to exclude detection-evasion features reflects three considerations grounded in the published literature. First, AI-generated text detectors exhibit well-documented false-positive biases, particularly against writing by non-native English speakers (Liang et al., 2023); an arms race between evaders and detectors would exacerbate these harms rather than mitigate them. Second, the appropriate response to concerns about AI assistance is transparent disclosure, which is now required by major editorial policies (International Committee of Medical Journal Editors [ICMJE], 2024; *Nature* Editorial Policy, 2024). Third, the underlying signal produced by current detectors is insufficiently reliable to serve as a basis for integrity findings (Weber-Wulff et al., 2023), rendering evasion both unnecessary and counterproductive. The full ethical-use policy is documented in [`docs/ETHICS.md`](docs/ETHICS.md).
+
+---
+
+## 2. System Requirements and Installation
+
+### 2.1 System Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Operating System | Windows 10 64-bit (version 1809 or later) | Windows 11 |
+| System Memory | 8 GB RAM | 16 GB or more |
+| Disk Space | 3 GB (application plus one small model) | 20 GB or more (multiple models) |
+| WebView2 Runtime | Pre-installed on Windows 11; installed automatically on Windows 10 | — |
+
+Individual models specify their own memory requirements; the Models tab displays these for each catalog entry.
+
+### 2.2 Installation of Ollama
+
+ScholarScribe uses [Ollama](https://ollama.com) as its local LLM runtime. Ollama is a free, open-source application that manages the download, registration, and execution of open-weight models on the user's device.
+
+1. Download Ollama from <https://ollama.com/download> (Windows installer, approximately 150 MB).
+2. Execute the installer. Ollama starts automatically as a background service.
+3. Verify the presence of the Ollama icon in the system tray.
+
+ScholarScribe communicates with Ollama via its local HTTP API at `http://127.0.0.1:11434`. No direct interaction with Ollama is required.
+
+### 2.3 Installation of ScholarScribe
+
+**Option A: Pre-built installer (recommended).** Download the latest `.msi` or `.exe` from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases) and execute the installer.
+
+**Option B: Build from source.** This option requires Rust 1.77 or later, Node.js 18 or later, and the [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/) (Microsoft Visual Studio C++ Build Tools and WebView2).
 
 ```powershell
 git clone https://github.com/waleedmandour/scholarscribe.git
@@ -87,290 +102,244 @@ npm install
 npm run tauri build
 ```
 
-The installer appears in `src-tauri/target/release/bundle/`.
+The resulting installer is written to `src-tauri/target/release/bundle/`.
 
-**Option C — let a bootstrap script do it**
-
-If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for / install all prerequisites (Rust, Node, MSVC, WebView2, Ollama), run `npm install` and `cargo check`, then build the .msi. Run it from PowerShell:
-
-```powershell
-.\scripts\build-windows.ps1
-```
-
-### Quick start (5 minutes)
-
-See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 5-minute walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**.
+**Quick start.** See [`USER_GUIDE.md`](USER_GUIDE.md) for a five-minute walkthrough. The full reference manual is [`USER_MANUAL.md`](USER_MANUAL.md).
 
 ---
 
-## Feature overview
+## 3. Feature Inventory
 
-### Models tab
+### 3.1 Models Tab
 
-Install and manage open LLMs. The catalog includes 14 models spanning 4 GB to 64 GB RAM:
+The Models tab provides a curated catalog of fourteen open-weight models spanning the 4 GB to 64 GB RAM range, including the Gemma 3 family (Google, 2025), the Qwen 3 family (Alibaba, 2025), Phi-4 (Microsoft, 2024), DeepSeek R1 (DeepSeek, 2025), Llama 3.3 (Meta, 2024), and SciGLM 6B (Tsinghua University). Users may also install any Ollama-supported model by name or import a local GGUF file. GGUF imports invoke Ollama's `/api/create` endpoint with zero outbound network traffic beyond the initial Ollama service call.
 
-- **Gemma 3 family** (Google 2025): 1B / 4B / 12B / 27B — multimodal, strong on academic text
-- **Qwen 3 family** (Alibaba 2025): 4B / 8B / 14B / 32B — multilingual (30+ languages), hybrid thinking-mode
-- **Phi-4** (Microsoft 2024): 14B + Mini 3.8B — STEM-specialized, trained on synthetic academic data
-- **DeepSeek R1** (2025): 14B / 32B — open reasoning model with explicit chain-of-thought
-- **Llama 3.3 70B** (Meta 2024) — flagship, requires 64 GB+ RAM
-- **SciGLM 6B** (Tsinghua) — academic-tuned, trained on scientific papers
+A compatibility checker compares the GGUF file size (multiplied by a factor of 1.5 to account for key–value cache and activation memory) against the system's total and available RAM, producing a verdict of `ok`, `tight`, or `insufficient`.
 
-You can also:
-- **Install by name** — any Ollama-supported model (e.g. `mistral:7b`, `command-r`)
-- **Import a local `.gguf` file** — pick a model file you downloaded directly from HuggingFace. ScholarScribe checks your device's RAM against the model's needs (file size × 1.5) and shows a verdict: `ok`, `tight` (close other apps), or `insufficient` (model too large for your RAM). Import calls Ollama's `/api/create` — zero outbound network.
+### 3.2 AI Text Cleaner Tab
 
-### Text Cleaner tab
+The Text Cleaner implements twenty-four deterministic, rule-based text transformations organized into two presets:
 
-**24 rule-based text transformations** that fix common artifacts from copy-pasted text — especially from PDFs, web pages, OCR, and word processors. Two presets:
+- **Default preset (12 operations):** mojibake remediation, ligature expansion, quote and dash normalization, zero-width character removal, control character removal, hyphenated line-break joining, broken-sentence joining, broken-URL joining, broken-citation remediation, page-number removal, and whitespace collapse.
+- **Strict preset (24 operations):** all default operations plus Byte Order Mark (BOM) removal, line-ending normalization (CRLF to LF), non-breaking space conversion, Unicode whitespace normalization, soft hyphen removal, variation selector removal, ellipsis conversion, asterisk removal, markdown heading removal, bullet normalization, and repeated-punctuation collapse.
 
-- **Default** (12 ops): fix mojibake, expand ligatures, normalize quotes/dashes, strip zero-width/control chars, join hyphenated line breaks, join broken sentences, join broken URLs, fix broken citations, remove page numbers, collapse whitespace.
-- **Strict** (24 ops, ⚡ button): all of the above PLUS strip BOM, normalize line endings (CRLF→LF), convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis (…→...), remove asterisks (*), remove markdown headings (#), normalize bullets (•→-), collapse repeated punctuation (!!!→!).
+Two modes are provided for Microsoft Word documents:
 
-| Default operation | What it fixes |
-|---|---|
-| Fix mojibake | `â€™` → `'`, `â€"` → `—`, `Ã©` → `é` (UTF-8 decoded as Latin-1) |
-| Expand ligatures | `ﬁ` → `fi`, `ﬂ` → `fl`, `ﬀ` → `ff`, `ﬃ` → `ffi` |
-| Normalize quotes | Curly → straight (off by default; preserves academic style) |
-| Normalize dashes | `--` → `—`, en-dash → hyphen |
-| Strip zero-width chars | U+200B/200C/200D/FEFF/2060 (invisible but cause issues) |
-| Strip control chars | Non-printable C0/C1 chars except tab/newline |
-| Join hyphenated line breaks | `exam-\nple` → `example` (classic PDF artifact) |
-| Join broken sentences | Lines ending mid-sentence joined (preserves paragraph breaks) |
-| Join broken URLs | `https://example.\ncom` → `https://example.com` |
-| Fix broken citations | `(Smith,\n2020)` → `(Smith, 2020)` |
-| Remove page numbers | Standalone number lines from PDF extraction |
-| Collapse whitespace | Multiple spaces → one, trim trailing, 3+ newlines → 2 |
+1. **Extract and clean text** — Extracts plain text from the OOXML and applies all enabled transformations. Document formatting is not preserved.
+2. **Clean and save as .docx (preserves format)** — Modifies each `<w:t>` text run in place within the OOXML document parts (`word/document.xml`, `word/header*.xml`, `word/footer*.xml`, `word/footnotes.xml`, `word/endnotes.xml`), preserving all tables, images, hyperlinks, headers, footers, styles, themes, and tracked changes. Twenty per-run operations are applied; four cross-paragraph operations (join broken lines, join broken URLs, fix broken citations, remove page numbers) are skipped because they require structural modifications incompatible with format preservation.
 
-| Strict-only operation | What it fixes |
-|---|---|
-| Strip BOM | U+FEFF at start of file |
-| Normalize line endings | CRLF → LF, lone CR → LF |
-| Convert non-breaking spaces | U+00A0, U+2007, U+202F → ASCII space |
-| Normalize Unicode whitespace | en/em/thin/hair/figure/ideographic spaces → ASCII space |
-| Strip soft hyphens | U+00AD (invisible chars that cause search misses) |
-| Strip variation selectors | U+FE00–FE0F, U+E0100–E01EF (emoji/symbol modifiers) |
-| Convert ellipsis | Unicode `…` → three ASCII dots `...` |
-| Remove asterisks | All `*` characters (markdown bold/italic markers, footnote refs) |
-| Remove markdown headings | Leading `#`, `##`, `###` from lines (preserves heading text) |
-| Normalize bullets | `• ◦ ▪ ‣ ⁃` → ASCII hyphen `-` |
-| Collapse repeated punctuation | `!!!` → `!`, `???` → `?`, `;;` → `;` |
+A dedicated **"Strict clean and save as .docx"** button combines the strict preset with format-preserving output in a single action.
 
-**Two `.docx` modes** when a Word document is loaded:
+### 3.3 Citation Manager Tab
 
-1. **Extract & clean text** — extracts text and runs all enabled transformations. Loses formatting but applies every cleaner including cross-paragraph ones.
-2. **Clean & save as .docx (preserves format)** — modifies each `<w:t>` text run in place. Preserves all tables, images, hyperlinks, headers/footers, footnotes/endnotes, styles, theme, and track changes. Saves to a new `.docx` (default name `<original>-cleaned.docx`). Cross-paragraph operations (join broken lines, fix broken citations, remove page numbers) are skipped because they'd require restructuring the document.
+The Citation Manager validates in-text citations in a draft against a user-supplied BibTeX (`.bib`) file. Three checks are performed:
 
-### Citation Manager tab *(new in v0.1.6)*
+1. **Undefined citations** — In-text citations (parenthetical, narrative, or numeric style) that do not correspond to any entry in the bibliography. These are the most likely candidates for accidental fabrication.
+2. **Unused references** — Bibliography entries that are never cited in the draft.
+3. **Citation counts per reference** — The number of times each entry is cited, flagging entries cited only once as potential "token citations."
 
-Validates your draft's in-text citations against your `.bib` (BibTeX) file. Three checks:
+The BibTeX parser is hand-written in Rust and does not depend on third-party parsing libraries. All processing is local.
 
-1. **Undefined citations** — every `(Author, Year)` or `(Author et al., Year)` in your draft that doesn't match an entry in your `.bib` file. These are the citations most likely to be fabricated or wrong.
-2. **Unused references** — every `.bib` entry that's never cited in your draft. Helps you trim your reference list before submission.
-3. **Citation count per reference** — how many times each `.bib` entry is cited, so you can spot references that are cited only once (often a sign of a token citation).
+### 3.4 Document Statistics Tab
 
-All parsing is local. No `.bib` content leaves your device. The BibTeX parser is hand-written (no third-party BibTeX dependency).
+The Document Statistics tab provides a quantitative overview of the draft, including word, sentence, paragraph, section, citation, figure, and table counts; estimated reading time at 200 words per minute; and the three readability metrics (Flesch Reading Ease, Flesch–Kincaid Grade Level, Gunning Fog Index). A comparison panel reports the difference between the draft's word count and typical limits for nine venue categories (e.g., *Nature* research articles at approximately 5,000 words; ICMJE-affiliated medical journals at approximately 3,500 words; IEEE conference papers at approximately 6,000 words).
 
-### Document Statistics tab *(new in v0.1.6)*
+### 3.5 Structure Analyzer Tab
 
-A quick health-check panel for your draft:
+The Structure Analyzer extracts the document's heading hierarchy. For `.docx` files, headings are detected via Word's built-in heading styles (Heading1 through Heading6, Title) in the OOXML. For plain text, headings are detected via markdown-style `#` prefixes or lines composed predominantly of uppercase alphabetic characters. The analyzer reports the total number of sections, maximum heading depth, sections with fewer than 100 words (flagged as potentially underdeveloped), and a list of expected academic sections that are absent from the document (Introduction, Methods, Results, Discussion, Conclusion, References, Abstract, Limitations).
 
-- Word count, sentence count, paragraph count, section count (extracted from headings)
-- Citation count (any `(Author, Year)` or `[N]` pattern)
-- Average sentence length, type-token ratio, complex-word ratio
-- Estimated reading time (at 200 wpm)
-- Flesch Reading Ease, Flesch-Kincaid Grade Level, Gunning Fog Index
-- Comparison panel: how your draft compares to common journal targets (e.g. Nature articles average ~5,000 words; ICMJE medical articles ~3,500 words; IEEE conference papers ~6,000 words)
+### 3.6 Abstract Generator Tab
 
-### Style Analysis tab
+The Abstract Generator uses a locally-installed LLM to produce a structured abstract comprising four labeled paragraphs (Background, Methods, Results, Conclusions) from the body of a manuscript. The system prompt instructs the model to produce an abstract of a specified maximum word count (default 250) tailored to a specified venue style. The draft text is transmitted only to the local Ollama instance; no portion of the manuscript leaves the user's device. A prominent review warning reminds the user that LLMs may produce hallucinated findings and that the output is a draft requiring verification.
 
-Compare a draft's stylistic profile to a sample of **your own** prior writing. Reports 12 metrics:
+### 3.7 Style Analysis Tab
 
-- Sentence length (mean + standard deviation)
-- Vocabulary diversity (type-token ratio)
-- Passive-voice density
-- Hedging density (perhaps, possibly, may, etc.)
-- Connector density (however, moreover, therefore, etc.)
-- First-person singular/plural ratio
-- Citation density
-- Reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog)
-- Complex-word ratio
+The Style Analysis tab computes twelve descriptive stylistic metrics for a draft and a reference sample of the author's own prior writing, then reports the feature-wise differences. Metrics include average sentence length and standard deviation, type–token ratio, passive-voice density, hedging density (e.g., *perhaps*, *may*, *possibly*), connector density (e.g., *however*, *moreover*, *therefore*), first-person singular and plural ratios, citation density, and the three readability scores. An overall distance score summarizes the cumulative difference. This module is designed for authorial self-assessment and is not a predictor of AI-detection scores.
 
-Output: overall distance score + feature-by-feature comparison with interpretations ("very close", "minor difference", "notable difference", "substantial difference"). Use this to spot drafts that drift away from your usual register.
+### 3.8 Chat Tab
 
-**What this is — and isn't.** Style Analysis tells *you* how your draft compares to *your own* writing. It does not predict or attempt to lower AI-detector scores.
+The Chat tab provides a conversational interface to installed LLMs. The system prompt includes a guardrail that explicitly refuses requests to evade AI detectors, fabricate citations, or submit AI-generated content as original work.
 
-### Chat tab
+### 3.9 Disclosure Assistant Tab
 
-Local-only chat with any installed model. The system prompt includes a guardrail that refuses requests to evade AI detectors or fabricate citations. Use it for:
+The Disclosure Assistant generates venue-compliant AI-use disclosure statements for six venue categories: ICMJE-affiliated medical journals (JAMA, NEJM, *The Lancet*, BMJ), *Nature* Portfolio journals, IEEE, Elsevier, ACL/EMNLP/NAACL, and a generic fallback. Each template includes a link to the venue's official AI-use policy.
 
-- Brainstorming phrasing
-- Asking for critique of a paragraph
-- Generating outlines
-- Sanity-checking an argument
+### 3.10 Detector Literacy Tab
 
-### Disclosure Assistant tab
+The Detector Literacy tab presents an educational summary of the operational principles of AI-generated text detectors (perplexity, burstiness, and marker-based approaches) and their documented limitations, including false-positive bias against non-native English writers (Liang et al., 2023), unreliability on short passages, sensitivity to editing, and adversarial fragility (Weber-Wulff et al., 2023). The module is informational only and does not facilitate detection evasion.
 
-Generate venue-compliant AI-use disclosure statements for:
+### 3.11 Privacy Audit Tab
 
-- **ICMJE** (medical journals: JAMA, NEJM, Lancet, BMJ, etc.)
-- **Nature Portfolio** journals
-- **IEEE** (all societies)
-- **Elsevier** (2,500+ journals)
-- **ACL / EMNLP / NAACL** (NLP conferences)
-- **Generic / custom venue**
+The Privacy Audit tab maintains an in-memory log of every file read and outbound HTTP call performed by the application during the current session. The log is cleared on application close and is never persisted to disk. A summary card displays total events, file reads, HTTP calls, Ollama commands, bytes transferred, and the set of unique outbound hosts contacted (which should contain only `registry.ollama.ai`).
 
-Fill in the tool used, the task, the model (optional), and your name (optional). One click generates a properly-formatted statement ready to paste into your manuscript or cover letter. Each template includes a link to the venue's official AI-use policy.
+### 3.12 Saved Work Tab
 
-### Detector Literacy tab
-
-Plain-English explainer of how AI-detection tools (Turnitin AI, GPTZero, Originality.ai) work and where they fail:
-
-- **Perplexity and burstiness** — the two main signals most detectors use
-- **Where detectors fail** — false-positive bias against non-native English writers, unreliability on short passages, sensitivity to editing, adversarial fragility
-- **What this means for you** — practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer
-- **Further reading** — Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024)
-
-Educational only — does not help you evade detection.
-
-### Privacy Audit tab
-
-In-session log of every file read + outbound HTTP call. The summary card shows:
-
-- Total events, file reads, HTTP calls, Ollama commands
-- Bytes in / out
-- **Unique outbound hosts contacted** — should only ever show `registry.ollama.ai` (model downloads). Any other host is a red flag.
-
-Filterable event table with timestamps. The audit log is **in-memory only** — cleared on app close. This is intentional: persisting it would create a record of every file you read, which is the opposite of privacy.
-
-### Saved Work tab
-
-Opt-in local persistence. Disabled by default. When enabled:
-
-- Drafts, chat transcripts, disclosure statements save as plain JSON files in `%APPDATA%\com.scholarscribe.app\data\`
-- Plain JSON — inspectable in any text editor
-- Never synced to cloud (no OneDrive/Dropbox integration by ScholarScribe)
-- Per-draft delete + "Delete all"
-- "Open folder in Explorer" button to see exactly what's stored
-- Full privacy disclosure dialog before enabling — explains what gets saved, where, encryption status, deletion behavior
-
-The Privacy Audit log is **never** persisted — it stays in-memory only.
-
-### About tab
-
-Version, environment (CPU, RAM, OS), credits, acknowledgments.
+The Saved Work tab provides opt-in local persistence of drafts, chat transcripts, and disclosure statements as plain JSON files in the operating system's application data directory (on Windows, `%APPDATA%\com.scholarscribe.app\data\`). Persistence is disabled by default; the user must explicitly enable it after reviewing a privacy disclosure. The Privacy Audit log is never persisted.
 
 ---
 
-## Privacy
+## 4. Privacy and Security Architecture
+
+### 4.1 Privacy Commitments
 
 | Property | Status |
-|---|---|
-| Telemetry | **None.** No analytics, no crash reporting, no usage tracking. |
-| Network calls | One outbound call, to `registry.ollama.ai`, only when you click "Download" on a model. Carries no text or usage data. GGUF imports make zero outbound calls. |
-| User text | **Never leaves your device.** Drafts, reference samples, chat messages, .bib files — all stay in memory or local files. |
-| Third-party APIs | **None.** No OpenAI, Anthropic, Google AI, or any other cloud LLM API. |
-| Crash reports | None collected. Errors are written to a local log file only. |
-| Saved drafts | Opt-in only. Plain JSON in `%APPDATA%\com.scholarscribe.app\data\`. Never synced. |
-| Audit log | In-memory only. Cleared on app close. Never persisted. |
+|----------|--------|
+| Telemetry | None. No analytics, no crash reporting, no usage tracking. |
+| Outbound network calls | One host (`registry.ollama.ai`), contacted only when the user elects to download a model. The call carries no user text or usage data. GGUF imports make zero outbound calls. |
+| User text | Never leaves the user's device. Drafts, reference samples, chat messages, and `.bib` files remain in memory or in local files. |
+| Third-party AI APIs | None. The application does not call OpenAI, Anthropic, Google AI, or any other hosted inference service. |
+| Saved drafts | Opt-in only. Plain JSON files in the application data directory. Never synchronized to cloud storage by the application. |
+| Audit log | In-memory only. Cleared on application close. Never persisted. |
 
-The CSP in `tauri.conf.json` explicitly restricts outbound connections from the UI to `127.0.0.1:11434` (your local Ollama). The Rust backend only contacts `ollama.com` for model downloads and nothing else.
+### 4.2 Verification
 
-If you want to verify this yourself:
-1. Audit `src-tauri/src/ollama.rs` — every outbound HTTP call is in that file.
-2. Watch the Privacy Audit tab while interacting with the app.
-3. Run ScholarScribe behind a network monitor (GlassWire, Wireshark) and cross-reference outbound hosts.
+Users may verify these claims through three mechanisms:
 
-See [`SECURITY.md`](SECURITY.md) for the full security policy.
+1. **Source code audit.** All outbound HTTP calls are confined to `src-tauri/src/ollama.rs`. The Content Security Policy in `src-tauri/tauri.conf.json` restricts the frontend's `connect-src` to `self` and `127.0.0.1:11434`.
+2. **In-application audit.** The Privacy Audit tab displays every file read and outbound call in real time.
+3. **Network monitoring.** The application may be run behind a network monitor (e.g., GlassWire, Wireshark) to corroborate the in-application log.
+
+The full security policy is documented in [`SECURITY.md`](SECURITY.md).
 
 ---
 
-## Project structure
+## 5. Project Structure
 
 ```
 scholarscribe/
-├── src-tauri/                  Rust backend (Tauri 2)
+├── src-tauri/                       Rust backend (Tauri 2)
 │   ├── src/
-│   │   ├── main.rs             Binary entry point (windows_subsystem attr here)
-│   │   ├── lib.rs              Library: run() function, command registration
-│   │   ├── commands.rs         Tauri command handlers (the API surface)
-│   │   ├── ollama.rs           Ollama HTTP client (the ONLY outbound network code)
-│   │   ├── style.rs            Style analysis (descriptive statistics + readability)
-│   │   ├── text_cleaner.rs     12 cleaning operations + per-run variant for .docx
-│   │   ├── docx_reading.rs     .docx → plain text extraction (zip + OOXML walk)
-│   │   ├── citation_manager.rs BibTeX parser + citation validator (v0.1.6+)
-│   │   ├── document_stats.rs   Document statistics (v0.1.6+)
-│   │   ├── disclosure.rs       Disclosure-statement generator
-│   │   ├── persistence.rs      Opt-in local storage (settings + drafts)
-│   │   └── audit.rs            In-memory privacy audit log
+│   │   ├── main.rs                  Binary entry point
+│   │   ├── lib.rs                   Library: run() function, command registration
+│   │   ├── commands.rs              Tauri command handlers
+│   │   ├── ollama.rs                Ollama HTTP client (sole outbound network code)
+│   │   ├── style.rs                 Style analysis and readability metrics
+│   │   ├── text_cleaner.rs          24 cleaning operations
+│   │   ├── docx_reading.rs          .docx plain-text extraction
+│   │   ├── citation_manager.rs      BibTeX parser and citation validator
+│   │   ├── document_stats.rs        Document statistics
+│   │   ├── structure_analyzer.rs    Heading-tree extraction and section analysis
+│   │   ├── abstract_generator.rs    LLM-based abstract generation
+│   │   ├── disclosure.rs            Disclosure-statement generator
+│   │   ├── persistence.rs           Opt-in local storage
+│   │   └── audit.rs                 In-memory privacy audit log
 │   ├── Cargo.toml
 │   └── tauri.conf.json
-├── src/                        Svelte frontend
-│   ├── App.svelte              Shell + sidebar + theme toggle
-│   ├── lib/api.ts              Typed Tauri invoke wrappers
-│   └── components/
-│       ├── Models.svelte
-│       ├── AITextCleaner.svelte
-│       ├── CitationManager.svelte   (v0.1.6+)
-│       ├── DocumentStats.svelte     (v0.1.6+)
-│       ├── StyleAnalysis.svelte
-│       ├── Chat.svelte
-│       ├── Disclosure.svelte
-│       ├── DetectorLiteracy.svelte
-│       ├── PrivacyAudit.svelte
-│       ├── SavedWork.svelte
-│       └── About.svelte
-├── docs/
-│   └── ETHICS.md               Full ethical-use policy
-├── USER_GUIDE.md               5-minute quick start
-├── USER_MANUAL.md              Full reference manual
+├── src/                             Svelte frontend
+│   ├── App.svelte                   Shell, sidebar, theme toggle
+│   ├── lib/api.ts                   Typed Tauri invoke wrappers
+│   └── components/                  Thirteen Svelte components (one per tab)
+├── docs/ETHICS.md                   Full ethical-use policy
+├── USER_GUIDE.md                    Five-minute quick start
+├── USER_MANUAL.md                   Full reference manual
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 ├── LICENSE
-└── README.md (this file)
+└── README.md                        This document
 ```
 
 ---
 
-## Roadmap
+## 6. Development Roadmap
 
-- **v0.1.0** — Models, Chat, Style Analysis, Disclosure, Detector Literacy
-- **v0.1.1** — Console-window fix, GGUF import with compatibility check, reading-level metrics, Privacy Audit log, About/Credits
-- **v0.1.2** — GGUF import HTTP 400 fix, dark/light/auto theme toggle, expanded models catalog (14 academic-focused models)
-- **v0.1.3** — AI Text Cleaner (12 rule-based transformations), opt-in local persistence
-- **v0.1.4** — `.docx` file reading (zip + OOXML walk)
-- **v0.1.5** — In-place `.docx` cleaning that preserves all formatting (tables, images, hyperlinks, headers/footers, styles, track changes)
-- **v0.1.6** — **Citation Manager** (BibTeX validation against draft) + **Document Statistics** panel + comprehensive README + user guide
-- **v0.1.7** — Strict cleaning mode: 11 new operations (strip BOM, normalize line endings, convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis, remove asterisks, remove markdown headings, normalize bullets, collapse repeated punctuation). One-click "⚡ Strict clean" button applies all 24 operations.
-- **v0.1.8** (this release) — **Structure Analyzer** (extract heading tree, suggest missing sections) + **Abstract Generator** (LLM-generated structured abstract) + "⚡ Strict clean & save as .docx" button (combines strict cleaning with format preservation).
-- **v0.2** (planned) — Multi-reference style profile (analyze against a folder of your papers rather than one)
-- **v0.3** (planned) — Bundled llama.cpp option, so users who can't install Ollama separately still get a working app
-- **v0.4** (planned) — Citation-aware chat (LLM sees your `.bib` file and avoids fabricating references in chat responses)
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and feature requests that align with the ethical-use policy are very welcome; pull requests attempting to add detection-evasion features will be closed without merge.
+- **v0.1.0** — Initial release: Models, Chat, Style Analysis, Disclosure, Detector Literacy.
+- **v0.1.1** — Console-window remediation; GGUF import with compatibility check; reading-level metrics; Privacy Audit log; About/Credits.
+- **v0.1.2** — GGUF import HTTP 400 remediation; dark/light/auto theme toggle; expanded models catalog (fourteen academic-focused models).
+- **v0.1.3** — AI Text Cleaner (twelve rule-based transformations); opt-in local persistence.
+- **v0.1.4** — `.docx` file reading via ZIP and OOXML traversal.
+- **v0.1.5** — In-place `.docx` cleaning preserving all formatting.
+- **v0.1.6** — Citation Manager (BibTeX validation); Document Statistics panel; comprehensive README and user guide.
+- **v0.1.7** — Strict cleaning mode: eleven additional operations (24 total).
+- **v0.1.8** (current) — Structure Analyzer; Abstract Generator; "Strict clean and save as .docx" button.
+- **v0.2.0** (planned) — Multi-reference style profile (analysis against a folder of the author's papers).
+- **v0.3.0** (planned) — Bundled llama.cpp runtime for systems without Ollama.
+- **v0.4.0** (planned) — Citation-aware chat (LLM consultation of the user's `.bib` file).
 
 ---
 
-## Credits
+## 7. Contributing
 
-ScholarScribe v0.1.8 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
-
-Designed and directed by Dr. Waleed Mandour, 2026, with engineering support from **GLM 5.2** (Z.ai).
-
-Built on top of outstanding open-source work, including:
-
-- [Tauri](https://tauri.app) — the cross-platform desktop framework that keeps the installer tiny
-- [Ollama](https://ollama.com) — the local LLM runtime that does the heavy lifting of model management
-- [Svelte](https://svelte.dev) — the frontend framework
-- The open LLM authors: Google (Gemma), Alibaba (Qwen), Meta (Llama), Microsoft (Phi), DeepSeek
-- The detector-evaluation research community, especially Liang et al. (2023), Weber-Wulff et al. (2023), and Laban et al. (2024), whose work the Detector Literacy module is built on
+Contributions are welcome provided they align with the ethical-use policy documented in [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`docs/ETHICS.md`](docs/ETHICS.md). Bug reports, documentation improvements, accessibility fixes, and feature requests consistent with the stated scope will be considered. Pull requests that introduce detection-evasion functionality, telemetry, or dependencies on third-party AI APIs will be declined.
 
 ---
 
-## License
+## 8. Acknowledgments
 
-MIT © Waleed Mandour. See [LICENSE](LICENSE).
+### 8.1 Authorship and Direction
+
+ScholarScribe was conceived and directed by **Dr. Waleed Mandour** in 2026, who defined the project's ethical scope, feature priorities, and privacy requirements.
+
+### 8.2 Engineering Collaboration
+
+The application was engineered in collaboration with the GLM (General Language Model) family of AI agents developed by Z.ai. Specifically, **GLM 5.1** contributed to the initial architectural design and ethical-use policy formulation, and **GLM 5.2** implemented the Rust backend, Svelte frontend, GitHub Actions continuous integration and release workflows, and the iterative debugging required to achieve successful builds on the Windows platform. The collaboration between the human author and the AI agents is documented in the project's commit history.
+
+The AI agents functioned as engineering collaborators under the direction of Dr. Mandour, who reviewed all code, verified all claims, and retained final editorial authority over every aspect of the application.
+
+### 8.3 Open-Source Dependencies
+
+ScholarScribe is built upon the following open-source projects, whose contributions are gratefully acknowledged:
+
+- [Tauri](https://tauri.app) — Cross-platform desktop application framework.
+- [Ollama](https://ollama.com) — Local LLM runtime.
+- [Svelte](https://svelte.dev) — Frontend framework.
+- [Rust programming language](https://www.rust-lang.org) and its ecosystem.
+- The `zip`, `regex`, `serde`, `reqwest`, `tokio`, `sysinfo`, and `once_cell` crates.
+
+### 8.4 Open-Weight Model Authors
+
+The application supports models produced by the following organizations, whose open-weight releases make local, private AI assistance possible:
+
+- Google (Gemma 3)
+- Alibaba (Qwen 3)
+- Meta (Llama 3.3)
+- Microsoft (Phi-4)
+- DeepSeek (DeepSeek R1)
+- Tsinghua University / KEG (SciGLM)
+
+### 8.5 Research Community
+
+The Detector Literacy module is built upon the work of researchers who have rigorously evaluated the limitations of AI-generated text detectors, particularly Liang et al. (2023) and Weber-Wulff et al. (2023). Their findings inform the application's ethical stance and its refusal to facilitate detection evasion.
+
+---
+
+## 9. License
+
+ScholarScribe is released under the **MIT License**. See [`LICENSE`](LICENSE) for the full text.
+
+© 2026 Dr. Waleed Mandour. All rights are reserved to the extent permitted by the MIT License.
+
+---
+
+## 10. References
+
+### American Psychological Association (APA) Style (7th Edition)
+
+International Committee of Medical Journal Editors. (2024). *Recommendations for the conduct, reporting, editing, and publication of scholarly work in medical journals*. Retrieved from <https://www.icmje.org/recommendations/>
+
+Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). GPT detectors are biased against non-native English writers. *Patterns, 4*(7), 100779. https://doi.org/10.1016/j.patter.2023.100779
+
+*Nature* Editorial Policy. (2024). *Tools such as ChatGPT threaten transparent science*. Retrieved from <https://www.nature.com/editorial-policies/ai>
+
+Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., Foltýnek, T., Guerrero-Dib, J., Popoola, O., Šigut, P., & Waddington, L. (2023). Testing of detection tools for AI-generated text. *International Journal for Educational Integrity, 19*, 26. https://doi.org/10.1007/s40979-023-00146-z
+
+### Modern Language Association (MLA) Style (9th Edition)
+
+International Committee of Medical Journal Editors. "Recommendations for the Conduct, Reporting, Editing, and Publication of Scholarly Work in Medical Journals." *ICMJE*, 2024, www.icmje.org/recommendations/. Accessed 21 June 2026.
+
+Liang, Weixin, et al. "GPT Detectors Are Biased against Non-Native English Writers." *Patterns*, vol. 4, no. 7, 2023, article 100779, https://doi.org/10.1016/j.patter.2023.100779.
+
+"Tools Such as ChatGPT Threaten Transparent Science." *Nature Editorial Policy*, 2024, www.nature.com/editorial-policies/ai. Accessed 21 June 2026.
+
+Weber-Wulff, Debora, et al. "Testing of Detection Tools for AI-Generated Text." *International Journal for Educational Integrity*, vol. 19, 2023, article 26, https://doi.org/10.1007/s40979-023-00146-z.
+
+---
+
+<footer>
+
+**Repository:** <https://github.com/waleedmandour/scholarscribe> · **Issues:** <https://github.com/waleedmandour/scholarscribe/issues> · **Releases:** <https://github.com/waleedmandour/scholarscribe/releases>
+
+---
+
+*Built with LOVE to the Academic Community.*
+
+</footer>
