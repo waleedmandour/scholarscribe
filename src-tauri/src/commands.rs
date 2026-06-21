@@ -921,3 +921,90 @@ pub async fn document_stats(text: String) -> Result<crate::document_stats::DocSt
         .map_err(|e| format!("document stats task failed: {}", e))?;
     Ok(result)
 }
+
+// ---------------- v0.1.8 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct AnalyzeStructureArgs {
+    pub path: String,
+}
+
+#[tauri::command]
+pub async fn analyze_structure(
+    args: AnalyzeStructureArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<crate::structure_analyzer::StructureReport, String> {
+    let path = PathBuf::from(&args.path);
+    if !path.exists() {
+        return Err(format!("File not found: {}", args.path));
+    }
+    let ext = path
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+
+    audit.record("file_read", &args.path, "structure analysis", 0, 0);
+
+    let path_for_task = path.clone();
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<crate::structure_analyzer::StructureReport, String> {
+            if ext == "docx" {
+                crate::structure_analyzer::analyze_docx(&path_for_task)
+            } else {
+                let text =
+                    std::fs::read_to_string(&path_for_task).map_err(|e| format!("read: {}", e))?;
+                Ok(crate::structure_analyzer::analyze_text(&text))
+            }
+        },
+    )
+    .await
+    .map_err(|e| format!("structure analysis task failed: {}", e))??;
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn analyze_structure_text(
+    text: String,
+) -> Result<crate::structure_analyzer::StructureReport, String> {
+    let result =
+        tokio::task::spawn_blocking(move || crate::structure_analyzer::analyze_text(&text))
+            .await
+            .map_err(|e| format!("structure analysis task failed: {}", e))?;
+    Ok(result)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GenerateAbstractArgs {
+    pub model: String,
+    pub draft_text: String,
+    pub max_words: Option<usize>,
+    pub venue: Option<String>,
+}
+
+#[tauri::command]
+pub async fn generate_abstract(
+    args: GenerateAbstractArgs,
+    state: State<'_, ollama::OllamaState>,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<crate::abstract_generator::AbstractResult, String> {
+    audit.record(
+        "ollama_command",
+        &format!("{}/api/chat", ollama::base_url()),
+        &format!("generate abstract with model {}", args.model),
+        0,
+        0,
+    );
+
+    let req = crate::abstract_generator::AbstractRequest {
+        model: args.model,
+        draft_text: args.draft_text,
+        max_words: args.max_words,
+        venue: args.venue,
+    };
+
+    let client = &state.inner().client;
+    crate::abstract_generator::generate_abstract(client, req)
+        .await
+        .map_err(|e| format!("[{}] {}", e.kind, e.message))
+}

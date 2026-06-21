@@ -338,6 +338,44 @@ export interface DocStats {
   journal_comparison: JournalComparison[];
 }
 
+// v0.1.8+
+
+export interface Heading {
+  level: number;
+  text: string;
+  word_count: number;
+}
+
+export interface StructureReport {
+  headings: Heading[];
+  total_sections: number;
+  max_depth: number;
+  missing_sections: string[];
+  short_sections: Heading[];
+  suggestions: string[];
+  source_path: string | null;
+  source_kind: string;
+}
+
+export interface AbstractRequest {
+  model: string;
+  draft_text: string;
+  max_words?: number | null;
+  venue?: string | null;
+}
+
+export interface AbstractResult {
+  abstract_text: string;
+  model_used: string;
+  prompt_tokens: number;
+  draft_length_chars: number;
+}
+
+export interface AbstractError {
+  kind: string;
+  message: string;
+}
+
 export const api = {
   appInfo: () => invoke<Record<string, unknown>>("app_info"),
   ollamaStatus: () => invoke<boolean>("ollama_status"),
@@ -396,6 +434,25 @@ export const api = {
       args: { draft_path: draftPath, bib_path: bibPath },
     }),
   documentStats: (text: string) => invoke<DocStats>("document_stats", { text }),
+  // v0.1.8+
+  analyzeStructure: (path: string) =>
+    invoke<StructureReport>("analyze_structure", { args: { path } }),
+  analyzeStructureText: (text: string) =>
+    invoke<StructureReport>("analyze_structure_text", { text }),
+  generateAbstract: (
+    model: string,
+    draftText: string,
+    maxWords?: number,
+    venue?: string,
+  ) =>
+    invoke<AbstractResult>("generate_abstract", {
+      args: {
+        model,
+        draft_text: draftText,
+        max_words: maxWords ?? null,
+        venue: venue ?? null,
+      },
+    }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
   persistenceEnable: () => invoke<void>("persistence_enable"),

@@ -7,6 +7,7 @@
 // writing — it is not designed to lower detector scores. See README.md
 // "Ethical Use" section for the full policy.
 
+mod abstract_generator;
 mod audit;
 mod citation_manager;
 mod commands;
@@ -15,6 +16,7 @@ mod document_stats;
 mod docx_reading;
 mod ollama;
 mod persistence;
+mod structure_analyzer;
 mod style;
 mod text_cleaner;
 
@@ -61,6 +63,9 @@ pub fn run() {
             commands::clean_docx_preserve_format,
             commands::validate_citations,
             commands::document_stats,
+            commands::analyze_structure,
+            commands::analyze_structure_text,
+            commands::generate_abstract,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,

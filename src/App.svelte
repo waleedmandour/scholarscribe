@@ -4,6 +4,8 @@
   import AITextCleaner from "./components/AITextCleaner.svelte";
   import CitationManager from "./components/CitationManager.svelte";
   import DocumentStats from "./components/DocumentStats.svelte";
+  import StructureAnalyzer from "./components/StructureAnalyzer.svelte";
+  import AbstractGenerator from "./components/AbstractGenerator.svelte";
   import StyleAnalysis from "./components/StyleAnalysis.svelte";
   import Disclosure from "./components/Disclosure.svelte";
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
@@ -13,7 +15,7 @@
   import About from "./components/About.svelte";
   import { api } from "./lib/api";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -44,6 +46,8 @@
     { id: "cleaner", label: "Text Cleaner", icon: "T" },
     { id: "citations", label: "Citations", icon: "C" },
     { id: "stats", label: "Stats", icon: "#" },
+    { id: "structure", label: "Structure", icon: "S" },
+    { id: "abstract", label: "Abstract", icon: "A" },
     { id: "style", label: "Style Analysis", icon: "S" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
@@ -125,7 +129,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.7 · MIT · local-only
+        v0.1.8 · MIT · local-only
       </div>
     </div>
   </aside>
@@ -139,6 +143,10 @@
       <CitationManager />
     {:else if active === "stats"}
       <DocumentStats />
+    {:else if active === "structure"}
+      <StructureAnalyzer />
+    {:else if active === "abstract"}
+      <AbstractGenerator {ollamaOk} />
     {:else if active === "style"}
       <StyleAnalysis />
     {:else if active === "chat"}

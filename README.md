@@ -15,6 +15,8 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file — lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics** — word count, section count, citation count, reading time, and comparison with common journal targets.
+- **Analyze document structure** — extract heading tree, get suggestions for missing sections (Introduction, Methods, Results, Discussion, Conclusion, etc.), spot short sections.
+- **Generate a structured abstract** — local LLM produces a Background/Methods/Results/Conclusions abstract from your draft. Runs entirely on your device.
 - **Analyze whether a draft sounds like *your own* prior writing** — descriptive statistics including sentence length, hedging, passive voice, plus readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
 - **Generate venue-compliant AI-use disclosure statements** for ICMJE, Nature, IEEE, Elsevier, ACL, and more.
 - **Understand how AI detectors actually work** — and where they fail. Educational content with peer-reviewed citations.
@@ -339,11 +341,11 @@ scholarscribe/
 - **v0.1.4** — `.docx` file reading (zip + OOXML walk)
 - **v0.1.5** — In-place `.docx` cleaning that preserves all formatting (tables, images, hyperlinks, headers/footers, styles, track changes)
 - **v0.1.6** — **Citation Manager** (BibTeX validation against draft) + **Document Statistics** panel + comprehensive README + user guide
-- **v0.1.7** (this release) — **Strict cleaning mode**: 11 new operations (strip BOM, normalize line endings, convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis, remove asterisks, remove markdown headings, normalize bullets, collapse repeated punctuation). One-click "⚡ Strict clean" button applies all 24 operations. New options tagged "strict" in the UI.
+- **v0.1.7** — Strict cleaning mode: 11 new operations (strip BOM, normalize line endings, convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis, remove asterisks, remove markdown headings, normalize bullets, collapse repeated punctuation). One-click "⚡ Strict clean" button applies all 24 operations.
+- **v0.1.8** (this release) — **Structure Analyzer** (extract heading tree, suggest missing sections) + **Abstract Generator** (LLM-generated structured abstract) + "⚡ Strict clean & save as .docx" button (combines strict cleaning with format preservation).
 - **v0.2** (planned) — Multi-reference style profile (analyze against a folder of your papers rather than one)
 - **v0.3** (planned) — Bundled llama.cpp option, so users who can't install Ollama separately still get a working app
-- **v0.4** (planned) — Outline/structure analyzer (extract heading tree, suggest missing sections like Methods/Limitations)
-- **v0.5** (planned) — Citation-aware chat (LLM sees your `.bib` file and avoids fabricating references in chat responses)
+- **v0.4** (planned) — Citation-aware chat (LLM sees your `.bib` file and avoids fabricating references in chat responses)
 
 ---
 
@@ -355,7 +357,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Credits
 
-ScholarScribe v0.1.7 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v0.1.8 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 Designed and directed by Dr. Waleed Mandour, 2026, with engineering support from **GLM 5.2** (Z.ai).
 
