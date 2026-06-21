@@ -1,5 +1,5 @@
 # ScholarScribe: A Privacy-First Local LLM Writing Companion for Researchers
-
+https://doi.org/10.5281/zenodo.20781043
 **Version 0.1.8 (Pre-release) · MIT License · © 2026 Dr. Waleed Mandour**
 
 ---
