@@ -340,6 +340,6 @@ Weber-Wulff, Debora, et al. "Testing of Detection Tools for AI-Generated Text." 
 
 ---
 
-*Built with LOVE to the Academic Community.*
+*Built with ❤️ to the Academic Community.*
 
 </footer>
