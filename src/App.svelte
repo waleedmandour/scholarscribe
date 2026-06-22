@@ -6,6 +6,10 @@
   import DocumentStats from "./components/DocumentStats.svelte";
   import StructureAnalyzer from "./components/StructureAnalyzer.svelte";
   import AbstractGenerator from "./components/AbstractGenerator.svelte";
+  import RiskProfiler from "./components/RiskProfiler.svelte";
+  import VoiceConsistency from "./components/VoiceConsistency.svelte";
+  import WritingJournal from "./components/WritingJournal.svelte";
+  import AppealLetter from "./components/AppealLetter.svelte";
   import StyleAnalysis from "./components/StyleAnalysis.svelte";
   import Disclosure from "./components/Disclosure.svelte";
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
@@ -15,7 +19,7 @@
   import About from "./components/About.svelte";
   import { api } from "./lib/api";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -48,6 +52,10 @@
     { id: "stats", label: "Stats", icon: "#" },
     { id: "structure", label: "Structure", icon: "S" },
     { id: "abstract", label: "Abstract", icon: "A" },
+    { id: "risk", label: "Risk Profile", icon: "R" },
+    { id: "consistency", label: "Voice Check", icon: "V" },
+    { id: "journal", label: "Journal", icon: "J" },
+    { id: "appeal", label: "Appeal Letter", icon: "L" },
     { id: "style", label: "Style Analysis", icon: "S" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
@@ -129,7 +137,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.8 · MIT · local-only
+        v0.1.7 · MIT · local-only
       </div>
     </div>
   </aside>
@@ -147,6 +155,14 @@
       <StructureAnalyzer />
     {:else if active === "abstract"}
       <AbstractGenerator {ollamaOk} />
+    {:else if active === "risk"}
+      <RiskProfiler />
+    {:else if active === "consistency"}
+      <VoiceConsistency />
+    {:else if active === "journal"}
+      <WritingJournal {ollamaOk} />
+    {:else if active === "appeal"}
+      <AppealLetter />
     {:else if active === "style"}
       <StyleAnalysis />
     {:else if active === "chat"}

@@ -80,10 +80,9 @@
 <div class="card">
   <div class="card-title">Further reading</div>
   <ul style="line-height: 1.7;">
-    <li>Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). <em>GPT detectors are biased against non-native English writers.</em> Patterns, 4(7), 100779. <a href="https://doi.org/10.1016/j.patter.2023.100779" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100779</a></li>
-    <li>Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., et al. (2023). <em>Testing of detection tools for AI-generated text.</em> International Journal for Educational Integrity, 19, 26. <a href="https://doi.org/10.1007/s40979-023-00146-z" target="_blank" rel="noopener">DOI: 10.1007/s40979-023-00146-z</a></li>
-    <li>International Committee of Medical Journal Editors. (2024). <em>Recommendations for the conduct, reporting, editing, and publication of scholarly work in medical journals.</em> <a href="https://www.icmje.org/recommendations/" target="_blank" rel="noopener">icmje.org/recommendations</a></li>
-    <li><em>Nature</em> Editorial Policy on AI. (2024). <a href="https://www.nature.com/editorial-policies/ai" target="_blank" rel="noopener">nature.com/editorial-policies/ai</a></li>
+    <li>Liang, W., et al. <em>GPT detectors are biased against non-native English writers.</em> Patterns, 2023. <a href="https://doi.org/10.1016/j.patter.2023.100779" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100779</a></li>
+    <li>Weber-Wulff, D., et al. <em>Testing of detection signals for AI-generated text.</em> Patterns, 2023.</li>
+    <li>Laban, P., et al. <em>Determining the believability and harm of AI-generated outputs.</em> ACL 2024.</li>
     <li>University guidance: Vanderbilt, Pitt, Texas-Austin statements on AI-detector reliability (searchable online).</li>
   </ul>
 </div>

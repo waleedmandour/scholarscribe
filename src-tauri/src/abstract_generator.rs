@@ -1,144 +1,111 @@
-//! Abstract Generator — uses a locally-installed LLM (via Ollama) to produce
-//! a structured abstract (Background/Methods/Results/Conclusions) from the
-//! manuscript body.
-//!
-//! Requires a model to be installed. Calls Ollama's /api/chat endpoint with
-//! a carefully-crafted prompt that asks for a structured abstract.
-//! All processing is local — the draft text never leaves the user's device.
+// ---------- v0.2.0: Section-Aware Abstract Generator ----------
 
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
-
-const OLLAMA_BASE: &str = "http://127.0.0.1:11434";
-
-#[derive(Debug, Serialize, Deserialize)]
-struct ChatMessage {
-    role: String,
-    content: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChatResponse {
-    message: Option<ChatMessage>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AbstractRequest {
-    pub model: String,
-    pub draft_text: String,
-    pub max_words: Option<usize>,
-    pub venue: Option<String>,
+#[derive(Debug, Serialize)]
+pub struct SectionCommentary {
+    pub section_name: String,
+    pub summary: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct AbstractResult {
-    pub abstract_text: String,
+pub struct SectionCommentaryResult {
+    pub commentaries: Vec<SectionCommentary>,
     pub model_used: String,
-    pub prompt_tokens: usize, // approximate
     pub draft_length_chars: usize,
 }
 
-#[derive(Debug, Serialize)]
-pub struct AbstractError {
-    pub kind: String, // "ollama_not_running" | "no_model" | "generation_failed"
-    pub message: String,
-}
-
-/// Generate a structured abstract from a draft using a local LLM.
-pub async fn generate_abstract(
+/// Generate section-by-section commentary — brief summaries of what each
+/// major section contributes to the argument. Doubles as an outline tool.
+pub async fn generate_section_commentary(
     client: &reqwest::Client,
-    req: AbstractRequest,
-) -> Result<AbstractResult, AbstractError> {
+    model: String,
+    draft_text: String,
+) -> Result<SectionCommentaryResult, AbstractError> {
     // Check Ollama is running
-    let status_resp = client
+    let status = client
         .get(format!("{}/api/tags", OLLAMA_BASE))
         .timeout(Duration::from_secs(5))
         .send()
         .await
         .map_err(|_| AbstractError {
             kind: "ollama_not_running".into(),
-            message: format!(
-                "Ollama is not running on {}. Please start the Ollama app and try again.",
-                OLLAMA_BASE
-            ),
+            message: format!("Ollama is not running on {}.", OLLAMA_BASE),
         })?;
-    if !status_resp.status().is_success() {
+    if !status.status().is_success() {
         return Err(AbstractError {
             kind: "ollama_not_running".into(),
-            message: "Ollama returned an error status. Please restart it.".into(),
+            message: "Ollama returned an error. Please restart it.".into(),
         });
     }
 
-    // Verify the requested model is installed
-    let models_resp: serde_json::Value = client
-        .get(format!("{}/api/tags", OLLAMA_BASE))
-        .timeout(Duration::from_secs(10))
-        .send()
-        .await
-        .map_err(|e| AbstractError {
-            kind: "ollama_not_running".into(),
-            message: format!("Cannot reach Ollama: {}", e),
-        })?
-        .json()
-        .await
-        .map_err(|e| AbstractError {
-            kind: "ollama_not_running".into(),
-            message: format!("Cannot parse Ollama response: {}", e),
-        })?;
+    // Use structure_analyzer to identify sections
+    let structure = crate::structure_analyzer::analyze_text(&draft_text);
 
-    let installed_models: Vec<String> = models_resp
-        .get("models")
-        .and_then(|m| m.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|m| m.get("name").and_then(|n| n.as_str()).map(String::from))
-                .collect()
-        })
-        .unwrap_or_default();
-
-    if !installed_models.iter().any(|m| m == &req.model) {
-        return Err(AbstractError {
-            kind: "no_model".into(),
-            message: format!(
-                "Model '{}' is not installed. Installed models: {}. Download it from the Models tab.",
-                req.model,
-                if installed_models.is_empty() {
-                    "(none)".to_string()
-                } else {
-                    installed_models.join(", ")
-                }
-            ),
-        });
-    }
-
-    // Build the prompt
-    let max_words = req.max_words.unwrap_or(250);
-    let venue = req.venue.unwrap_or_else(|| "general academic".into());
-    let draft_excerpt = if req.draft_text.len() > 12000 {
-        // Most models have ~8K context; truncate to first 12K chars (~3K tokens)
-        format!("{}...[truncated]", &req.draft_text[..12000])
+    // If no headings detected, split by paragraphs into ~500-word sections
+    let sections: Vec<(String, String)> = if structure.headings.is_empty() {
+        let words: Vec<&str> = draft_text.split_whitespace().collect();
+        let chunk_size = 500;
+        let mut out = Vec::new();
+        for (i, chunk) in words.chunks(chunk_size).enumerate() {
+            out.push((format!("Section {}", i + 1), chunk.join(" ")));
+        }
+        out
     } else {
-        req.draft_text.clone()
+        // Extract text between headings
+        let mut out = Vec::new();
+        let text_bytes = draft_text.as_bytes();
+        for (i, h) in structure.headings.iter().enumerate() {
+            let start = if i == 0 {
+                0
+            } else {
+                // Find the heading text in the draft
+                draft_text.find(&h.text).unwrap_or(0)
+            };
+            let end = if i + 1 < structure.headings.len() {
+                draft_text
+                    .find(&structure.headings[i + 1].text)
+                    .unwrap_or(draft_text.len())
+            } else {
+                draft_text.len()
+            };
+            let section_text = &draft_text[start.min(end)..end];
+            out.push((h.text.clone(), section_text.to_string()));
+        }
+        out
     };
 
-    let system_prompt = format!(
-        "You are an academic writing assistant. Generate a structured abstract for the manuscript below. The abstract should be at most {} words and suitable for a {} venue.\n\nFormat the abstract with these four labeled sections, each as a single paragraph:\n\nBackground: <context and motivation>\nMethods: <what was done>\nResults: <key findings>\nConclusions: <interpretation and significance>\n\nDo NOT include citations, do NOT include the word 'Abstract' as a header, do NOT add commentary. Output only the four labeled paragraphs.",
-        max_words, venue
-    );
+    if sections.is_empty() {
+        return Err(AbstractError {
+            kind: "generation_failed".into(),
+            message: "No sections could be identified in the draft.".into(),
+        });
+    }
+
+    let system_prompt = "You are an academic writing assistant. For each section of the manuscript provided, write a 1-2 sentence summary of what that section contributes to the overall argument. Output each summary on its own line, prefixed by the section name and a colon. Be concise and factual. Do not add commentary or suggestions.";
+
+    let mut sections_text = String::new();
+    for (name, text) in &sections {
+        // Truncate each section to ~2000 chars to keep prompt manageable
+        let excerpt = if text.len() > 2000 {
+            format!("{}...", &text[..2000])
+        } else {
+            text.clone()
+        };
+        sections_text.push_str(&format!("\n\n## {}\n{}", name, excerpt));
+    }
 
     let user_prompt = format!(
-        "Manuscript:\n\n{}\n\nGenerate the structured abstract now.",
-        draft_excerpt
+        "Manuscript sections:\n{}\n\nProvide a 1-2 sentence summary for each section.",
+        sections_text
     );
 
     let body = serde_json::json!({
-        "model": req.model,
+        "model": model,
         "messages": [
             { "role": "system", "content": system_prompt },
             { "role": "user", "content": user_prompt }
         ],
         "stream": false,
-        "options": { "temperature": 0.4 }
+        "options": { "temperature": 0.3 }
     });
 
     let resp = client
@@ -166,7 +133,7 @@ pub async fn generate_abstract(
         message: format!("Cannot parse LLM response: {}", e),
     })?;
 
-    let abstract_text = parsed
+    let raw_output = parsed
         .message
         .ok_or_else(|| AbstractError {
             kind: "generation_failed".into(),
@@ -174,10 +141,40 @@ pub async fn generate_abstract(
         })?
         .content;
 
-    Ok(AbstractResult {
-        abstract_text,
-        model_used: req.model,
-        prompt_tokens: system_prompt.len() / 4 + user_prompt.len() / 4, // rough estimate
-        draft_length_chars: req.draft_text.len(),
+    // Parse the LLM output into section commentaries
+    let mut commentaries = Vec::new();
+    for line in raw_output.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Some(colon_idx) = line.find(':') {
+            let name = line[..colon_idx]
+                .trim()
+                .trim_start_matches('#')
+                .trim()
+                .to_string();
+            let summary = line[colon_idx + 1..].trim().to_string();
+            if !summary.is_empty() {
+                commentaries.push(SectionCommentary {
+                    section_name: name,
+                    summary,
+                });
+            }
+        }
+    }
+
+    // If parsing didn't produce anything useful, return the raw output as a single entry
+    if commentaries.is_empty() {
+        commentaries.push(SectionCommentary {
+            section_name: "Overall".into(),
+            summary: raw_output,
+        });
+    }
+
+    Ok(SectionCommentaryResult {
+        commentaries,
+        model_used: model,
+        draft_length_chars: draft_text.len(),
     })
 }

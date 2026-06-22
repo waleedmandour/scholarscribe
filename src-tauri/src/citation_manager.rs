@@ -431,3 +431,137 @@ fn extract_last_name(author: &str) -> String {
 pub fn read_bib_file(path: &Path) -> Result<String, String> {
     std::fs::read_to_string(path).map_err(|e| format!("read {}: {}", path.display(), e))
 }
+
+// ---------- v0.2.0: Citation Context Validator ----------
+
+/// For each in-text citation, extract the surrounding context (the sentence
+/// containing the citation) and check whether the citation's attributed
+/// concept appears relevant to the cited work's title. This is a heuristic
+/// check — it flags potential misattributions for human review.
+///
+/// Uses simple keyword overlap between the surrounding sentence and the
+/// .bib entry's title/keywords. A local LLM could improve this, but the
+/// heuristic version is fast and requires no model.
+pub fn validate_citation_contexts(text: &str, bib_content: &str) -> Vec<CitationContextCheck> {
+    let (bib_entries, _) = parse_bib(bib_content);
+    let in_text = extract_in_text_citations(text);
+
+    // Build lookup: (last_name, year) → bib entry
+    let mut bib_lookup: std::collections::HashMap<(String, String), &BibEntry> =
+        std::collections::HashMap::new();
+    for entry in &bib_entries {
+        let last_name = extract_last_name(&entry.author);
+        if !last_name.is_empty() && !entry.year.is_empty() {
+            bib_lookup.insert((last_name.to_lowercase(), entry.year.clone()), entry);
+        }
+    }
+
+    let mut checks = Vec::new();
+
+    for cite in &in_text {
+        // Get the sentence containing this citation
+        let sentence = extract_sentence_at(text, cite.position);
+
+        // Find the matching bib entry
+        let entry = if let Some(n) = cite.numeric {
+            bib_entries.get(n.saturating_sub(1))
+        } else {
+            let last_name = extract_last_name(&cite.author);
+            bib_lookup
+                .get(&(last_name.to_lowercase(), cite.year.clone()))
+                .copied()
+        };
+
+        if let Some(entry) = entry {
+            // Compute keyword overlap between the sentence and the bib entry's title
+            let sentence_words: std::collections::HashSet<String> = sentence
+                .to_lowercase()
+                .split_whitespace()
+                .filter(|w| w.len() > 3) // skip short words
+                .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric()).to_string())
+                .collect();
+
+            let title_words: std::collections::HashSet<String> = entry
+                .title
+                .to_lowercase()
+                .split_whitespace()
+                .filter(|w| w.len() > 3)
+                .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric()).to_string())
+                .collect();
+
+            let overlap = sentence_words.intersection(&title_words).count();
+            let max_possible = title_words.len().max(1);
+            let overlap_pct = (overlap as f64 / max_possible as f64) * 100.0;
+
+            let verdict = if overlap_pct > 30.0 {
+                "strong".to_string()
+            } else if overlap_pct > 10.0 {
+                "moderate".to_string()
+            } else {
+                "weak".to_string()
+            };
+
+            let note = if overlap_pct < 10.0 {
+                format!("Low keyword overlap between the citing sentence and the cited work's title (\"{}\"). Verify the citation is contextually appropriate.", entry.title)
+            } else {
+                format!(
+                    "Citation appears contextually related to the cited work (\"{}\").",
+                    entry.title
+                )
+            };
+
+            checks.push(CitationContextCheck {
+                citation_raw: cite.raw.clone(),
+                bib_key: entry.key.clone(),
+                bib_title: entry.title.clone(),
+                sentence: sentence,
+                keyword_overlap_pct: overlap_pct.round(1),
+                verdict,
+                note,
+            });
+        }
+    }
+
+    checks
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct CitationContextCheck {
+    pub citation_raw: String,
+    pub bib_key: String,
+    pub bib_title: String,
+    pub sentence: String,
+    pub keyword_overlap_pct: f64,
+    pub verdict: String,
+    pub note: String,
+}
+
+fn extract_sentence_at(text: &str, position: usize) -> String {
+    let bytes = text.as_bytes();
+    if position >= bytes.len() {
+        return String::new();
+    }
+    // Find sentence start: walk backwards to find . ! ? or start of text
+    let mut start = position;
+    while start > 0 {
+        let c = bytes[start - 1];
+        if c == b'.' || c == b'!' || c == b'?' || c == b'\n' {
+            break;
+        }
+        start -= 1;
+    }
+    // Find sentence end: walk forwards
+    let mut end = position;
+    while end < bytes.len() {
+        let c = bytes[end];
+        if c == b'.' || c == b'!' || c == b'?' {
+            end += 1;
+            break;
+        }
+        if c == b'\n' {
+            break;
+        }
+        end += 1;
+    }
+    text[start..end.min(text.len())].trim().to_string()
+}

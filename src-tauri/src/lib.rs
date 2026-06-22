@@ -8,6 +8,7 @@
 // "Ethical Use" section for the full policy.
 
 mod abstract_generator;
+mod appeal_letter;
 mod audit;
 mod citation_manager;
 mod commands;
@@ -16,9 +17,12 @@ mod document_stats;
 mod docx_reading;
 mod ollama;
 mod persistence;
+mod risk_profiler;
 mod structure_analyzer;
 mod style;
 mod text_cleaner;
+mod voice_consistency;
+mod writing_journal;
 
 pub use audit::AuditLog;
 
@@ -66,6 +70,12 @@ pub fn run() {
             commands::analyze_structure,
             commands::analyze_structure_text,
             commands::generate_abstract,
+            commands::analyze_risk_profile,
+            commands::check_voice_consistency,
+            commands::generate_appeal_letter,
+            commands::validate_citation_contexts,
+            commands::document_stats_by_section,
+            commands::generate_section_commentary,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,
@@ -81,6 +91,12 @@ pub fn run() {
             persistence::draft_delete,
             persistence::draft_delete_all,
             persistence::data_dir_path,
+            writing_journal::journal_create_session,
+            writing_journal::journal_save_snapshot,
+            writing_journal::journal_list_sessions,
+            writing_journal::journal_get_snapshots,
+            writing_journal::journal_delete_session,
+            writing_journal::journal_export_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");

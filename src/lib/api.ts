@@ -338,7 +338,6 @@ export interface DocStats {
   journal_comparison: JournalComparison[];
 }
 
-// v0.1.8+
 
 export interface Heading {
   level: number;
@@ -433,8 +432,6 @@ export const api = {
     invoke<CitationReport>("validate_citations", {
       args: { draft_path: draftPath, bib_path: bibPath },
     }),
-  documentStats: (text: string) => invoke<DocStats>("document_stats", { text }),
-  // v0.1.8+
   analyzeStructure: (path: string) =>
     invoke<StructureReport>("analyze_structure", { args: { path } }),
   analyzeStructureText: (text: string) =>
@@ -453,6 +450,7 @@ export const api = {
         venue: venue ?? null,
       },
     }),
+  documentStats: (text: string) => invoke<DocStats>("document_stats", { text }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
   persistenceEnable: () => invoke<void>("persistence_enable"),
@@ -473,4 +471,161 @@ export const api = {
     listen<string>("ollama://pull-start", (e) => cb(e.payload)),
   onPullEnd: (cb: (info: { model: string; ok: boolean }) => void): Promise<UnlistenFn> =>
     listen<{ model: string; ok: boolean }>("ollama://pull-end", (e) => cb(e.payload)),
+
+  // v0.2.0+
+  analyzeRiskProfile: (text: string) => invoke<RiskProfile>("analyze_risk_profile", { text }),
+  checkVoiceConsistency: (text: string) => invoke<ConsistencyReport>("check_voice_consistency", { text }),
+  generateAppealLetter: (input: AppealLetterInput) =>
+    invoke<AppealLetterOutput>("generate_appeal_letter", { args: { input } }),
+  validateCitationContexts: (draftText: string, bibContent: string) =>
+    invoke<CitationContextCheck[]>("validate_citation_contexts", {
+      args: { draft_text: draftText, bib_content: bibContent },
+    }),
+  documentStatsBySection: (text: string) =>
+    invoke<SectionReadabilityReport>("document_stats_by_section", { text }),
+  generateSectionCommentary: (model: string, draftText: string) =>
+    invoke<SectionCommentaryResult>("generate_section_commentary", {
+      args: { model, draft_text: draftText },
+    }),
+  journalCreateSession: (title: string) =>
+    invoke<Snapshot>("journal_create_session", { title }),
+  journalSaveSnapshot: (sessionId: string, content: string) =>
+    invoke<Snapshot>("journal_save_snapshot", { sessionId, content }),
+  journalListSessions: () => invoke<JournalSession[]>("journal_list_sessions"),
+  journalGetSnapshots: (sessionId: string) =>
+    invoke<Snapshot[]>("journal_get_snapshots", { sessionId }),
+  journalDeleteSession: (sessionId: string) =>
+    invoke<number>("journal_delete_session", { sessionId }),
+  journalExportSession: (sessionId: string, outputPath: string) =>
+    invoke<void>("journal_export_session", { sessionId, outputPath }),
+
 };
+
+// v0.2.0+
+
+export interface RiskProfile {
+  overall_perplexity_proxy: number;
+  overall_burstiness_proxy: number;
+  overall_risk_level: string;
+  overall_risk_color: string;
+  section_profiles: {
+    section_label: string;
+    start_char: number;
+    end_char: number;
+    word_count: number;
+    perplexity_proxy: number;
+    burstiness_proxy: number;
+    risk_level: string;
+    risk_color: string;
+  }[];
+  explanation: string;
+  recommendations: string[];
+}
+
+export interface ConsistencyReport {
+  passages: {
+    label: string;
+    word_count: number;
+    avg_sentence_length: number;
+    type_token_ratio: number;
+    hedge_density: number;
+    passive_ratio: number;
+    flesch_reading_ease: number;
+  }[];
+  inconsistencies: {
+    passage_index: number;
+    passage_label: string;
+    metric: string;
+    value: number;
+    document_average: number;
+    deviation_pct: number;
+    severity: string;
+    note: string;
+  }[];
+  overall_consistency_score: number;
+  explanation: string;
+  recommendations: string[];
+}
+
+export interface AppealLetterInput {
+  researcher_name: string;
+  researcher_title: string;
+  institution: string;
+  manuscript_title: string;
+  venue: string;
+  editor_name: string;
+  detector_used: string;
+  detector_score: string;
+  process_description: string;
+  additional_evidence: string;
+}
+
+export interface AppealLetterOutput {
+  letter: string;
+  references: string[];
+}
+
+export interface CitationContextCheck {
+  citation_raw: string;
+  bib_key: string;
+  bib_title: string;
+  sentence: string;
+  keyword_overlap_pct: number;
+  verdict: string;
+  note: string;
+}
+
+export interface SectionReadability {
+  section_name: string;
+  word_count: number;
+  sentence_count: number;
+  avg_sentence_length: number;
+  flesch_reading_ease: number;
+  flesch_kincaid_grade: number;
+  gunning_fog: number;
+  interpretation: string;
+}
+
+export interface SectionReadabilityReport {
+  sections: SectionReadability[];
+  document_average: SectionReadability;
+  explanation: string;
+}
+
+export interface SectionCommentary {
+  section_name: string;
+  summary: string;
+}
+
+export interface SectionCommentaryResult {
+  commentaries: SectionCommentary[];
+  model_used: string;
+  draft_length_chars: number;
+}
+
+export interface JournalSession {
+  session_id: string;
+  title: string;
+  created_at: number;
+  updated_at: number;
+  snapshot_count: number;
+  total_words_final: number;
+}
+
+export interface Snapshot {
+  id: string;
+  session_id: string;
+  timestamp: number;
+  content: string;
+  word_count: number;
+  char_count: number;
+  diff_from_previous: {
+    words_added: number;
+    words_removed: number;
+    chars_added: number;
+    chars_removed: number;
+    similarity_pct: number;
+  } | null;
+}
+
+// v0.2.0 API methods (append to the api object — need to find and edit it)

@@ -168,38 +168,6 @@
     }
   }
 
-  // v0.1.8: strict clean + preserve-format .docx in one click.
-  // Applies all 24 operations (20 per-run ops work in .docx mode; 4
-  // cross-paragraph ops are skipped and listed in the result).
-  async function cleanStrictAndSaveDocx() {
-    if (!docxSourcePath) {
-      error = "Pick a .docx file first.";
-      return;
-    }
-    const inputName = docxSourcePath.split(/[\\/]/).pop() || "document.docx";
-    const stem = inputName.replace(/\.docx$/i, "");
-    const defaultOutput = `${stem}-strict-cleaned.docx`;
-
-    const outputPath = await save({
-      defaultPath: defaultOutput,
-      filters: [{ name: "Word document", extensions: ["docx"] }],
-    });
-    if (!outputPath) return;
-
-    error = "";
-    busy = true;
-    result = null;
-    // Apply strict preset so the user sees what was applied
-    opts = { ...strictCleanOptions };
-    try {
-      preserveResult = await api.cleanDocxPreserveFormat(docxSourcePath, outputPath, opts);
-    } catch (e) {
-      error = String(e);
-    } finally {
-      busy = false;
-    }
-  }
-
   async function copyCleaned() {
     if (!result) return;
     try {
@@ -327,17 +295,9 @@
     <button
       on:click={cleanAndSaveDocx}
       disabled={busy || !docxSourcePath}
-      title="Clean the .docx in place with the currently-selected options — modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
+      title="Clean the .docx in place — modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
     >
       {busy ? "Working…" : "Clean & save as .docx (preserves format)"}
-    </button>
-    <button
-      class="primary"
-      on:click={cleanStrictAndSaveDocx}
-      disabled={busy || !docxSourcePath}
-      title="Apply ALL 24 cleaning operations to the .docx in place — preserves all tables/images/hyperlinks/headers/footers/styles. 20 per-run operations are applied; 4 cross-paragraph operations (join broken lines, join broken URLs, fix broken citations, remove page numbers) are skipped and listed in the result. Saves to a new .docx file."
-    >
-      {busy ? "Working…" : "⚡ Strict clean & save as .docx"}
     </button>
   {/if}
 </div>

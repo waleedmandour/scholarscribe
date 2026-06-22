@@ -922,89 +922,61 @@ pub async fn document_stats(text: String) -> Result<crate::document_stats::DocSt
     Ok(result)
 }
 
-// ---------------- v0.1.8 new commands ----------------
+// ---------------- v0.2.0 new commands ----------------
 
-#[derive(Debug, Deserialize)]
-pub struct AnalyzeStructureArgs {
-    pub path: String,
+#[tauri::command]
+pub fn analyze_risk_profile(text: String) -> crate::risk_profiler::RiskProfile {
+    crate::risk_profiler::analyze(&text)
 }
 
 #[tauri::command]
-pub async fn analyze_structure(
-    args: AnalyzeStructureArgs,
-    audit: State<'_, audit::AuditLog>,
-) -> Result<crate::structure_analyzer::StructureReport, String> {
-    let path = PathBuf::from(&args.path);
-    if !path.exists() {
-        return Err(format!("File not found: {}", args.path));
-    }
-    let ext = path
-        .extension()
-        .map(|e| e.to_string_lossy().to_lowercase())
-        .unwrap_or_default();
-
-    audit.record("file_read", &args.path, "structure analysis", 0, 0);
-
-    let path_for_task = path.clone();
-    let result = tokio::task::spawn_blocking(
-        move || -> Result<crate::structure_analyzer::StructureReport, String> {
-            if ext == "docx" {
-                crate::structure_analyzer::analyze_docx(&path_for_task)
-            } else {
-                let text =
-                    std::fs::read_to_string(&path_for_task).map_err(|e| format!("read: {}", e))?;
-                Ok(crate::structure_analyzer::analyze_text(&text))
-            }
-        },
-    )
-    .await
-    .map_err(|e| format!("structure analysis task failed: {}", e))??;
-
-    Ok(result)
-}
-
-#[tauri::command]
-pub async fn analyze_structure_text(
-    text: String,
-) -> Result<crate::structure_analyzer::StructureReport, String> {
-    let result =
-        tokio::task::spawn_blocking(move || crate::structure_analyzer::analyze_text(&text))
-            .await
-            .map_err(|e| format!("structure analysis task failed: {}", e))?;
-    Ok(result)
+pub fn check_voice_consistency(text: String) -> crate::voice_consistency::ConsistencyReport {
+    crate::voice_consistency::check(&text)
 }
 
 #[derive(Debug, Deserialize)]
-pub struct GenerateAbstractArgs {
+pub struct AppealLetterArgs {
+    pub input: crate::appeal_letter::AppealLetterInput,
+}
+
+#[tauri::command]
+pub fn generate_appeal_letter(
+    args: AppealLetterArgs,
+) -> Result<crate::appeal_letter::AppealLetterOutput, String> {
+    crate::appeal_letter::generate(&args.input)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ValidateCitationContextsArgs {
+    pub draft_text: String,
+    pub bib_content: String,
+}
+
+#[tauri::command]
+pub fn validate_citation_contexts(
+    args: ValidateCitationContextsArgs,
+) -> Vec<crate::citation_manager::CitationContextCheck> {
+    crate::citation_manager::validate_citation_contexts(&args.draft_text, &args.bib_content)
+}
+
+#[tauri::command]
+pub fn document_stats_by_section(text: String) -> crate::document_stats::SectionReadabilityReport {
+    crate::document_stats::analyze_by_sections(&text)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SectionCommentaryArgs {
     pub model: String,
     pub draft_text: String,
-    pub max_words: Option<usize>,
-    pub venue: Option<String>,
 }
 
 #[tauri::command]
-pub async fn generate_abstract(
-    args: GenerateAbstractArgs,
+pub async fn generate_section_commentary(
+    args: SectionCommentaryArgs,
     state: State<'_, ollama::OllamaState>,
-    audit: State<'_, audit::AuditLog>,
-) -> Result<crate::abstract_generator::AbstractResult, String> {
-    audit.record(
-        "ollama_command",
-        &format!("{}/api/chat", ollama::base_url()),
-        &format!("generate abstract with model {}", args.model),
-        0,
-        0,
-    );
-
-    let req = crate::abstract_generator::AbstractRequest {
-        model: args.model,
-        draft_text: args.draft_text,
-        max_words: args.max_words,
-        venue: args.venue,
-    };
-
+) -> Result<crate::abstract_generator::SectionCommentaryResult, String> {
     let client = &state.inner().client;
-    crate::abstract_generator::generate_abstract(client, req)
+    crate::abstract_generator::generate_section_commentary(client, args.model, args.draft_text)
         .await
         .map_err(|e| format!("[{}] {}", e.kind, e.message))
 }

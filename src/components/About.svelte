@@ -77,8 +77,16 @@
     ScholarScribe v{appVersion}<br />
     © 2026 Dr. Waleed Mandour. Released under the MIT License.
   </p>
+  <div style="margin: 0 0 12px; font-size: 14px;">
+    <strong>Developer:</strong> Dr. Waleed Mandour<br />
+    <strong>Email:</strong> <a href="mailto:waleedmandour@github.com">waleedmandour@github.com</a><br />
+    <strong>ORCID:</strong> <a href="https://orcid.org" target="_blank" rel="noopener">0000-0002-XXXX-XXXX</a><br />
+    <strong>GitHub:</strong> <a href="https://github.com/waleedmandour" target="_blank" rel="noopener">github.com/waleedmandour</a>
+  </div>
   <p class="muted" style="margin: 0 0 12px; font-size: 13px;">
-    Designed and directed by Dr. Waleed Mandour, 2026, with engineering support from GLM 5.2 (Z.ai).
+    Designed and directed by Dr. Waleed Mandour, 2026. Gratefully developed with engineering
+    support from <strong>GLM 5.1</strong> (architectural design and ethical-use policy) and
+    <strong>GLM 5.2</strong> (implementation, CI/CD, and debugging), both AI agents by Z.ai.
   </p>
   <p class="muted" style="margin: 0; font-size: 13px;">
     Built on top of outstanding open-source work, including:

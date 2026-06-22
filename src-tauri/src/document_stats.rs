@@ -156,3 +156,144 @@ fn compare_to_journals(word_count: usize) -> Vec<JournalComparison> {
         })
         .collect()
 }
+
+// ---------- v0.2.0: Readability by Section ----------
+
+#[derive(Debug, serde::Serialize)]
+pub struct SectionReadability {
+    pub section_name: String,
+    pub word_count: usize,
+    pub sentence_count: usize,
+    pub avg_sentence_length: f64,
+    pub flesch_reading_ease: f64,
+    pub flesch_kincaid_grade: f64,
+    pub gunning_fog: f64,
+    pub interpretation: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct SectionReadabilityReport {
+    pub sections: Vec<SectionReadability>,
+    pub document_average: SectionReadability,
+    pub explanation: String,
+}
+
+pub fn analyze_by_sections(text: &str) -> SectionReadabilityReport {
+    let structure = crate::structure_analyzer::analyze_text(text);
+
+    let sections: Vec<(String, String)> = if structure.headings.is_empty() {
+        // No headings — split by paragraphs into ~300-word chunks
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let mut out = Vec::new();
+        for (i, chunk) in words.chunks(300).enumerate() {
+            out.push((format!("Section {}", i + 1), chunk.join(" ")));
+        }
+        out
+    } else {
+        // Extract text between headings
+        let mut out = Vec::new();
+        for (i, h) in structure.headings.iter().enumerate() {
+            let start = if i == 0 {
+                0
+            } else {
+                text.find(&h.text).unwrap_or(0)
+            };
+            let end = if i + 1 < structure.headings.len() {
+                text.find(&structure.headings[i + 1].text)
+                    .unwrap_or(text.len())
+            } else {
+                text.len()
+            };
+            let section_text = &text[start.min(end)..end];
+            out.push((h.text.clone(), section_text.to_string()));
+        }
+        out
+    };
+
+    let mut section_results = Vec::new();
+    let mut total_words = 0usize;
+    let mut total_sentences = 0usize;
+    let mut total_flesch = 0.0;
+    let mut total_fk = 0.0;
+    let mut total_fog = 0.0;
+    let mut total_asl = 0.0;
+    let mut count = 0usize;
+
+    for (name, text) in &sections {
+        if text.trim().is_empty() {
+            continue;
+        }
+        let profile = crate::style::analyze(text);
+        let interpretation = flesch_interpretation(profile.flesch_reading_ease);
+        total_words += profile.word_count;
+        total_sentences += profile.sentence_count;
+        total_flesch += profile.flesch_reading_ease;
+        total_fk += profile.flesch_kincaid_grade;
+        total_fog += profile.gunning_fog;
+        total_asl += profile.avg_sentence_length;
+        count += 1;
+        section_results.push(SectionReadability {
+            section_name: name.clone(),
+            word_count: profile.word_count,
+            sentence_count: profile.sentence_count,
+            avg_sentence_length: profile.avg_sentence_length,
+            flesch_reading_ease: profile.flesch_reading_ease,
+            flesch_kincaid_grade: profile.flesch_kincaid_grade,
+            gunning_fog: profile.gunning_fog,
+            interpretation,
+        });
+    }
+
+    let doc_avg = SectionReadability {
+        section_name: "Document average".into(),
+        word_count: total_words,
+        sentence_count: total_sentences,
+        avg_sentence_length: if count > 0 {
+            total_asl / count as f64
+        } else {
+            0.0
+        },
+        flesch_reading_ease: if count > 0 {
+            total_flesch / count as f64
+        } else {
+            0.0
+        },
+        flesch_kincaid_grade: if count > 0 {
+            total_fk / count as f64
+        } else {
+            0.0
+        },
+        gunning_fog: if count > 0 {
+            total_fog / count as f64
+        } else {
+            0.0
+        },
+        interpretation: "Document-wide average".into(),
+    };
+
+    let explanation = format!(
+        "Readability varies naturally across sections: Methods sections typically score harder on Flesch (which is appropriate — they describe technical procedures), while introductions and discussions should be more accessible. This section-aware view helps you calibrate your writing appropriately for each part of the manuscript."
+    );
+
+    SectionReadabilityReport {
+        sections: section_results,
+        document_average: doc_avg,
+        explanation,
+    }
+}
+
+fn flesch_interpretation(score: f64) -> String {
+    if score >= 90 {
+        "very easy (5th grade)".into()
+    } else if score >= 70 {
+        "easy (7th grade)".into()
+    } else if score >= 60 {
+        "standard (8th-9th grade)".into()
+    } else if score >= 50 {
+        "fairly hard (10th-12th grade)".into()
+    } else if score >= 30 {
+        "difficult (college)".into()
+    } else {
+        "very difficult (college graduate)".into()
+    }
+}
