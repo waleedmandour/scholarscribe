@@ -1,6 +1,6 @@
 # ScholarScribe
 
-> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device with no telemetry, no cloud calls, no paid APIs.
+> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: Pre-release](https://img.shields.io/badge/Status-Pre--release-orange.svg)]()
@@ -15,6 +15,12 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file — lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics** — word count, section count, citation count, reading time, and comparison with common journal targets.
+- **Analyze document structure** — extract heading tree, get suggestions for missing sections (Introduction, Methods, Results, Discussion, Conclusion, etc.), spot short sections.
+- **Generate a structured abstract** — local LLM produces a Background/Methods/Results/Conclusions abstract from your draft. Also generates section-by-section commentary.
+- **Assess authenticity risk** — surface whether your draft's perplexity/burstiness proxies overlap with typical AI-text profiles (based on Liang et al. 2023; Weber-Wulff et al. 2023). Not an evasion tool — helps you understand your writing's stylistic fingerprint.
+- **Check voice consistency** — flag within-document stylistic inconsistencies where sentence length, hedging, or vocabulary abruptly shifts.
+- **Maintain a writing process journal** — auto-saves timestamped snapshots of your draft, creating a verifiable process record for authentic authorship evidence.
+- **Generate a false-positive appeal letter** — if falsely flagged by an AI detector, generate a professional, evidence-based appeal letter citing the peer-reviewed literature.
 - **Analyze whether a draft sounds like *your own* prior writing** — descriptive statistics including sentence length, hedging, passive voice, plus readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
 - **Generate venue-compliant AI-use disclosure statements** for ICMJE, Nature, IEEE, Elsevier, ACL, and more.
 - **Understand how AI detectors actually work** — and where they fail. Educational content with peer-reviewed citations.
@@ -35,6 +41,9 @@ ScholarScribe is designed for researchers who have genuinely written or substant
 - Generates **disclosure statements** so you can comply with journal and conference AI-use policies.
 - Educates you about how AI-detection tools work and what their known limitations are.
 - Validates your citations against your `.bib` file — reducing the risk of fabricated references in your manuscript.
+- Assesses whether your writing shares surface features with AI-generated text (not an evasion tool — an awareness tool).
+- Maintains a timestamped draft history as verifiable evidence of authentic authorship.
+- Generates evidence-based appeal letters for researchers falsely flagged by AI detectors.
 - Cleans text artifacts from copy-pasted content without rewriting it.
 
 ### What ScholarScribe explicitly does NOT do
@@ -256,7 +265,7 @@ The Privacy Audit log is **never** persisted — it stays in-memory only.
 
 ### About tab
 
-Version, environment (CPU, RAM, OS), credits, acknowledgments.
+Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), and acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators.
 
 ---
 
@@ -330,34 +339,33 @@ scholarscribe/
 
 ---
 
-## Roadmap
-
-- **v0.1.0** — Models, Chat, Style Analysis, Disclosure, Detector Literacy
-- **v0.1.1** — Console-window fix, GGUF import with compatibility check, reading-level metrics, Privacy Audit log, About/Credits
-- **v0.1.2** — GGUF import HTTP 400 fix, dark/light/auto theme toggle, expanded models catalog (14 academic-focused models)
-- **v0.1.3** — AI Text Cleaner (12 rule-based transformations), opt-in local persistence
-- **v0.1.4** — `.docx` file reading (zip + OOXML walk)
-- **v0.1.5** — In-place `.docx` cleaning that preserves all formatting (tables, images, hyperlinks, headers/footers, styles, track changes)
-- **v0.1.6** — **Citation Manager** (BibTeX validation against draft) + **Document Statistics** panel + comprehensive README + user guide
-- **v0.1.7** (this release) — **Strict cleaning mode**: 11 new operations (strip BOM, normalize line endings, convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis, remove asterisks, remove markdown headings, normalize bullets, collapse repeated punctuation). One-click "⚡ Strict clean" button applies all 24 operations. New options tagged "strict" in the UI.
-- **v0.2** (planned) — Multi-reference style profile (analyze against a folder of your papers rather than one)
-- **v0.3** (planned) — Bundled llama.cpp option, so users who can't install Ollama separately still get a working app
-- **v0.4** (planned) — Outline/structure analyzer (extract heading tree, suggest missing sections like Methods/Limitations)
-- **v0.5** (planned) — Citation-aware chat (LLM sees your `.bib` file and avoids fabricating references in chat responses)
-
----
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and feature requests that align with the ethical-use policy are very welcome; pull requests attempting to add detection-evasion features will be closed without merge.
 
 ---
 
-## Credits
+## Acknowledgments
 
-ScholarScribe v0.1.7 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v0.2.0 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
-Designed and directed by Dr. Waleed Mandour, 2026, with engineering support from **GLM 5.2** (Z.ai).
+### Developer
+
+**Dr. Waleed Mandour**
+Email: waleedmandour@github.com
+GitHub: github.com/waleedmandour
+ORCID: 0000-0002-XXXX-XXXX
+
+### Engineering Collaborators
+
+Designed and directed by Dr. Waleed Mandour, 2026. Gratefully developed with engineering support from:
+
+- **GLM 5.1** (Z.ai) — architectural design and ethical-use policy formulation
+- **GLM 5.2** (Z.ai) — implementation, continuous integration/continuous deployment, and iterative debugging
+
+The AI agents functioned as engineering collaborators under the direction of Dr. Mandour, who reviewed all code, verified all claims, and retained final editorial authority over every aspect of the application.
+
+### Open-Source Dependencies
 
 Built on top of outstanding open-source work, including:
 
@@ -365,10 +373,24 @@ Built on top of outstanding open-source work, including:
 - [Ollama](https://ollama.com) — the local LLM runtime that does the heavy lifting of model management
 - [Svelte](https://svelte.dev) — the frontend framework
 - The open LLM authors: Google (Gemma), Alibaba (Qwen), Meta (Llama), Microsoft (Phi), DeepSeek
-- The detector-evaluation research community, especially Liang et al. (2023), Weber-Wulff et al. (2023), and Laban et al. (2024), whose work the Detector Literacy module is built on
+
+### Research Community
+
+The Detector Literacy and Authenticity Risk Profiler modules are built upon the work of researchers who have rigorously evaluated the limitations of AI-generated text detectors, particularly:
+
+- Liang et al. (2023) — documented false-positive bias against non-native English writers
+- Weber-Wulff et al. (2023) — evaluated 14 detection tools and found all exhibited high false-positive rates
+
+Their findings inform the application's ethical stance and its refusal to facilitate detection evasion.
 
 ---
 
 ## License
 
-MIT © Waleed Mandour. See [LICENSE](LICENSE).
+MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
+
+**Persistent identifier:** https://doi.org/10.5281/zenodo.20781043
+
+---
+
+*Built with LOVE to the Academic Community.*
