@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "ScholarScribe — Local Writing Companion",
+        "title": "ScholarScribe \u2014 Local Writing Companion",
         "width": 1180,
         "height": 760,
         "minWidth": 900,
@@ -27,7 +27,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis"],
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -35,14 +35,26 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "copyright": "© 2026 Dr. Waleed Mandour — MIT License",
+    "copyright": "\u00a9 2026 Dr. Waleed Mandour \u2014 MIT License",
     "publisher": "Dr. Waleed Mandour",
     "category": "Productivity",
     "shortDescription": "Privacy-first local LLM writing companion for researchers",
-    "longDescription": "ScholarScribe runs open LLMs (Gemma, Qwen, Llama, Phi) entirely on your device via Ollama. It helps researchers analyze their own writing style, generate compliant AI-use disclosure statements, and understand how AI detectors work — without ever sending text to the cloud.",
+    "longDescription": "ScholarScribe runs open LLMs (Gemma, Qwen, Llama, Phi) entirely on your device via Ollama. It helps researchers analyze their own writing style, generate compliant AI-use disclosure statements, and understand how AI detectors work \u2014 without ever sending text to the cloud.",
     "windows": {
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
+      }
+    },
+    "macOS": {
+      "signingIdentity": null,
+      "entitlements": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": true
       }
     }
   },
