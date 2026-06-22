@@ -79,7 +79,9 @@
   </p>
   <div style="margin: 0 0 12px; font-size: 14px;">
     <strong>Developer:</strong> Dr. Waleed Mandour<br />
-    <strong>Email:</strong> <a href="mailto:waleedmandour@github.com">waleedmandour@github.com</a><br />
+    <strong>Email:</strong> <a href="mailto:waleedmandour@gmail.com">waleedmandour@gmail.com</a><br />
+    <strong>Institutional Email:</strong> <a href="mailto:w.abumandour@squ.edu.om">w.abumandour@squ.edu.om</a><br />
+    <strong>Affiliation:</strong> Sultan Qaboos University<br />
     <strong>ORCID:</strong> <a href="https://orcid.org" target="_blank" rel="noopener">0000-0002-XXXX-XXXX</a><br />
     <strong>GitHub:</strong> <a href="https://github.com/waleedmandour" target="_blank" rel="noopener">github.com/waleedmandour</a>
   </div>

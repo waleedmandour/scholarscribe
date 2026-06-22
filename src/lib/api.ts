@@ -499,6 +499,15 @@ export const api = {
   journalExportSession: (sessionId: string, outputPath: string) =>
     invoke<void>("journal_export_session", { sessionId, outputPath }),
 
+
+  // v0.2.1+
+  computeStyleFingerprint: (papers: [string, string][]) =>
+    invoke<StyleFingerprint>("compute_style_fingerprint", { args: { papers } }),
+  writingCoachChat: (model: string, messages: { role: string; content: string }[], styleProfile?: string) =>
+    invoke<{ role: string; content: string }>("writing_coach_chat", {
+      args: { model, messages, style_profile: styleProfile ?? null },
+    }),
+
 };
 
 // v0.2.0+
@@ -629,3 +638,39 @@ export interface Snapshot {
 }
 
 // v0.2.0 API methods (append to the api object — need to find and edit it)
+
+// v0.2.1+
+
+export interface FingerprintMetrics {
+  avg_sentence_length: number;
+  sentence_length_stdev: number;
+  type_token_ratio: number;
+  passive_ratio: number;
+  hedge_density: number;
+  connector_density: number;
+  first_person_singular_ratio: number;
+  first_person_plural_ratio: number;
+  citation_density: number;
+  flesch_reading_ease: number;
+  flesch_kincaid_grade: number;
+  gunning_fog: number;
+  avg_syllables_per_word: number;
+  complex_word_ratio: number;
+}
+
+export interface PaperSummary {
+  label: string;
+  word_count: number;
+  avg_sentence_length: number;
+  type_token_ratio: number;
+  flesch_reading_ease: number;
+}
+
+export interface StyleFingerprint {
+  papers_analyzed: number;
+  total_words: number;
+  metrics: FingerprintMetrics;
+  per_paper_profiles: PaperSummary[];
+  export_json: string;
+  export_markdown: string;
+}

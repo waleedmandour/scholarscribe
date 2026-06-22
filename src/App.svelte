@@ -10,6 +10,8 @@
   import VoiceConsistency from "./components/VoiceConsistency.svelte";
   import WritingJournal from "./components/WritingJournal.svelte";
   import AppealLetter from "./components/AppealLetter.svelte";
+  import StyleFingerprint from "./components/StyleFingerprint.svelte";
+  import WritingCoach from "./components/WritingCoach.svelte";
   import StyleAnalysis from "./components/StyleAnalysis.svelte";
   import Disclosure from "./components/Disclosure.svelte";
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
@@ -19,7 +21,7 @@
   import About from "./components/About.svelte";
   import { api } from "./lib/api";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -56,6 +58,8 @@
     { id: "consistency", label: "Voice Check", icon: "V" },
     { id: "journal", label: "Journal", icon: "J" },
     { id: "appeal", label: "Appeal Letter", icon: "L" },
+    { id: "fingerprint", label: "Fingerprint", icon: "F" },
+    { id: "coach", label: "Writing Coach", icon: "?" },
     { id: "style", label: "Style Analysis", icon: "S" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
@@ -163,6 +167,10 @@
       <WritingJournal {ollamaOk} />
     {:else if active === "appeal"}
       <AppealLetter />
+    {:else if active === "fingerprint"}
+      <StyleFingerprint />
+    {:else if active === "coach"}
+      <WritingCoach {ollamaOk} />
     {:else if active === "style"}
       <StyleAnalysis />
     {:else if active === "chat"}

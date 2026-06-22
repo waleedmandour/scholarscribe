@@ -1061,3 +1061,71 @@ pub async fn generate_abstract(
         .await
         .map_err(|e| format!("[{}] {}", e.kind, e.message))
 }
+
+// ---------------- v0.2.1 new commands ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct ComputeFingerprintArgs {
+    pub papers: Vec<(String, String)>, // (label, text) pairs
+}
+
+#[tauri::command]
+pub fn compute_style_fingerprint(
+    args: ComputeFingerprintArgs,
+) -> crate::style_fingerprint::StyleFingerprint {
+    crate::style_fingerprint::compute_fingerprint(args.papers)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WritingCoachArgs {
+    pub model: String,
+    pub messages: Vec<ollama::ChatMessage>,
+    pub style_profile: Option<String>, // JSON-serialized style profile for context
+}
+
+/// Structured Writing Coach — a specialized chat mode where the LLM is given
+/// the author's style profile and acts as a discipline-aware writing coach,
+/// asking Socratic questions that draw out the author's genuine reasoning
+/// rather than suggesting text.
+#[tauri::command]
+pub async fn writing_coach_chat(
+    args: WritingCoachArgs,
+    state: State<'_, ollama::OllamaState>,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<ollama::ChatMessage, ollama::OllamaError> {
+    audit.record(
+        "ollama_command",
+        &format!("{}/api/chat", ollama::base_url()),
+        &format!("writing coach chat with model {}", args.model),
+        0,
+        0,
+    );
+
+    let coach_system_prompt = format!(
+        "You are a discipline-aware academic writing coach. Your role is to help the researcher develop their OWN ideas through Socratic questioning — NOT to write or rewrite text for them.\n\nRules:\n1. NEVER write paragraphs or sentences for the researcher. Always ask questions.\n2. When the researcher shares a draft, ask probing questions about their reasoning, evidence, and argument structure.\n3. Help them identify gaps in logic, unclear definitions, or unsupported claims.\n4. Ask questions like: 'What was your reasoning for choosing this method over X?' 'How does this finding connect to your earlier claim about Y?' 'What evidence supports this assertion?'\n5. If asked to rewrite or generate text, decline and instead ask: 'What are you trying to express here? Let's work through the logic first.'\n6. Be encouraging but rigorous. Push for clarity and precision.\n7. Respect the researcher's intellectual ownership — the content must remain authentically theirs.\n{}",
+        if let Some(profile) = &args.style_profile {
+            format!("\nThe author's style profile (from their prior writing):\n{}\n\nUse this to ask about stylistic consistency when relevant.", profile)
+        } else {
+            String::new()
+        }
+    );
+
+    let mut messages = args.messages;
+    // Prepend the coach system prompt as the first message
+    messages.insert(
+        0,
+        ollama::ChatMessage {
+            role: "system".into(),
+            content: coach_system_prompt,
+        },
+    );
+
+    let request = ollama::ChatRequest {
+        model: args.model,
+        messages,
+        stream: false,
+        temperature: 0.5,
+    };
+
+    ollama::chat(state.inner(), request).await
+}

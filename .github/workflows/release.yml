@@ -1,18 +1,14 @@
-# ScholarScribe — automated release builds on Windows.
+# ScholarScribe — automated release builds on Windows, macOS, and Linux.
 #
-# When you push a tag matching v* (e.g. v0.1.0-pre), this workflow:
-#   1. Spins up a Windows runner.
-#   2. Installs Rust, Node, Ollama prerequisites.
-#   3. Builds the .msi and .exe (NSIS) installers via `tauri build`.
-#   4. Uploads both installers to the matching GitHub Release.
-#
-# No tokens needed in the repo — `GITHUB_TOKEN` is automatically provided
-# by Actions and has permission to write releases.
+# When you push a tag matching v* (e.g. v0.2.1-pre), this workflow:
+#   1. Spins up Windows, macOS, and Linux runners in parallel.
+#   2. Installs Rust, Node, and platform-specific prerequisites.
+#   3. Builds platform installers via `tauri build`.
+#   4. Uploads all installers to the matching GitHub Release.
 #
 # To trigger:
-#   git tag v0.1.0-pre
-#   git push origin v0.1.0-pre
-# Or create a release from the GitHub web UI with tag v0.1.0-pre.
+#   git tag v0.2.1-pre
+#   git push origin v0.2.1-pre
 
 name: Release
 
@@ -28,11 +24,22 @@ on:
         type: string
 
 permissions:
-  contents: write   # needed to upload assets to a release
+  contents: write
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+          - platform: macos-latest
+            args: ""
+          - platform: ubuntu-22.04
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,13 +63,19 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
       - name: Install npm dependencies
         run: npm install --no-audit --no-fund
 
       - name: Verify frontend type-checks
         run: npm run check
 
-      - name: Build Tauri app (produces .msi and NSIS .exe)
+      - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,22 +83,20 @@ jobs:
           tagName: ${{ inputs.tag || github.ref_name }}
           releaseName: "${{ inputs.tag || github.ref_name }} (Pre-release)"
           releaseBody: |
-            Automated build of ScholarScribe ${{ inputs.tag || github.ref_name }}.
-
-            ## What's included
-
-            - **Models tab** — Download and manage open LLMs (Gemma 2, Qwen 2.5, Llama 3.1, Phi-3) via Ollama.
-            - **Chat tab** — Local-only chat with system-prompt guardrail (refuses evasion requests).
-            - **Style Analysis tab** — Compare a draft to your own prior writing.
-            - **Disclosure Assistant tab** — Generate venue-compliant AI-use statements (ICMJE, Nature, IEEE, Elsevier, ACL).
-            - **Detector Literacy tab** — Educational content on how detectors work and where they fail.
+            ScholarScribe ${{ inputs.tag || github.ref_name }}
 
             ## Install
 
             1. Install [Ollama](https://ollama.com/download).
-            2. Download and run the ScholarScribe installer attached below.
+            2. Download the installer for your platform below.
             3. Open ScholarScribe → Models tab → download a model.
-            4. See [USER_MANUAL.md](USER_MANUAL.md) for the full walkthrough.
+            4. See [USER_GUIDE.md](USER_GUIDE.md) for the 5-minute walkthrough.
+
+            ## Platforms
+
+            - **Windows**: `.msi` and `.exe` installers
+            - **macOS**: `.dmg` and `.app.tar.gz`
+            - **Linux**: `.deb` and `.AppImage`
 
             ## Privacy
 
@@ -96,3 +107,4 @@ jobs:
             ScholarScribe does **not** include detection-evasion features. See [docs/ETHICS.md](docs/ETHICS.md).
           releaseDraft: false
           prerelease: true
+          args: ${{ matrix.args }}

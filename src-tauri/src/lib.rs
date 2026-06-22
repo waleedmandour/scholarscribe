@@ -20,6 +20,7 @@ mod persistence;
 mod risk_profiler;
 mod structure_analyzer;
 mod style;
+mod style_fingerprint;
 mod text_cleaner;
 mod voice_consistency;
 mod writing_journal;
@@ -76,6 +77,8 @@ pub fn run() {
             commands::validate_citation_contexts,
             commands::document_stats_by_section,
             commands::generate_section_commentary,
+            commands::compute_style_fingerprint,
+            commands::writing_coach_chat,
             audit::audit_list,
             audit::audit_clear,
             audit::audit_summary,
