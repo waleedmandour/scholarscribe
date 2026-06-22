@@ -1,6 +1,6 @@
 # ScholarScribe
 
-> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
+> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device with no telemetry, no cloud calls, no paid APIs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: Pre-release](https://img.shields.io/badge/Status-Pre--release-orange.svg)]()
