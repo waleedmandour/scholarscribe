@@ -137,7 +137,7 @@ pub fn journal_save_snapshot(
             words_removed,
             chars_added,
             chars_removed,
-            similarity_pct: (similarity * 100.0).round(1),
+            similarity_pct: ((similarity * 100.0 * 10.0).round() / 10.0),
         }
     });
 
@@ -250,7 +250,7 @@ pub fn journal_export_session(
     session_id: String,
     output_path: String,
 ) -> Result<(), String> {
-    let snaps = journal_get_snapshots(app, session_id)?;
+    let snaps = journal_get_snapshots(app, session_id.clone())?;
     let mut out = String::new();
     out.push_str(&format!("# Writing Process Journal Export\n\n"));
     out.push_str(&format!("Session ID: {}\n", session_id));

@@ -221,7 +221,7 @@ fn check_deviation(
             metric: metric.to_string(),
             value,
             document_average: average,
-            deviation_pct: deviation.round(1),
+            deviation_pct: (deviation * 10.0).round() / 10.0,
             severity: severity.to_string(),
             note,
         });

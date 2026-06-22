@@ -42,7 +42,7 @@ pub fn analyze(text: &str) -> RiskProfile {
     let mut section_profiles = Vec::new();
 
     for (i, passage) in passages.iter().enumerate() {
-        let metrics = compute_passage_metrics(passage.text);
+        let metrics = compute_passage_metrics(&passage.text);
         let risk = classify_risk(metrics.perplexity_proxy, metrics.burstiness_proxy);
         section_profiles.push(SectionRisk {
             section_label: format!("Passage {} ({} words)", i + 1, passage.word_count),
@@ -129,11 +129,12 @@ fn split_into_passages(text: &str, target_words: usize) -> Vec<Passage> {
         let end = (start + target_words).min(words.len());
         let passage_words = &words[start..end];
         let passage_text = passage_words.join(" ");
+        let passage_len = passage_text.len();
         let start_char = text.find(passage_words.first().unwrap_or(&"")).unwrap_or(0);
         passages.push(Passage {
             text: passage_text,
             start_char,
-            end_char: start_char + passage_text.len(),
+            end_char: start_char + passage_len,
             word_count: passage_words.len(),
         });
         start = end;
