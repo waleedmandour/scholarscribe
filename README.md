@@ -352,7 +352,8 @@ ScholarScribe v0.2.0 — © 2026 **Dr. Waleed Mandour**, released under the MIT 
 ### Developer
 
 **Dr. Waleed Mandour**
-Email: waleedmandour@github.com
+Email: waleedmandour@gmail.com
+University Email: w.abumandour@squ.edu.om
 GitHub: github.com/waleedmandour
 ORCID: 0000-0002-XXXX-XXXX
 
@@ -393,4 +394,4 @@ MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
 
 ---
 
-*Built with LOVE to the Academic Community.*
+*Built with ❤️ to the Academic Community.*
