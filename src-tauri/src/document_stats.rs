@@ -283,15 +283,15 @@ pub fn analyze_by_sections(text: &str) -> SectionReadabilityReport {
 }
 
 fn flesch_interpretation(score: f64) -> String {
-    if score >= 90 {
+    if score >= 90.0 {
         "very easy (5th grade)".into()
-    } else if score >= 70 {
+    } else if score >= 70.0 {
         "easy (7th grade)".into()
-    } else if score >= 60 {
+    } else if score >= 60.0 {
         "standard (8th-9th grade)".into()
-    } else if score >= 50 {
+    } else if score >= 50.0 {
         "fairly hard (10th-12th grade)".into()
-    } else if score >= 30 {
+    } else if score >= 30.0 {
         "difficult (college)".into()
     } else {
         "very difficult (college graduate)".into()
