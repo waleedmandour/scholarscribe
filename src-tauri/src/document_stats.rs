@@ -1,5 +1,6 @@
 //! Document Statistics — quick health-check panel for a draft.
 //!
+#![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! Reports word count, sentence count, paragraph count, section count
 //! (extracted from headings in plain text), citation count, reading time,
 //! readability scores, and a comparison panel with common journal targets.

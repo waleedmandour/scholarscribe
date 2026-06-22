@@ -1,5 +1,6 @@
 //! Voice Consistency Checker — flags within-document stylistic inconsistencies
 //! where sentence length, hedging density, or vocabulary diversity abruptly
+#![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! shifts. Sudden stylistic shifts within a single paper are a legitimate
 //! editorial concern and a documented AI-detection signal.
 //!

@@ -1,5 +1,6 @@
 //! Writing Process Journal — auto-saves timestamped snapshots of draft text,
 //! creating a verifiable process record that can serve as evidence of
+#![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! authentic authorship. Aligns with the opt-in persistence architecture.
 //!
 //! Snapshots are stored as JSON files in the app data directory under
@@ -141,13 +142,14 @@ pub fn journal_save_snapshot(
         }
     });
 
+    let char_count = content.len();
     let snapshot = Snapshot {
         id: new_id(),
         session_id: session_id.clone(),
         timestamp: now,
         content,
         word_count,
-        char_count: content.len(),
+        char_count,
         diff_from_previous: diff,
     };
 

@@ -1,5 +1,6 @@
 //! Authenticity Risk Profiler — assesses whether a draft's surface features
 //! overlap with the "high-risk zone" for AI-detection false positives, based
+#![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! on the documented proxy metrics (perplexity and burstiness) from the
 //! detection-evaluation literature.
 //!

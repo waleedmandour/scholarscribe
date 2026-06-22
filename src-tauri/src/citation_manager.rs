@@ -1,5 +1,6 @@
 //! Citation Manager — validates in-text citations against a .bib (BibTeX) file.
 //!
+#![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! Three checks:
 //! 1. Undefined citations — in-text citations in the draft that don't match
 //!    any .bib entry. These are the dangerous ones (likely fabricated).
