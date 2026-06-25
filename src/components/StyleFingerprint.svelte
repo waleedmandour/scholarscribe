@@ -77,7 +77,7 @@
 <h1>Multi-Paper Style Fingerprint</h1>
 <p class="lead">
   Aggregate style metrics across multiple papers by the same author, producing a shareable
-  (privacy-safe) stylometric signature. <strong>Only aggregate metrics are exported — no raw text
+  (privacy-safe) stylometric signature. <strong>Only aggregate metrics are exported, no raw text
   ever leaves your device.</strong> The fingerprint can accompany a manuscript submission as
   supplementary evidence of authorial consistency.
 </p>
@@ -164,7 +164,7 @@
 
   <h2>Export</h2>
   <div class="card">
-    <div class="card-subtitle">Export the privacy-safe fingerprint. No raw text is included — only aggregate metrics.</div>
+    <div class="card-subtitle">Export the privacy-safe fingerprint. No raw text is included, only aggregate metrics.</div>
     <div class="row" style="margin-top: 12px; gap: 8px;">
       <button class="shrink" on:click={exportMarkdown}>Export as Markdown</button>
       <button class="shrink" on:click={copyJson}>{copied ? "Copied!" : "Copy JSON"}</button>

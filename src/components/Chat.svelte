@@ -137,6 +137,6 @@
   <div class="callout info" style="margin-top: 12px;">
     <strong>Guardrail.</strong> The system prompt instructs the model to refuse requests to evade AI detectors or
     submit AI-generated content as original work. If you find a model still complying with such requests, please
-    open an issue — the guardrail wording is part of the project's ethical commitments.
+    open an issue, the guardrail wording is part of the project's ethical commitments.
   </div>
 {/if}

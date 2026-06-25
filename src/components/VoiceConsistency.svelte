@@ -29,7 +29,7 @@
 
 <h1>Voice Consistency Checker</h1>
 <p class="lead">
-  Flags within-document stylistic inconsistencies — passages where sentence length, hedging density,
+  Flags within-document stylistic inconsistencies, passages where sentence length, hedging density,
   or vocabulary diversity abruptly shifts. Sudden stylistic shifts within a single paper are a
   legitimate editorial concern (and a documented AI-detection signal). Helps researchers ensure
   cohesion regardless of AI involvement.
@@ -81,7 +81,7 @@
       </table>
     </div>
   {:else}
-    <div class="callout info">No inconsistencies detected — your document shows consistent stylistic metrics across all sections.</div>
+    <div class="callout info">No inconsistencies detected, your document shows consistent stylistic metrics across all sections.</div>
   {/if}
 
   <h2>Passage metrics</h2>

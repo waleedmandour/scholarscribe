@@ -96,7 +96,7 @@
   Auto-saves timestamped snapshots of your draft at user-defined intervals, creating a verifiable
   process record that can serve as evidence of authentic authorship. Each snapshot is diffed from
   the previous one. Exports to a timestamped Markdown file. Aligns with the opt-in persistence
-  architecture — requires persistence to be enabled in the Saved Work tab.
+  architecture, requires persistence to be enabled in the Saved Work tab.
 </p>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
@@ -169,7 +169,7 @@
   </div>
 
   {#if selectedSnapshot}
-    <h2>Snapshot {snapshots.indexOf(selectedSnapshot) + 1} — {fmtTime(selectedSnapshot.timestamp)}</h2>
+    <h2>Snapshot {snapshots.indexOf(selectedSnapshot) + 1}: {fmtTime(selectedSnapshot.timestamp)}</h2>
     <div class="card">
       <pre style="max-height: 400px; overflow-y: auto; white-space: pre-wrap;">{selectedSnapshot.content}</pre>
       <button class="shrink" style="margin-top: 8px;" on:click={() => selectedSnapshot = null}>Close</button>

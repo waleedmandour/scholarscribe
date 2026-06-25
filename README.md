@@ -354,7 +354,7 @@ ScholarScribe v0.2.0 — © 2026 **Dr. Waleed Mandour**, released under the MIT 
 **Dr. Waleed Mandour**
 Email: waleedmandour@github.com
 GitHub: github.com/waleedmandour
-ORCID: 0000-0002-XXXX-XXXX
+ORCID: 0000-0002-9262-5993
 
 ### Engineering Collaborators
 
@@ -390,6 +390,8 @@ Their findings inform the application's ethical stance and its refusal to facili
 MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
 
 **Persistent identifier:** https://doi.org/10.5281/zenodo.20781043
+
+**Funding Disclaimer:** This work is not funded by any institution. It was independently developed by the researcher and is dedicated to the academic community as a free and open-source tool.
 
 ---
 

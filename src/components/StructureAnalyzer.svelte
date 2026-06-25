@@ -67,7 +67,7 @@
         {#each report.headings as h}
           <div style="padding-left: {(h.level - 1) * 20}px;">
             <span class="dim">H{h.level}:</span> <strong>{h.text}</strong>
-            {#if h.word_count > 0}<span class="dim" style="font-size: 11px; margin-left: 8px;">({h.word_count} words{#if h.word_count < 100} — short{/if})</span>{/if}
+            {#if h.word_count > 0}<span class="dim" style="font-size: 11px; margin-left: 8px;">({h.word_count} words{#if h.word_count < 100}, short{/if})</span>{/if}
           </div>
         {/each}
       </div>

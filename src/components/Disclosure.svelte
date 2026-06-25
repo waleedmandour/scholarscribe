@@ -57,14 +57,14 @@
 
 <h1>Disclosure Assistant</h1>
 <p class="lead">
-  Generate a venue-compliant AI-use disclosure statement in one click. Major academic publishers — ICMJE journals,
-  Nature, IEEE, Elsevier, ACL — now require explicit disclosure of AI assistance. Failing to disclose is itself
+  Generate a venue-compliant AI-use disclosure statement in one click. Major academic publishers, ICMJE journals,
+  Nature, IEEE, Elsevier, ACL, now require explicit disclosure of AI assistance. Failing to disclose is itself
   a research-integrity violation. Use this tool to draft a statement you can paste into your manuscript or cover letter.
 </p>
 
 <div class="card">
   <div class="card-title">Generate a disclosure statement</div>
-  <div class="card-subtitle">All fields are processed locally — nothing is sent anywhere.</div>
+  <div class="card-subtitle">All fields are processed locally, nothing is sent anywhere.</div>
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
     <div>

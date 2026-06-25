@@ -194,7 +194,7 @@
       </tbody>
     </table>
     <p class="muted" style="font-size: 12px; margin-top: 12px;">
-      These are approximate typical limits — always check your specific journal's author guide for current limits.
+      These are approximate typical limits; always check your specific journal's author guide for current limits.
       Many venues also have separate limits for abstracts (~250 words), letters, and supplementary materials.
     </p>
   </div>

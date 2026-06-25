@@ -45,16 +45,16 @@
 <h1>Privacy Audit</h1>
 <p class="lead">
   Every time ScholarScribe reads a file or makes an outbound HTTP call this session, it's recorded here.
-  The log is in-memory only — it's cleared when the app closes. Use it to verify the app is doing
+  The log is in-memory only, it's cleared when the app closes. Use it to verify the app is doing
   exactly what it claims: reading only the files you pick, and talking only to the hosts it should.
 </p>
 
 <div class="callout info">
   <strong>How to read this.</strong>
   <ul style="margin: 6px 0 0 16px; padding: 0;">
-    <li><strong>file_read</strong> — ScholarScribe read a file you picked in a file dialog.</li>
-    <li><strong>http_call</strong> — ScholarScribe made an outbound HTTP request. The <em>target</em> column shows the URL.</li>
-    <li><strong>ollama_command</strong> — ScholarScribe asked your local Ollama to do something (pull, chat, delete). These calls go to <code>127.0.0.1:11434</code> only — they don't leave your machine.</li>
+    <li><strong>file_read</strong>, ScholarScribe read a file you picked in a file dialog.</li>
+    <li><strong>http_call</strong>, ScholarScribe made an outbound HTTP request. The <em>target</em> column shows the URL.</li>
+    <li><strong>ollama_command</strong>, ScholarScribe asked your local Ollama to do something (pull, chat, delete). These calls go to <code>127.0.0.1:11434</code> only, they don't leave your machine.</li>
   </ul>
 </div>
 
@@ -145,5 +145,5 @@
   <strong>Verification tip.</strong>
   Run ScholarScribe behind a network monitor (GlassWire, Wireshark, or Little Snitch on macOS).
   Cross-reference the outbound hosts listed here with what your monitor sees. If they don't match,
-  something is wrong — please report it via the project's SECURITY.md process.
+  something is wrong, please report it via the project's SECURITY.md process.
 </div>

@@ -68,7 +68,7 @@
       inputPath = selected;
       inputKind = "docx";
       docxSourcePath = selected;
-      inputText = `[.docx file loaded: ${selected}]\nChoose an action below:\n  • "Extract & clean text" — extract text and clean it (loses formatting)\n  • "Clean & save as .docx" — clean in place, preserving all tables/images/formatting`;
+      inputText = `[.docx file loaded: ${selected}]\nChoose an action below:\n  • "Extract & clean text", extract text and clean it (loses formatting)\n  • "Clean & save as .docx", clean in place, preserving all tables/images/formatting`;
       result = null;
       preserveResult = null;
     } else {
@@ -112,7 +112,7 @@
     }
   }
 
-  // v0.1.7: one-click strict cleaning — applies ALL 24 operations
+  // v0.1.7: one-click strict cleaning, applies ALL 24 operations
   async function cleanStrict() {
     if (inputKind === "docx" && !docxSourcePath) {
       error = "Pick a .docx file first.";
@@ -208,7 +208,7 @@
 
 <h1>AI Text Cleaner</h1>
 <p class="lead">
-  Cleans common artifacts from text you paste or import — especially from copy-pasting out of
+  Cleans common artifacts from text you paste or import, especially from copy-pasting out of
   PDFs, scanned documents, web pages, and word processors. All cleaning runs locally on your
   device as deterministic rule-based transformations. No text is sent to any server.
   <strong>Two .docx modes</strong>: extract text only (loses formatting), or clean in place
@@ -216,7 +216,7 @@
 </p>
 
 <div class="callout info">
-  <strong>What this does — and doesn't — do.</strong>
+  <strong>What this does, and does not, do.</strong>
   The cleaner fixes <em>artifacts</em> (broken hyphens, ligatures, mojibake, page numbers,
   control characters, hidden chars, asterisks, markdown headings) but does <strong>not</strong>
   rewrite the content or change its meaning. It is not a paraphraser and not an AI-detector
@@ -244,7 +244,7 @@
     <textarea bind:value={inputText} rows="14" placeholder="Paste your text here, or use Open file… to load a .txt/.md/.docx file"></textarea>
     <div class="dim" style="font-size: 11px; margin-top: 4px;">
       {inputText.length.toLocaleString()} characters
-      {#if inputKind === "docx"}· .docx loaded — pick an action below{/if}
+      {#if inputKind === "docx"}· .docx loaded: pick an action below{/if}
     </div>
   </div>
 
@@ -277,7 +277,7 @@
   <button
     on:click={clean}
     disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
-    title={inputKind === "docx" ? "Extract text from the .docx and clean it with the options above. Tables, images, and formatting are lost — output is plain text." : "Clean the pasted/loaded text with the options above."}
+    title={inputKind === "docx" ? "Extract text from the .docx and clean it with the options above. Tables, images, and formatting are lost; output is plain text." : "Clean the pasted/loaded text with the options above."}
   >
     {busy ? "Working…" : inputKind === "docx" ? "Extract & clean text" : "Clean text"}
   </button>
@@ -295,7 +295,7 @@
     <button
       on:click={cleanAndSaveDocx}
       disabled={busy || !docxSourcePath}
-      title="Clean the .docx in place — modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
+      title="Clean the .docx in place, modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
     >
       {busy ? "Working…" : "Clean & save as .docx (preserves format)"}
     </button>
@@ -303,7 +303,7 @@
 </div>
 
 {#if result}
-  <h2>Result — extracted text</h2>
+  <h2>Result: extracted text</h2>
   <div class="card">
     <div class="row" style="margin-bottom: 12px;">
       <div>
@@ -338,7 +338,7 @@
         </ul>
       </div>
     {:else}
-      <div class="no-data">No transformations were needed — the input was already clean.</div>
+      <div class="no-data">No transformations were needed, the input was already clean.</div>
     {/if}
 
     <details>
@@ -381,7 +381,7 @@
 {/if}
 
 {#if preserveResult}
-  <h2>Result — .docx cleaned in place</h2>
+  <h2>Result, .docx cleaned in place</h2>
   <div class="callout info">
     <strong>Saved:</strong> <code>{preserveResult.output_path}</code><br />
     <strong>Text runs cleaned:</strong> {preserveResult.runs_cleaned.toLocaleString()}<br />
@@ -412,7 +412,7 @@
       These operations require cross-paragraph context (e.g. joining sentences that span
       paragraph breaks). Applying them would require restructuring the document, which would
       defeat the purpose of preserving your formatting. To apply them, use
-      "Extract &amp; clean text" instead — output is plain text but all transformations run.
+      "Extract &amp; clean text" instead, output is plain text but all transformations run.
     </p>
   </div>
 

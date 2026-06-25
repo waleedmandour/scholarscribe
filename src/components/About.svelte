@@ -48,12 +48,12 @@
     transparently and on their own device. Five modules:
   </p>
   <ul style="margin: 0; padding-left: 20px; line-height: 1.7;">
-    <li><strong>Models</strong> — Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
-    <li><strong>Style Analysis</strong> — Compare a draft to a sample of <em>your own</em> prior writing. Includes reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog).</li>
-    <li><strong>Chat</strong> — Local-only chat with a system-prompt guardrail that refuses requests to evade detectors or fabricate citations.</li>
-    <li><strong>Disclosure Assistant</strong> — Generate venue-compliant AI-use disclosure statements for ICMJE, Nature, IEEE, Elsevier, ACL.</li>
-    <li><strong>Detector Literacy</strong> — Plain-English explainer of how AI detectors work and where they fail, with peer-reviewed citations.</li>
-    <li><strong>Privacy Audit</strong> — In-session log of every file read and outbound HTTP call, so you can verify the app's privacy claims yourself.</li>
+    <li><strong>Models</strong>, Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
+    <li><strong>Style Analysis</strong>, Compare a draft to a sample of <em>your own</em> prior writing. Includes reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog).</li>
+    <li><strong>Chat</strong>, Local-only chat with a system-prompt guardrail that refuses requests to evade detectors or fabricate citations.</li>
+    <li><strong>Disclosure Assistant</strong>, Generate venue-compliant AI-use disclosure statements for ICMJE, Nature, IEEE, Elsevier, ACL.</li>
+    <li><strong>Detector Literacy</strong>, Plain-English explainer of how AI detectors work and where they fail, with peer-reviewed citations.</li>
+    <li><strong>Privacy Audit</strong>, In-session log of every file read and outbound HTTP call, so you can verify the app's privacy claims yourself.</li>
   </ul>
 </div>
 
@@ -82,7 +82,7 @@
     <strong>Email:</strong> <a href="mailto:waleedmandour@gmail.com">waleedmandour@gmail.com</a><br />
     <strong>Institutional Email:</strong> <a href="mailto:w.abumandour@squ.edu.om">w.abumandour@squ.edu.om</a><br />
     <strong>Affiliation:</strong> Sultan Qaboos University<br />
-    <strong>ORCID:</strong> <a href="https://orcid.org" target="_blank" rel="noopener">0000-0002-XXXX-XXXX</a><br />
+    <strong>ORCID:</strong> <a href="https://orcid.org/0000-0002-9262-5993" target="_blank" rel="noopener">0000-0002-9262-5993</a><br />
     <strong>GitHub:</strong> <a href="https://github.com/waleedmandour" target="_blank" rel="noopener">github.com/waleedmandour</a>
   </div>
   <p class="muted" style="margin: 0 0 12px; font-size: 13px;">
@@ -94,12 +94,16 @@
     Built on top of outstanding open-source work, including:
   </p>
   <ul style="margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.7;">
-    <li><a href="https://tauri.app" target="_blank" rel="noopener">Tauri</a> — the cross-platform desktop framework that keeps the installer tiny.</li>
-    <li><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> — the local LLM runtime that does the heavy lifting of model management.</li>
-    <li><a href="https://svelte.dev" target="_blank" rel="noopener">Svelte</a> — the frontend framework.</li>
+    <li><a href="https://tauri.app" target="_blank" rel="noopener">Tauri</a>: the cross-platform desktop framework that keeps the installer tiny.</li>
+    <li><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>: the local LLM runtime that does the heavy lifting of model management.</li>
+    <li><a href="https://svelte.dev" target="_blank" rel="noopener">Svelte</a>: the frontend framework.</li>
     <li>The open LLM authors: Google (Gemma), Alibaba (Qwen), Meta (Llama), Microsoft (Phi).</li>
-    <li>The detector-evaluation research community, especially Liang et al. (2023), Weber-Wulff et al. (2023), and Laban et al. (2024), whose work the Detector Literacy module is built on.</li>
+    <li>The detector-evaluation research community, especially Liang et al. (2023) and Weber-Wulff et al. (2023), whose work the Detector Literacy module is built on.</li>
   </ul>
+</div>
+
+<div class="callout info">
+  <strong>Funding Disclaimer.</strong> This work is not funded by any institution. It was independently developed by the researcher and is dedicated to the academic community as a free and open-source tool.
 </div>
 
 <h2>Source code & issues</h2>

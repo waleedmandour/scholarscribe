@@ -9,7 +9,7 @@
   let busy = false;
   let error = "";
 
-  const COACH_INTRO = "I'm your academic writing coach. I'll help you develop your ideas through questions — not by writing for you. Share a paragraph or describe what you're working on, and I'll ask probing questions about your reasoning, evidence, and argument structure.";
+  const COACH_INTRO = "I'm your academic writing coach. I'll help you develop your ideas through questions, not by writing for you. Share a paragraph or describe what you're working on, and I'll ask probing questions about your reasoning, evidence, and argument structure.";
 
   async function loadModels() {
     if (!ollamaOk) return;
@@ -43,7 +43,7 @@
 
 <h1>Structured Writing Coach</h1>
 <p class="lead">
-  A specialized chat mode where the LLM acts as a discipline-aware writing coach — asking Socratic
+  A specialized chat mode where the LLM acts as a discipline-aware writing coach, asking Socratic
   questions that draw out your genuine reasoning rather than suggesting text. "What was your reasoning
   for choosing this method over X?" is fundamentally different from "rewrite this paragraph." This
   keeps the intellectual content authentically yours while providing scaffolding.
@@ -98,7 +98,7 @@
         disabled={busy}
       ></textarea>
       <div class="row" style="margin-top: 6px;">
-        <span class="dim" style="font-size: 11px;">The coach asks questions — it does not write for you.</span>
+        <span class="dim" style="font-size: 11px;">The coach asks questions; it does not write for you.</span>
         <div class="spacer"></div>
         <button class="primary shrink" on:click={send} disabled={busy || !input.trim()}>
           {busy ? "Thinking…" : "Send"}

@@ -4,7 +4,7 @@
 
 <h1>Detector Literacy</h1>
 <p class="lead">
-  How AI-detection tools (Turnitin's AI score, GPTZero, Originality.ai, etc.) actually work — what they measure,
+  How AI-detection tools (Turnitin's AI score, GPTZero, Originality.ai, etc.) actually work: what they measure,
   where they fail, and what that means for you as a researcher. This module is educational only; it does not help
   you evade detection.
 </p>
@@ -16,12 +16,12 @@
   </p>
   <ul style="line-height: 1.7;">
     <li>
-      <strong>Perplexity</strong> — roughly, "how surprised was the language model by each next word?" Human writing
+      <strong>Perplexity</strong>: roughly, "how surprised was the language model by each next word?" Human writing
       tends to be less predictable than LLM output, so it scores <em>higher</em> perplexity. Low perplexity is one
       signal that text may be AI-generated.
     </li>
     <li>
-      <strong>Burstiness</strong> — the variation in sentence length and structure across a passage. Human writing
+      <strong>Burstiness</strong>: the variation in sentence length and structure across a passage. Human writing
       mixes short and long sentences. LLM output tends to be more uniform, so low burstiness is a flag.
     </li>
   </ul>
@@ -32,12 +32,12 @@
 </div>
 
 <div class="card">
-  <div class="card-title">Where detectors fail — and who pays the price</div>
+  <div class="card-title">Where detectors fail, and who pays the price</div>
   <p>Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023; Laban et al., 2024) repeatedly find:</p>
   <ul style="line-height: 1.7;">
     <li>
       <strong>False-positive bias against non-native English writers.</strong> Text by authors with lower English
-      proficiency tends to score as "more AI-like" — shorter sentences, simpler connectors, lower perplexity — even
+      proficiency tends to score as "more AI-like" (shorter sentences, simpler connectors, lower perplexity) even
       when entirely human-written. This is a documented equity problem, not a marginal one.
     </li>
     <li>
@@ -61,7 +61,7 @@
   <div class="card-title">What this means for you</div>
   <ul style="line-height: 1.7;">
     <li>
-      <strong>If you wrote the draft yourself</strong>, you do not need to "beat" a detector — you may legitimately
+      <strong>If you wrote the draft yourself</strong>, you do not need to "beat" a detector; you may legitimately
       be flagged by one. The correct response is to push back institutionally: ask for the detector's false-positive
       rate, request human review, and cite the literature above.
     </li>
@@ -90,7 +90,7 @@
 <div class="callout info">
   <strong>Why this tab exists.</strong>
   Understanding detectors is part of research literacy in 2026. But "understanding" and "evading" are different
-  activities. ScholarScribe will not add features whose purpose is to lower detector scores — that path leads to an
+  activities. ScholarScribe will not add features whose purpose is to lower detector scores; that path leads to an
   arms race that harms honest researchers (especially non-native English writers) without solving the real problem:
   transparent communication about AI assistance.
 </div>

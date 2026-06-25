@@ -120,7 +120,7 @@
 <h1>Saved Work</h1>
 <p class="lead">
   ScholarScribe can save your drafts, chat history, and disclosure statements locally on your
-  device. <strong>Persistence is OFF by default</strong> — you must explicitly enable it below.
+  device. <strong>Persistence is OFF by default</strong>, you must explicitly enable it below.
   Nothing is ever synced to the cloud.
 </p>
 
@@ -161,13 +161,13 @@
     <ul style="font-size: 13px; line-height: 1.7; padding-left: 20px;">
       <li><strong>What gets saved:</strong> drafts you explicitly save, chat transcripts you explicitly save, disclosure statements you explicitly save. Nothing is autosaved.</li>
       <li><strong>What doesn't get saved:</strong> the Privacy Audit log (always in-memory, cleared on app close), model files (managed by Ollama), app logs.</li>
-      <li><strong>Where:</strong> <code>{dataDir}</code> — a folder only your user account can read.</li>
-      <li><strong>Cloud sync:</strong> none. The folder is not synced to OneDrive, Dropbox, or any cloud service by ScholarScribe. (If your Windows profile redirects %APPDATA% to OneDrive, that's an OS-level setting outside our control — check your OneDrive settings if you don't want this.)</li>
+      <li><strong>Where:</strong> <code>{dataDir}</code>, a folder only your user account can read.</li>
+      <li><strong>Cloud sync:</strong> none. The folder is not synced to OneDrive, Dropbox, or any cloud service by ScholarScribe. (If your Windows profile redirects %APPDATA% to OneDrive, that's an OS-level setting outside our control, check your OneDrive settings if you don't want this.)</li>
       <li><strong>Encryption:</strong> files are plain JSON. If you need encryption, enable Windows BitLocker on your system drive or store the app data folder in an encrypted container.</li>
-      <li><strong>Deletion:</strong> you can delete any draft or all drafts at any time from this tab. Uninstalling ScholarScribe leaves the data folder in place — you must delete it manually if you want a clean removal.</li>
+      <li><strong>Deletion:</strong> you can delete any draft or all drafts at any time from this tab. Uninstalling ScholarScribe leaves the data folder in place, you must delete it manually if you want a clean removal.</li>
     </ul>
     <div class="row" style="margin-top: 12px;">
-      <button class="primary shrink" on:click={enablePersistence}>I understand — enable persistence</button>
+      <button class="primary shrink" on:click={enablePersistence}>I understand, enable persistence</button>
       <button class="shrink" on:click={() => (showEnableDialog = false)}>Cancel</button>
     </div>
   </div>
@@ -229,7 +229,7 @@
 <div class="callout info">
   <strong>Privacy commitment.</strong>
   ScholarScribe's "no telemetry, nothing leaves your device" promise applies to saved data
-  too. Saved drafts are read by the app only when you click "View" — they are never sent
+  too. Saved drafts are read by the app only when you click "View", they are never sent
   anywhere. If you ever doubt this, watch the Privacy Audit tab while interacting with saved
   drafts: you'll see file_read events pointing at your local data folder, and zero HTTP calls.
 </div>

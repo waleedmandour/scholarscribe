@@ -38,7 +38,7 @@
 
 <div class="callout info">
   <strong>Entirely ethical.</strong> False positives are documented in the peer-reviewed literature.
-  This tool helps researchers respond to them using an evidence-based approach — the same standard
+  This tool helps researchers respond to them using an evidence-based approach, the same standard
   the Disclosure Assistant uses for voluntary AI-use disclosure.
 </div>
 

@@ -34,13 +34,13 @@
   Assesses whether your draft's surface features (vocabulary diversity as a perplexity proxy,
   sentence-length variability as a burstiness proxy) overlap with the typical profile of
   AI-generated text. Based on the documented false-positive risk factors from Liang et al. (2023)
-  and Weber-Wulff et al. (2023). <strong>This is not a detection-evasion tool</strong> — it helps
+  and Weber-Wulff et al. (2023). <strong>This is not a detection-evasion tool</strong>; it helps
   you understand whether your genuine writing shares surface features with AI text.
 </p>
 
 <div class="callout info">
   <strong>Ethical note.</strong> A "high risk" designation means your writing shares surface features
-  with AI-generated text — it does NOT mean the text is AI-generated or will be flagged. Per Liang et al.
+  with AI-generated text; it does NOT mean the text is AI-generated or will be flagged. Per Liang et al.
   (2023), non-native English writers often score in the high-risk zone despite writing entirely original
   work. Use this to understand your stylistic fingerprint, not to evade detection.
 </div>
@@ -79,7 +79,7 @@
     <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px;">
       {#each profile.section_profiles as s}
         <div
-          title="{s.section_label} — Risk: {s.risk_level}, Perplexity: {s.perplexity_proxy.toFixed(2)}, Burstiness: {s.burstiness_proxy.toFixed(2)}"
+          title="{s.section_label}: Risk: {s.risk_level}, Perplexity: {s.perplexity_proxy.toFixed(2)}, Burstiness: {s.burstiness_proxy.toFixed(2)}"
           style="width: 40px; height: 40px; background: {s.risk_color}; border-radius: 4px; cursor: help; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600;"
         >
           {s.word_count}

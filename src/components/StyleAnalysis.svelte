@@ -88,13 +88,13 @@
 <h1>Style Analysis</h1>
 <p class="lead">
   Compare a draft against a sample of <em>your own</em> prior writing. ScholarScribe extracts descriptive stylistic
-  statistics — sentence length, hedging, passive voice, citation density, and others — and reports how closely the
+  statistics (sentence length, hedging, passive voice, citation density, and others) and reports how closely the
   draft matches your established voice. Use this to spot drafts that drift away from your usual register, or to confirm
   that a co-author's edit still sounds like the team.
 </p>
 
 <div class="callout info">
-  <strong>What this is — and isn't.</strong>
+  <strong>What this is, and what it is not.</strong>
   Style Analysis tells <em>you</em> how your draft compares to <em>your own</em> writing. It does not predict or attempt
   to lower AI-detector scores. If you want to understand how detectors work, see the Detector Literacy tab.
 </div>
@@ -168,7 +168,7 @@
 
   <div class="callout info">
     <strong>How to use this.</strong>
-    "Notable" or "substantial" differences aren't inherently bad — they may simply mean you're writing in a different
+    "Notable" or "substantial" differences aren't inherently bad; they may simply mean you're writing in a different
     register (a methods section reads differently from a discussion). Use the table to ask: "is the difference a
     deliberate choice, or did the draft drift away from my voice without me noticing?"
   </div>

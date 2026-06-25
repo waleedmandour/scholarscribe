@@ -180,7 +180,7 @@
 <p class="lead">
   Install open LLMs on your device. All models run locally via
   <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>; no text ever leaves your
-  computer. Pick a model whose <strong>min RAM</strong> fits your machine — running an undersized model
+  computer. Pick a model whose <strong>min RAM</strong> fits your machine; running an undersized model
   is the most common cause of slow responses.
 </p>
 
@@ -202,7 +202,7 @@
       <li>Download Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> (free, ~150 MB).</li>
       <li>Run the installer. On Windows it auto-starts as a background service.</li>
       <li>Confirm the Ollama icon (a llama) appears in your system tray.</li>
-      <li>Come back here — the status pill in the sidebar will turn green.</li>
+      <li>Come back here; the status pill in the sidebar will turn green.</li>
     </ol>
   </div>
 {/if}
@@ -312,6 +312,6 @@
 <div class="callout info">
   <strong>Privacy:</strong> Downloading a model only contacts <code>registry.ollama.ai</code> once, to fetch the model weights.
   After download, all inference happens entirely on your device. No prompts, no drafts, and no other text are ever sent anywhere.
-  Importing a local <code>.gguf</code> file makes <em>zero</em> outbound network calls — Ollama registers the file from disk.
+  Importing a local <code>.gguf</code> file makes <em>zero</em> outbound network calls; Ollama registers the file from disk.
 </div>
 

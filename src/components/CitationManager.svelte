@@ -53,12 +53,12 @@
   Validate your draft's in-text citations against your <code>.bib</code> (BibTeX) file.
   Catches undefined citations (likely fabricated or wrong), unused references (trim your
   reference list before submission), and shows how many times each reference is cited.
-  All parsing is local — your draft and .bib file never leave your device.
+  All parsing is local, your draft and .bib file never leave your device.
 </p>
 
 <div class="callout info">
   <strong>Why this matters.</strong>
-  Citation fabrication is one of the most common forms of research misconduct — and
+  Citation fabrication is one of the most common forms of research misconduct, and
   one of the easiest to commit accidentally when working with AI assistants that
   invent plausible-looking references. This tab gives you a definitive, local check
   that every in-text citation in your draft matches a real entry in your .bib file.
@@ -136,7 +136,7 @@
   {#if report.undefined_citations.length > 0}
     <h2>⚠️ Undefined citations ({report.undefined_citations.length})</h2>
     <div class="card">
-      <div class="card-subtitle">In your draft but not in your .bib file. These are likely fabricated or wrong — verify each one.</div>
+      <div class="card-subtitle">In your draft but not in your .bib file. These are likely fabricated or wrong, verify each one.</div>
       <table>
         <thead><tr><th>Citation in draft</th><th>Author</th><th>Year</th></tr></thead>
         <tbody>
