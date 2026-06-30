@@ -34,5 +34,13 @@ sysinfo = "0.32"
 url = "2"
 zip = "2"
 
+# Pin time to a version compatible with cookie 0.18.1.
+# time 0.3.52 introduced a breaking change to Parsed::parse() (added a
+# required `defaults: Option<Parsed>` argument) in a patch release, which
+# breaks cookie 0.18.1's call site at parse.rs:226. Pin to 0.3.36 which
+# has the original 1-argument signature. Remove this pin once cookie
+# publishes a release compatible with time >= 0.3.52.
+time = "=0.3.36"
+
 [features]
 custom-protocol = ["tauri/custom-protocol"]
