@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { api, type SystemInfo } from "../lib/api";
+  import { openTour } from "../lib/onboarding";
 
   let sysInfo: SystemInfo | null = null;
   let appVersion = "";
@@ -17,6 +18,15 @@
     }
   });
 </script>
+
+<div class="callout info" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+  <div>
+    <strong>New here?</strong> Take the 5-step interactive tour to learn the essentials in about a minute.
+  </div>
+  <button on:click={openTour} style="flex: 0 0 auto;">
+    ✦ Walk me through the app
+  </button>
+</div>
 
 <h1>About ScholarScribe</h1>
 <p class="lead">

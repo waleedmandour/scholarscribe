@@ -19,7 +19,9 @@
   import PrivacyAudit from "./components/PrivacyAudit.svelte";
   import SavedWork from "./components/SavedWork.svelte";
   import About from "./components/About.svelte";
+  import WelcomeTour from "./components/WelcomeTour.svelte";
   import { api } from "./lib/api";
+  import { openTour } from "./lib/onboarding";
 
   type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
@@ -141,8 +143,15 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.1.7 · MIT · local-only
+        v0.2.0 · MIT · local-only
       </div>
+      <button
+        class="walk-through-btn"
+        on:click={openTour}
+        title="Open the interactive welcome tour"
+      >
+        ✦ Walk me through the app
+      </button>
     </div>
   </aside>
 
@@ -189,6 +198,8 @@
   </main>
 </div>
 
+<WelcomeTour on:jump={(e) => (active = e.detail)} />
+
 <style>
   .theme-toggle {
     background: transparent;
@@ -205,5 +216,23 @@
   .sidebar .brand {
     gap: 8px;
     align-items: center;
+  }
+  .walk-through-btn {
+    margin-top: 10px;
+    width: 100%;
+    font-size: 12px;
+    padding: 6px 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: background 0.12s ease;
+  }
+  .walk-through-btn:hover {
+    background: var(--accent);
+    color: white;
   }
 </style>

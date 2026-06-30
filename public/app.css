@@ -20,8 +20,8 @@
   --radius: 8px;
   --radius-sm: 5px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
   color-scheme: light;
 }
 
@@ -89,8 +89,8 @@ html, body {
 
 button {
   font-family: inherit;
-  font-size: 13px;
-  padding: 6px 12px;
+  font-size: 14px;
+  padding: 7px 14px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
   color: var(--text);
@@ -126,8 +126,8 @@ button.danger:hover:not(:disabled) {
 
 input[type="text"], textarea, select {
   font-family: inherit;
-  font-size: 13px;
-  padding: 7px 10px;
+  font-size: 14px;
+  padding: 8px 11px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
   color: var(--text);
@@ -147,7 +147,7 @@ input:focus, textarea:focus, select:focus {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 230px 1fr;
   flex: 1;
   min-height: 0;
 }
@@ -155,7 +155,7 @@ input:focus, textarea:focus, select:focus {
 .sidebar {
   background: var(--bg-elev);
   border-right: 1px solid var(--border);
-  padding: 16px 12px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -163,7 +163,7 @@ input:focus, textarea:focus, select:focus {
 
 .sidebar .brand {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   margin-bottom: 4px;
   padding: 4px 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -184,11 +184,11 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   user-select: none;
 }
@@ -196,26 +196,26 @@ input:focus, textarea:focus, select:focus {
 .nav-item.active { background: var(--accent-soft); color: var(--accent); }
 
 .main {
-  padding: 24px 32px;
+  padding: 28px 36px;
   overflow-y: auto;
   background: var(--bg);
 }
 
 .main h1 {
-  font-size: 20px;
-  margin: 0 0 4px;
+  font-size: 22px;
+  margin: 0 0 6px;
   font-weight: 600;
 }
 .main h2 {
-  font-size: 15px;
-  margin: 24px 0 8px;
+  font-size: 17px;
+  margin: 26px 0 10px;
   font-weight: 600;
   color: var(--text);
 }
 .main .lead {
   color: var(--text-muted);
-  margin: 0 0 20px;
-  font-size: 13px;
+  margin: 0 0 22px;
+  font-size: 14.5px;
   max-width: 680px;
 }
 
@@ -223,18 +223,18 @@ input:focus, textarea:focus, select:focus {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px 20px;
+  padding: 20px 24px;
   margin-bottom: 16px;
   box-shadow: var(--shadow);
 }
 .card .card-title {
   font-weight: 600;
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .card .card-subtitle {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 12.5px;
   margin: 0 0 12px;
 }
 
@@ -244,9 +244,9 @@ input:focus, textarea:focus, select:focus {
 
 .tag {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 11.5px;
   background: var(--bg-elev-2);
   color: var(--text-muted);
   margin-right: 4px;
@@ -273,9 +273,9 @@ input:focus, textarea:focus, select:focus {
 .status-pill.bad { background: rgba(192, 57, 43, 0.12); color: var(--danger); }
 .status-pill.bad .pulse { background: var(--danger); }
 
-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-th { font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); }
+th { font-weight: 600; color: var(--text-muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; }
 
 .progress {
   height: 6px;
@@ -292,9 +292,9 @@ th { font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform
 .callout {
   border-left: 3px solid var(--accent);
   background: var(--accent-soft);
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: 13px;
+  font-size: 14px;
   margin: 12px 0;
 }
 .callout.warn {
@@ -308,11 +308,11 @@ th { font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform
 
 pre {
   background: var(--code-bg);
-  padding: 12px 14px;
+  padding: 13px 16px;
   border-radius: var(--radius-sm);
   overflow-x: auto;
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 12.5px;
+  line-height: 1.6;
   margin: 0;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   color: var(--text);

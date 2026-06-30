@@ -6,6 +6,7 @@ build/
 # Rust / Tauri
 src-tauri/target/
 src-tauri/Cargo.lock
+src-tauri/gen/
 
 # IDE
 .vscode/
