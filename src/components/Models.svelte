@@ -43,30 +43,39 @@
   }
 
   onMount(async () => {
-    recommended = await api.recommendedModels();
     try {
-      sysInfo = await api.systemInfo();
-    } catch (e) {
-      console.error("system_info failed", e);
-    }
-    const u1 = await api.onPullProgress((p) => {
-      pullInProgress = { ...pullInProgress, [p.model]: p };
-    });
-    const u2 = await api.onPullEnd((info) => {
-      pullInProgress = { ...pullInProgress, [info.model]: null };
-      if (info.ok) {
-        pullError = { ...pullError, [info.model]: "" };
-        refresh();
-        dispatch("changed");
-      } else {
-        pullError = {
-          ...pullError,
-          [info.model]: "Pull failed. Check that Ollama is running and the model name is correct.",
-        };
+      try {
+        recommended = await api.recommendedModels();
+      } catch (e) {
+        console.error("recommended_models failed", e);
       }
-    });
-    listeners.push(u1, u2);
-    refresh();
+      try {
+        sysInfo = await api.systemInfo();
+      } catch (e) {
+        console.error("system_info failed", e);
+      }
+      const u1 = await api.onPullProgress((p) => {
+        pullInProgress = { ...pullInProgress, [p.model]: p };
+      });
+      const u2 = await api.onPullEnd((info) => {
+        pullInProgress = { ...pullInProgress, [info.model]: null };
+        if (info.ok) {
+          pullError = { ...pullError, [info.model]: "" };
+          refresh();
+          dispatch("changed");
+        } else {
+          pullError = {
+            ...pullError,
+            [info.model]: "Pull failed. Check that Ollama is running and the model name is correct.",
+          };
+        }
+      });
+      listeners.push(u1, u2);
+      refresh();
+    } catch (e) {
+      console.error("Models onMount failed", e);
+      error = "Failed to initialize Models tab. Check that the app is running correctly.";
+    }
   });
 
   onDestroy(() => {

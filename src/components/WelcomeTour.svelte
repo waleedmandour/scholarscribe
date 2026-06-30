@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { showTour, completeTour, closeTour } from "../lib/onboarding";
 
   type TabId =
@@ -80,7 +80,7 @@
     },
   ];
 
-  $: if (!showTour) step = 0;
+  $: if (!$showTour) step = 0;
 
   function next() {
     if (step < steps.length - 1) step += 1;
@@ -110,7 +110,7 @@
 
   // Keyboard navigation: Esc = skip, ←/→ = nav
   function onKeydown(e: KeyboardEvent) {
-    if (!showTour) return;
+    if (!$showTour) return;
     if (e.key === "Escape") {
       e.preventDefault();
       skip();
@@ -126,24 +126,25 @@
   onMount(() => {
     previouslyFocused = document.activeElement as HTMLElement | null;
     window.addEventListener("keydown", onKeydown);
-    // Focus the modal container for screen readers.
-    setTimeout(() => modalEl?.focus(), 50);
   });
 
-  onDestroy(() => {
-    window.removeEventListener("keydown", onKeydown);
+  // Focus the modal when it opens; restore focus when it closes.
+  $: if ($showTour) {
+    setTimeout(() => modalEl?.focus(), 50);
+  } else if (previouslyFocused) {
     previouslyFocused?.focus?.();
-  });
+    previouslyFocused = null;
+  }
 
   $: isLast = step === steps.length - 1;
 </script>
 
-{#if showTour}
-  <button
+{#if $showTour}
+  <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+  <div
     class="tour-backdrop"
     on:click={skip}
-    aria-label="Close tour"
-    title="Close tour"
+    role="presentation"
   >
     <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
     <div
@@ -314,7 +315,7 @@
         </div>
       </div>
     </div>
-  </button>
+  </div>
 {/if}
 
 <style>
@@ -329,17 +330,7 @@
     align-items: center;
     justify-content: center;
     animation: tour-fade-in 200ms ease-out;
-    /* Reset button defaults so it acts as a pure backdrop */
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100vh;
     cursor: default;
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-    text-align: left;
   }
 
   .tour-modal {
