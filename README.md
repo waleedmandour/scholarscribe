@@ -3,12 +3,14 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: Pre-release](https://img.shields.io/badge/Status-Pre--release-orange.svg)]()
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
+[![Status: v0.2.0](https://img.shields.io/badge/Status-v0.2.0-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v0.2.0)
+[![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
+- **Get a guided 5-step welcome tour** *(new in v0.2.0)* — on first launch, an interactive modal walks you through privacy, model install, the 19 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Enjoy comfortable typography** *(new in v0.2.0)* — every text size has been bumped for reading and navigation comfort (body 15px, h1 22px, h2 17px, line-height 1.6). No fonts changed — just sizes and spacing.
 - **Run open LLMs fully offline** — Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google calls.
 - **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner — 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
@@ -19,8 +21,10 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Generate a structured abstract** — local LLM produces a Background/Methods/Results/Conclusions abstract from your draft. Also generates section-by-section commentary.
 - **Assess authenticity risk** — surface whether your draft's perplexity/burstiness proxies overlap with typical AI-text profiles (based on Liang et al. 2023; Weber-Wulff et al. 2023). Not an evasion tool — helps you understand your writing's stylistic fingerprint.
 - **Check voice consistency** — flag within-document stylistic inconsistencies where sentence length, hedging, or vocabulary abruptly shifts.
+- **Build a multi-paper stylistic fingerprint** — analyze several of your prior papers together to characterize your baseline writing style, then compare a draft against that fingerprint.
 - **Maintain a writing process journal** — auto-saves timestamped snapshots of your draft, creating a verifiable process record for authentic authorship evidence.
 - **Generate a false-positive appeal letter** — if falsely flagged by an AI detector, generate a professional, evidence-based appeal letter citing the peer-reviewed literature.
+- **Get local-LLM coaching on a paragraph or argument** — the Writing Coach tab gives you focused, in-context feedback without leaving the app.
 - **Analyze whether a draft sounds like *your own* prior writing** — descriptive statistics including sentence length, hedging, passive voice, plus readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
 - **Generate venue-compliant AI-use disclosure statements** for ICMJE, Nature, IEEE, Elsevier, ACL, and more.
 - **Understand how AI detectors actually work** — and where they fail. Educational content with peer-reviewed citations.
@@ -53,7 +57,7 @@ ScholarScribe is designed for researchers who have genuinely written or substant
 - **Does not contact any third-party API.** The only network call is to `registry.ollama.ai` when you choose to download a model — and that call carries no text, no prompts, no usage data.
 - **Does not collect telemetry, analytics, or crash reports.**
 - **Does not read any file you didn't explicitly pick in a file dialog.**
-- **Does not fabricate citations.** The Chat tab's system prompt forbids this. The new Citation Manager feature exists precisely to catch accidental fabrication by listing every in-text citation that doesn't match a real `.bib` entry.
+- **Does not fabricate citations.** The Chat tab's system prompt forbids this. The Citation Manager tab exists precisely to catch accidental fabrication by listing every in-text citation that doesn't match a real `.bib` entry.
 
 If you are looking for a tool to "humanize" AI text to bypass Turnitin, this is not that tool. The author of this project believes detection-evasion tools cause net harm to research integrity — and disproportionately harm honest researchers, especially non-native English writers, who are most likely to be falsely accused of AI use and would be most harmed by an arms race between evaders and detectors.
 
@@ -71,9 +75,9 @@ See [`docs/ETHICS.md`](docs/ETHICS.md) for the full ethical-use policy.
 
 ScholarScribe uses [Ollama](https://ollama.com) as its backend — a free, open-source local LLM runner.
 
-1. Download Ollama from <https://ollama.com/download> (Windows installer, ~150 MB).
+1. Download Ollama from <https://ollama.com/download> (installer for Windows, macOS, or Linux, ~150 MB).
 2. Run the installer. Ollama starts automatically as a background service.
-3. Look for the Ollama icon (a llama) in your system tray.
+3. On Windows, look for the Ollama icon (a llama) in your system tray. On macOS, in your menu bar. On Linux, it runs as a systemd service.
 
 That's it — you don't need to use Ollama directly. ScholarScribe talks to it on `http://127.0.0.1:11434`.
 
@@ -81,22 +85,41 @@ That's it — you don't need to use Ollama directly. ScholarScribe talks to it o
 
 **Option A — download the pre-built installer (recommended for most users)**
 
-Grab the latest `.msi` or `.exe` from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases). Double-click to install. ScholarScribe will appear in your Start menu.
+Grab the latest installer for your platform from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases):
+
+| Platform | Installer | Status |
+|---|---|---|
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v0.2.0 |
+| **Linux** (Fedora/RHEL/SUSE) | `.rpm` | ✅ Built for v0.2.0 |
+| **Windows** | `.msi` / `.exe` | Build from source, or wait for the v0.2.1 Windows build |
+| **macOS** (Intel / Apple Silicon) | `.dmg` | Build from source, or wait for the v0.2.1 macOS build |
+
+Install with your platform's package manager:
+
+```bash
+# Linux (Debian/Ubuntu)
+sudo apt install ./ScholarScribe_0.2.0_amd64.deb
+
+# Linux (Fedora/RHEL/SUSE)
+sudo dnf install ./ScholarScribe-0.2.0-1.x86_64.rpm
+
+# Windows / macOS — double-click the .msi / .dmg
+```
 
 **Option B — build from source**
 
-Requires Rust 1.77+, Node.js 18+, and the Tauri prerequisites (Microsoft Visual Studio C++ Build Tools, WebView2 — see the [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/)).
+Requires Rust 1.77+, Node.js 18+, and the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform (Microsoft Visual Studio C++ Build Tools + WebView2 on Windows; Xcode Command Line Tools on macOS; `libwebkit2gtk-4.1-dev` and friends on Linux).
 
-```powershell
+```bash
 git clone https://github.com/waleedmandour/scholarscribe.git
 cd scholarscribe
 npm install
 npm run tauri build
 ```
 
-The installer appears in `src-tauri/target/release/bundle/`.
+The installers appear in `src-tauri/target/release/bundle/`.
 
-**Option C — let a bootstrap script do it**
+**Option C — let a bootstrap script do it (Windows only)**
 
 If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for / install all prerequisites (Rust, Node, MSVC, WebView2, Ollama), run `npm install` and `cargo check`, then build the .msi. Run it from PowerShell:
 
@@ -106,7 +129,9 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 5-minute walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**.
+When you first launch ScholarScribe, an **interactive 5-step welcome tour** appears automatically: Welcome → Privacy → Install a model → 19 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+
+See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
 ---
 
@@ -168,7 +193,7 @@ You can also:
 1. **Extract & clean text** — extracts text and runs all enabled transformations. Loses formatting but applies every cleaner including cross-paragraph ones.
 2. **Clean & save as .docx (preserves format)** — modifies each `<w:t>` text run in place. Preserves all tables, images, hyperlinks, headers/footers, footnotes/endnotes, styles, theme, and track changes. Saves to a new `.docx` (default name `<original>-cleaned.docx`). Cross-paragraph operations (join broken lines, fix broken citations, remove page numbers) are skipped because they'd require restructuring the document.
 
-### Citation Manager tab *(new in v0.1.6)*
+### Citation Manager tab
 
 Validates your draft's in-text citations against your `.bib` (BibTeX) file. Three checks:
 
@@ -178,7 +203,7 @@ Validates your draft's in-text citations against your `.bib` (BibTeX) file. Thre
 
 All parsing is local. No `.bib` content leaves your device. The BibTeX parser is hand-written (no third-party BibTeX dependency).
 
-### Document Statistics tab *(new in v0.1.6)*
+### Document Statistics tab
 
 A quick health-check panel for your draft:
 
@@ -188,6 +213,67 @@ A quick health-check panel for your draft:
 - Estimated reading time (at 200 wpm)
 - Flesch Reading Ease, Flesch-Kincaid Grade Level, Gunning Fog Index
 - Comparison panel: how your draft compares to common journal targets (e.g. Nature articles average ~5,000 words; ICMJE medical articles ~3,500 words; IEEE conference papers ~6,000 words)
+
+### Structure Analyzer tab
+
+Extract a hierarchical view of your draft's heading tree and spot structural issues before submission:
+
+- **Heading tree** — visual outline of all headings (`#`, `##`, `###`) detected in the document, with section lengths.
+- **Missing-section suggestions** — flags missing canonical sections (Introduction, Methods, Results, Discussion, Conclusion, etc.) based on common academic structures.
+- **Short-section warnings** — highlights sections under a configurable word-count threshold (often a sign of an under-developed argument).
+
+All parsing is local; no document content leaves your device.
+
+### Abstract Generator tab
+
+Generate a structured abstract from your draft using a local LLM. Produces:
+
+- A **Background / Methods / Results / Conclusions** abstract in the IMRAD-abstract style favored by most journals.
+- Optional **section-by-section commentary** — short notes on each section of your draft, useful for catching weak spots.
+
+Requires an installed model (see the Models tab).
+
+### Risk Profile tab
+
+Assesses whether your draft shares surface features with typical AI-generated text. Reports:
+
+- **Perplexity and burstiness proxies** — the two main signals most AI-text detectors use.
+- **Comparison to known AI-text and human-text distributions** (based on Liang et al. 2023; Weber-Wulff et al. 2023).
+- **Plain-English interpretation** — "overlap is low / moderate / high".
+
+**Not an evasion tool.** Risk Profile helps *you* understand whether your writing has stylistic fingerprints that overlap with AI text. It does not modify your draft or attempt to lower detection scores. See the Detector Literacy tab for context on why these proxies are imperfect.
+
+### Voice Consistency tab
+
+Flags within-document stylistic inconsistencies where sentence length, hedging, or vocabulary abruptly shifts between paragraphs. Useful when you've written sections at different times or co-authored with others — it surfaces the seams.
+
+Reports per-paragraph metrics (sentence length, hedge density, vocabulary diversity) and flags paragraphs whose profile deviates significantly from the document's mean.
+
+### Writing Journal tab
+
+Auto-saves timestamped snapshots of your draft as you work, creating a verifiable process record for authentic authorship evidence. Each snapshot records:
+
+- Timestamp (local time + UTC)
+- Word count at time of snapshot
+- Full text of the draft
+
+Snapshots are stored locally as plain JSON files. You can export the entire journal as a single archive for evidence purposes (e.g. to demonstrate an authentic writing process if falsely accused of AI use).
+
+### Appeal Letter tab
+
+If you're falsely flagged by an AI detector, generate a professional, evidence-based appeal letter citing the peer-reviewed literature. Fill in your details (name, institution, manuscript title, venue, detector used, detector score) and your writing process — the local LLM produces a formal letter you can edit and send to your editor or institutional integrity office.
+
+The letter template draws on Liang et al. (2023), Weber-Wulff et al. (2023), and Laban et al. (2024) — the same research that informs the Detector Literacy tab.
+
+### Style Fingerprint tab
+
+Build a multi-paper stylistic fingerprint of **your own** prior writing. Upload several of your prior papers; ScholarScribe aggregates their stylistic features (sentence length, vocabulary diversity, hedging, passive-voice density, connector density, readability metrics) into a single "fingerprint" profile. You can then compare a new draft against that fingerprint to spot drafts that drift away from your voice.
+
+Differs from the Style Analysis tab (which compares a draft to a single reference sample) — Fingerprint compares against the *aggregate* of multiple papers, so it's more robust to variation between individual papers.
+
+### Writing Coach tab
+
+Focused, in-context coaching on a paragraph or argument. Paste a paragraph and ask the local LLM for feedback ("Is this argument clear?", "Suggest a stronger topic sentence", "What's missing from this methods section?"). The system prompt includes the same guardrails as the Chat tab — refuses evasion and fabrication requests.
 
 ### Style Analysis tab
 
@@ -254,18 +340,18 @@ Filterable event table with timestamps. The audit log is **in-memory only** — 
 
 Opt-in local persistence. Disabled by default. When enabled:
 
-- Drafts, chat transcripts, disclosure statements save as plain JSON files in `%APPDATA%\com.scholarscribe.app\data\`
+- Drafts, chat transcripts, disclosure statements save as plain JSON files in your platform's app-data directory (`%APPDATA%\com.scholarscribe.app\data\` on Windows, `~/Library/Application Support/com.scholarscribe.app/data/` on macOS, `~/.local/share/com.scholarscribe.app/data/` on Linux)
 - Plain JSON — inspectable in any text editor
-- Never synced to cloud (no OneDrive/Dropbox integration by ScholarScribe)
+- Never synced to cloud (no OneDrive/Dropbox/iCloud integration by ScholarScribe)
 - Per-draft delete + "Delete all"
-- "Open folder in Explorer" button to see exactly what's stored
+- "Open folder in Explorer/Finder/File Manager" button to see exactly what's stored
 - Full privacy disclosure dialog before enabling — explains what gets saved, where, encryption status, deletion behavior
 
 The Privacy Audit log is **never** persisted — it stays in-memory only.
 
 ### About tab
 
-Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), and acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators.
+Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators, and a "Walk me through the app" button to re-open the welcome tour.
 
 ---
 
@@ -278,7 +364,7 @@ Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour),
 | User text | **Never leaves your device.** Drafts, reference samples, chat messages, .bib files — all stay in memory or local files. |
 | Third-party APIs | **None.** No OpenAI, Anthropic, Google AI, or any other cloud LLM API. |
 | Crash reports | None collected. Errors are written to a local log file only. |
-| Saved drafts | Opt-in only. Plain JSON in `%APPDATA%\com.scholarscribe.app\data\`. Never synced. |
+| Saved drafts | Opt-in only. Plain JSON files on your device: `%APPDATA%\com.scholarscribe.app\data\` (Windows), `~/Library/Application Support/com.scholarscribe.app/data/` (macOS), `~/.local/share/com.scholarscribe.app/data/` (Linux). Never synced. |
 | Audit log | In-memory only. Cleared on app close. Never persisted. |
 
 The CSP in `tauri.conf.json` explicitly restricts outbound connections from the UI to `127.0.0.1:11434` (your local Ollama). The Rust backend only contacts `ollama.com` for model downloads and nothing else.
@@ -305,31 +391,48 @@ scholarscribe/
 │   │   ├── style.rs            Style analysis (descriptive statistics + readability)
 │   │   ├── text_cleaner.rs     12 cleaning operations + per-run variant for .docx
 │   │   ├── docx_reading.rs     .docx → plain text extraction (zip + OOXML walk)
-│   │   ├── citation_manager.rs BibTeX parser + citation validator (v0.1.6+)
-│   │   ├── document_stats.rs   Document statistics (v0.1.6+)
+│   │   ├── citation_manager.rs BibTeX parser + citation validator
+│   │   ├── document_stats.rs   Document statistics
+│   │   ├── structure_analyzer.rs  Heading tree + missing-section detection
+│   │   ├── abstract_generator.rs  Local-LLM structured abstract generation
+│   │   ├── risk_profiler.rs    AI-text surface-feature analysis (awareness, not evasion)
+│   │   ├── voice_consistency.rs   Within-document stylistic-shift detection
+│   │   ├── writing_journal.rs  Timestamped draft snapshots for authorship evidence
+│   │   ├── appeal_letter.rs    Evidence-based false-positive appeal generator
+│   │   ├── style_fingerprint.rs   Multi-paper stylistic fingerprint aggregation
 │   │   ├── disclosure.rs       Disclosure-statement generator
 │   │   ├── persistence.rs      Opt-in local storage (settings + drafts)
 │   │   └── audit.rs            In-memory privacy audit log
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── src/                        Svelte frontend
-│   ├── App.svelte              Shell + sidebar + theme toggle
+│   ├── App.svelte              Shell + sidebar + theme toggle + welcome-tour mount
 │   ├── lib/api.ts              Typed Tauri invoke wrappers
+│   ├── lib/onboarding.ts       Welcome-tour visibility store (localStorage-backed)
 │   └── components/
 │       ├── Models.svelte
 │       ├── AITextCleaner.svelte
-│       ├── CitationManager.svelte   (v0.1.6+)
-│       ├── DocumentStats.svelte     (v0.1.6+)
+│       ├── CitationManager.svelte
+│       ├── DocumentStats.svelte
+│       ├── StructureAnalyzer.svelte
+│       ├── AbstractGenerator.svelte
+│       ├── RiskProfiler.svelte
+│       ├── VoiceConsistency.svelte
+│       ├── WritingJournal.svelte
+│       ├── AppealLetter.svelte
+│       ├── StyleFingerprint.svelte
+│       ├── WritingCoach.svelte
 │       ├── StyleAnalysis.svelte
 │       ├── Chat.svelte
 │       ├── Disclosure.svelte
 │       ├── DetectorLiteracy.svelte
 │       ├── PrivacyAudit.svelte
 │       ├── SavedWork.svelte
+│       ├── WelcomeTour.svelte     5-step interactive first-run tour (v0.2.0+)
 │       └── About.svelte
 ├── docs/
 │   └── ETHICS.md               Full ethical-use policy
-├── USER_GUIDE.md               5-minute quick start
+├── USER_GUIDE.md               2-page quick start (also shipped as PDF in releases)
 ├── USER_MANUAL.md              Full reference manual
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -395,4 +498,4 @@ MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
 
 ---
 
-*Built with LOVE to the Academic Community.*
+*Built with ❤ to the Academic Community.*
