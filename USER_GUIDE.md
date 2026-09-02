@@ -28,7 +28,7 @@ Open the **Models** tab. The top card shows your CPU and RAM. Pick a model that 
 
 Click **Download** and wait 2–15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…** — ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
 
-## 3. The 19 tabs at a glance
+## 3. The 20 tabs at a glance
 
 The sidebar is organized in the order you'd typically use them while writing a manuscript:
 
@@ -47,12 +47,13 @@ The sidebar is organized in the order you'd typically use them while writing a m
 | 11 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
 | 12 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
 | 13 | **Style Analysis** | Compare a draft to your own prior writing |
-| 14 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
-| 15 | **Disclosure** | Generate venue-compliant AI-use statements |
-| 16 | **Detector Literacy** | How AI detectors work — and where they fail |
-| 17 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
-| 18 | **Saved Work** | Opt-in local JSON persistence (off by default) |
-| 19 | **About** | Version, environment, credits |
+| 14 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
+| 15 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
+| 16 | **Disclosure** | Generate venue-compliant AI-use statements |
+| 17 | **Detector Literacy** | How AI detectors work — and where they fail |
+| 18 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
+| 19 | **Saved Work** | Opt-in local JSON persistence (off by default) |
+| 20 | **About** | Version, environment, credits |
 
 ## 4. Common workflows
 
@@ -74,8 +75,11 @@ The sidebar is organized in the order you'd typically use them while writing a m
 ### D. Disclose AI assistance (recommended)
 **Disclosure** tab → pick your venue (ICMJE, Nature, IEEE, Elsevier, ACL, or Generic) → fill in tool, task, model, name → **Generate disclosure** → paste the statement into your manuscript or cover letter. Each template links to the venue's official AI-use policy.
 
+### D2. Offer verifiable evidence of your writing process (v2.1.0)
+**Provenance** tab (opt-in — the first click shows exactly what the feature does and does not do) → choose a `.docx` you edited with **Word Track Changes on** (or connect a Google Doc) → review the session timeline → **Export provenance (.zip)**. The package contains a hash-chained, Ed25519-signed manifest — hashes and counts, never text. Anyone can verify it offline by opening `verifier/index.html` from the repository. Remember: this is *evidence you can offer*, not an AI-detection score and not proof of authorship. See `docs/PROVENANCE_SPEC.md` for the full limitations.
+
 ### E. Verify ScholarScribe's privacy claims yourself
-**Privacy Audit** tab — watch the live log as you use other tabs. The only outbound host you should ever see is `registry.ollama.ai` (model downloads, no text). Anything else is a red flag.
+**Privacy Audit** tab — watch the live log as you use other tabs. The only outbound host you should ever see is `registry.ollama.ai` (model downloads, no text) — plus, if you explicitly connected a Google Doc, the Google endpoints it called. Anything else is a red flag.
 
 ## 5. Privacy in one sentence
 

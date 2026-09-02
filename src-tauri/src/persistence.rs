@@ -30,6 +30,10 @@ static DATA_DIR: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));
 pub struct Settings {
     /// Whether the user has opted in to local persistence. Default: false.
     pub persistence_enabled: bool,
+    /// Whether the user has opted in to the Writing Provenance feature
+    /// (v2.1.0). Default: false — the disclosure dialog sets this to true.
+    #[serde(default)]
+    pub provenance_enabled: bool,
     /// Last-used theme: "light" | "dark" | "auto". Default: "auto".
     pub theme: String,
     /// App version that wrote this settings file. Used for migrations.
@@ -40,6 +44,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             persistence_enabled: false,
+            provenance_enabled: false,
             theme: "auto".into(),
             version: env!("CARGO_PKG_VERSION").into(),
         }
@@ -148,6 +153,27 @@ pub fn persistence_disable(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn persistence_status(app: AppHandle) -> Result<bool, String> {
     Ok(settings_get(app)?.persistence_enabled)
+}
+
+// ---------- Writing Provenance opt-in (v2.1.0) ----------
+
+#[tauri::command]
+pub fn provenance_enable(app: AppHandle) -> Result<(), String> {
+    let mut s = settings_get(app.clone())?;
+    s.provenance_enabled = true;
+    settings_set(app, s)
+}
+
+#[tauri::command]
+pub fn provenance_disable(app: AppHandle) -> Result<(), String> {
+    let mut s = settings_get(app.clone())?;
+    s.provenance_enabled = false;
+    settings_set(app, s)
+}
+
+#[tauri::command]
+pub fn provenance_status(app: AppHandle) -> Result<bool, String> {
+    Ok(settings_get(app)?.provenance_enabled)
 }
 
 // ---------- Drafts ----------

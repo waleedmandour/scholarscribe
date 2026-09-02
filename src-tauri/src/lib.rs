@@ -15,8 +15,13 @@ mod commands;
 mod disclosure;
 mod document_stats;
 mod docx_reading;
+mod google_docs;
+mod google_docs_commands;
+mod google_docs_net;
 mod ollama;
 mod persistence;
+mod provenance;
+mod provenance_commands;
 mod risk_profiler;
 mod structure_analyzer;
 mod style;
@@ -100,6 +105,21 @@ pub fn run() {
             writing_journal::journal_get_snapshots,
             writing_journal::journal_delete_session,
             writing_journal::journal_export_session,
+            // Writing Provenance (v2.1.0) — Phase 1 (.docx) + Phase 1.5 (Google)
+            persistence::provenance_enable,
+            persistence::provenance_disable,
+            persistence::provenance_status,
+            provenance_commands::provenance_key_status,
+            provenance_commands::provenance_export_public_key,
+            provenance_commands::provenance_analyze_docx,
+            provenance_commands::provenance_export_zip,
+            provenance_commands::provenance_interpret_score,
+            provenance_commands::provenance_disclosure_text,
+            google_docs_commands::google_status,
+            google_docs_commands::google_connect,
+            google_docs_commands::google_disconnect,
+            google_docs_commands::google_import_doc,
+            google_docs_commands::google_export_zip,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");

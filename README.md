@@ -3,14 +3,14 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v0.2.0](https://img.shields.io/badge/Status-v0.2.0-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v0.2.0)
+[![Status: v2.1.0](https://img.shields.io/badge/Status-v2.1.0-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.1.0)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 5-step welcome tour** *(new in v0.2.0)* — on first launch, an interactive modal walks you through privacy, model install, the 19 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
-- **Enjoy comfortable typography** *(new in v0.2.0)* — every text size has been bumped for reading and navigation comfort (body 15px, h1 22px, h2 17px, line-height 1.6). No fonts changed — just sizes and spacing.
+- **Get a guided 5-step welcome tour** — on first launch, an interactive modal walks you through privacy, model install, the 19 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Export verifiable Writing Provenance** *(new in v2.1.0)* — turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts — never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline** — Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google calls.
 - **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner — 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.

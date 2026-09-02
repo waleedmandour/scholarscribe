@@ -508,6 +508,38 @@ export const api = {
       args: { model, messages, style_profile: styleProfile ?? null },
     }),
 
+  // v2.1.0+ — Writing Provenance
+  provenanceStatus: () => invoke<boolean>("provenance_status"),
+  provenanceEnable: () => invoke<void>("provenance_enable"),
+  provenanceDisable: () => invoke<void>("provenance_disable"),
+  provenanceDisclosureText: () => invoke<DisclosureCopy>("provenance_disclosure_text"),
+  provenanceKeyStatus: () => invoke<ProvenanceKeyStatus>("provenance_key_status"),
+  provenanceExportPublicKey: (outputPath: string) =>
+    invoke<PublicKeyExport>("provenance_export_public_key", { outputPath }),
+  provenanceAnalyzeDocx: (path: string) =>
+    invoke<ProvenanceAnalysis>("provenance_analyze_docx", { path }),
+  provenanceExportZip: (path: string, outputPath: string, baselineText?: string | null) =>
+    invoke<ProvenanceExportResult>("provenance_export_zip", {
+      path,
+      outputPath,
+      baselineText: baselineText ?? null,
+    }),
+  provenanceInterpretScore: (score: number) =>
+    invoke<string>("provenance_interpret_score", { score }),
+  googleStatus: () => invoke<GoogleStatus>("google_status"),
+  googleConnect: (clientId: string) =>
+    invoke<GoogleConnectResult>("google_connect", { clientId }),
+  googleDisconnect: () => invoke<void>("google_disconnect"),
+  googleImportDoc: (clientId: string, docRef: string) =>
+    invoke<GoogleImportAnalysis>("google_import_doc", { clientId, docRef }),
+  googleExportZip: (clientId: string, docRef: string, outputPath: string, baselineText?: string | null) =>
+    invoke<ProvenanceExportResult>("google_export_zip", {
+      clientId,
+      docRef,
+      outputPath,
+      baselineText: baselineText ?? null,
+    }),
+
 };
 
 // v0.2.0+
@@ -673,4 +705,87 @@ export interface StyleFingerprint {
   per_paper_profiles: PaperSummary[];
   export_json: string;
   export_markdown: string;
+}
+
+// v2.1.0+ — Writing Provenance types
+
+export interface DisclosureCopy {
+  title: string;
+  body: string;
+}
+
+export interface ProvenanceKeyStatus {
+  has_key: boolean;
+  fingerprint: string | null;
+  keyring_available: boolean;
+  note: string;
+}
+
+export interface PublicKeyExport {
+  fingerprint: string;
+  public_key: string;
+  written_to: string;
+}
+
+export interface ProvenanceSessionRecord {
+  session_id: string;
+  author: string;
+  start_time: number; // unix seconds
+  end_time: number;
+  snapshot_hash: string;
+  chars_added: number;
+  chars_removed: number;
+  largest_insertion: number;
+  prev_record_hash: string;
+  record_hash: string;
+}
+
+export interface ProvenanceAnalysis {
+  document_hash: string;
+  revision_count: number;
+  skipped_unparsable_dates: number;
+  sessions: ProvenanceSessionRecord[];
+  anomalies: string[];
+  authors: string[];
+  total_chars_added: number;
+  total_chars_removed: number;
+  time_span_hours: number;
+  largest_insertion_pct: number;
+  has_track_changes_markup: boolean;
+  note: string;
+}
+
+export interface ProvenanceExportResult {
+  output_path: string;
+  manifest_fingerprint: string;
+  session_count: number;
+  signature_valid: boolean;
+  chain_intact: boolean;
+  anomalies: string[];
+  style_distance_score: number | null;
+  largest_insertion_pct: number;
+  time_span_hours: number;
+}
+
+export interface GoogleStatus {
+  connected: boolean;
+  scope: string;
+  note: string;
+}
+
+export interface GoogleConnectResult {
+  connected: boolean;
+  note: string;
+}
+
+export interface GoogleImportAnalysis {
+  file_id: string;
+  revision_count: number;
+  sessions: ProvenanceSessionRecord[];
+  anomalies: string[];
+  authors: string[];
+  document_hash: string;
+  total_chars_added: number;
+  total_chars_removed: number;
+  note: string;
 }

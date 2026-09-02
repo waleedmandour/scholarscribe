@@ -5,7 +5,11 @@ build/
 
 # Rust / Tauri
 src-tauri/target/
-src-tauri/Cargo.lock
+# Cargo.lock IS committed: this is an application (not a library), and
+# reproducible release builds matter — the time =0.3.36 pin in Cargo.toml
+# exists precisely because untranspinned dependency graphs broke Windows
+# builds once. hashFiles('src-tauri/Cargo.lock') in the workflows also
+# assumes the lock file is tracked.
 src-tauri/gen/
 
 # IDE

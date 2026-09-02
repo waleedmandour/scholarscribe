@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScholarScribe Provenance Verifier</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Libraries are vendored for full offline use; CDN fallbacks are loaded
+       only if the local files are missing. -->
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/sha256.min.js"></script>
+  <script src="vendor/nacl-fast.min.js"></script>
+  <script>
+    // CDN fallbacks (only used when the vendored copies are unavailable,
+    // e.g. someone copied index.html without the vendor folder).
+    if (typeof JSZip === "undefined") {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"><\/script>');
+    }
+    if (typeof sha256 === "undefined") {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/js-sha256@0.11.0/build/sha256.min.js"><\/script>');
+    }
+    if (typeof nacl === "undefined") {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>ScholarScribe Provenance Verifier</h1>
+    <p class="sub">
+      Standalone checker for ScholarScribe Writing Provenance packages.
+      Runs entirely in your browser — no uploads, no network calls
+      (libraries are bundled locally).
+    </p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1 · Load a provenance package</h2>
+      <label class="dropzone" id="zipZone">
+        <input type="file" id="zipInput" accept=".zip,application/zip" />
+        <span><strong>Choose the exported .zip</strong><br />manifest.json is read locally.</span>
+      </label>
+      <details>
+        <summary>…or load a bare manifest.json</summary>
+        <input type="file" id="manifestInput" accept=".json,application/json" />
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>2 · Provide the author's public key</h2>
+      <p class="muted">
+        Paste the <code>ed25519-pub:{hex}</code> string (or the fingerprint's
+        author key file) that the author exported from ScholarScribe. The
+        verifier also checks that this key matches the fingerprint inside the
+        manifest.
+      </p>
+      <textarea id="pubkey" rows="2" placeholder="ed25519-pub:… (hex)"></textarea>
+      <div class="fileline">
+        <input type="file" id="pubkeyFile" accept=".json,application/json,.pub" />
+        <span class="muted small">load .pub.json exported by the app</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3 · Optionally bind the original document</h2>
+      <p class="muted">
+        For a <strong>.docx</strong> source: the verifier hashes
+        <code>word/document.xml</code> and compares it to the manifest's
+        <code>document_hash</code>. For a <strong>Google Docs</strong> source:
+        export the document as plain text (.txt) from Google and load it — the
+        hash of that text is compared instead.
+      </p>
+      <div class="fileline">
+        <input type="file" id="docInput" accept=".docx,.txt" />
+        <span class="muted small">optional — original .docx or exported .txt</span>
+      </div>
+    </section>
+
+    <section class="panel" id="resultPanel" hidden>
+      <h2>Verification result</h2>
+      <div id="result"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      What a passing check <em>means</em>: the package is intact since it was
+      produced by the holder of the signing key, and its internal hash chain is
+      consistent. What it does <strong>not</strong> mean: the text is
+      human-written, or the authorship is proven. See
+      <code>disclosure.txt</code> inside the package and
+      <code>docs/PROVENANCE_SPEC.md</code> in the repository.
+    </p>
+  </footer>
+
+  <script src="verify.js"></script>
+</body>
+</html>

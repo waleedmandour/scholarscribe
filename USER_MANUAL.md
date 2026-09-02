@@ -164,6 +164,18 @@ The four cards cover:
 3. **What this means for you** — practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer.
 4. **Further reading** — Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024), and university statements on detector reliability.
 
+## 8b. Module: Writing Provenance (v2.1.0 — opt-in)
+
+Writing Provenance turns the revision history your document already carries into **verifiable evidence of process**. It is switched off until you accept its disclosure dialog, which states plainly what it does *not* do: it is not an AI-detection score, not proof of authorship, and it only covers edits made while Track Changes (or Google Docs version history) was on.
+
+**What it produces.** A `.zip` package containing `manifest.json` — a SHA-256 hash-chained list of work sessions (per session: the author name your editor recorded, start/end time, characters inserted/deleted, largest single insertion) — signed with an **Ed25519** key whose seed never leaves your OS keychain. The package also includes `disclosure.txt` (what the evidence is and isn't), `style_analysis.json` (descriptive style-consistency metrics with interpretation bands), `citation_validation.json` (a citation-pattern inventory) and `README.txt` (verification steps). **No document text is ever included** — only hashes and counts.
+
+**Word path (.docx).** Choose a document edited with Track Changes enabled. ScholarScribe parses the real `w:ins`/`w:del` history, groups edits into sessions (same author, gaps ≤ 30 minutes), chains the sessions per author, signs the chain and exports. Documents with no tracked changes produce a clear error rather than an empty package. If a gap longer than 7 days appears between sessions, it is listed as an *anomaly* — reported honestly, not treated as an accusation.
+
+**Google Docs path (optional, Phase 1.5).** Click **Connect Google Doc**. ScholarScribe performs a standard Google OAuth sign-in in your **system browser** (read-only scope `drive.readonly`; the refresh token is stored in your OS keychain). It then imports the document's version history and runs it through the identical pipeline. Every outbound call to Google is recorded in the **Privacy Audit** tab. One-time setup requires creating a free Google OAuth Client ID (instructions are shown in the tab).
+
+**Verification.** Anyone — editors, reviewers, co-authors — can verify a package by opening `verifier/index.html` from the repository in any browser. It works fully offline, re-derives every hash, checks the Ed25519 signature against the public key you export (`Export public key…` button), and can bind the package to the exact original `.docx`. The full format specification, including the threat model and honest limitations, is in `docs/PROVENANCE_SPEC.md`.
+
 ---
 
 ## 9. Troubleshooting

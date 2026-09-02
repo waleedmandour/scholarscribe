@@ -38,6 +38,17 @@ The following are in scope and welcome as contributions:
 - Educational content about AI detectors and their limitations.
 - Privacy improvements: offline-first architecture, no telemetry, auditable network calls.
 - Accessibility and i18n.
+- **Writing Provenance (v2.1.0):** a signed, hash-chained record of the
+  revision history a document genuinely carries (Word Track Changes /
+  Google Docs version history). It fits this list under the same rules as
+  everything else: it is *evidence about process offered by the author*,
+  never a verdict about text. It reads real history — it never fabricates
+  or edits any (that would violate §2.3). It contains no AI-detection
+  score. Its style statistic is descriptive, with interpretation bands and
+  no pass/fail reading. It performs zero network calls in its .docx path,
+  and its Google import path logs every outbound call to the privacy audit
+  log. The full specification, including honest limitations, is in
+  [PROVENANCE_SPEC.md](PROVENANCE_SPEC.md).
 
 ## 5. Handling pull requests
 

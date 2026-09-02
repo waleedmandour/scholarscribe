@@ -278,7 +278,9 @@ fn count_phrase_matches(text: &str, targets: &[&str]) -> usize {
     targets.iter().map(|t| lower.matches(t).count()).sum()
 }
 
-fn count_citations(text: &str) -> usize {
+/// Count citation-like patterns (author-year or numeric). Exposed to the
+/// provenance module (aggregate counts only — no text leaves the device).
+pub(crate) fn count_citations(text: &str) -> usize {
     // Author-year (Smith, 2020) or (Smith et al., 2020; Jones, 2021)
     // or numeric [1, 2, 3-5]
     let re = Regex::new(r"\((?:[A-Z][a-zA-Z'-]+(?:\s+(?:et\s+al\.?|and|&)\s+[A-Z][a-zA-Z'-]+)?,?\s*\d{4}[a-z]?[;,]?\s*)+\)|\[[\d,\s\-]+\]").unwrap();

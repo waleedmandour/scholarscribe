@@ -14,6 +14,7 @@
   import WritingCoach from "./components/WritingCoach.svelte";
   import StyleAnalysis from "./components/StyleAnalysis.svelte";
   import Disclosure from "./components/Disclosure.svelte";
+  import Provenance from "./components/Provenance.svelte";
   import DetectorLiteracy from "./components/DetectorLiteracy.svelte";
   import Chat from "./components/Chat.svelte";
   import PrivacyAudit from "./components/PrivacyAudit.svelte";
@@ -23,7 +24,7 @@
   import { api } from "./lib/api";
   import { openTour } from "./lib/onboarding";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -63,6 +64,7 @@
     { id: "fingerprint", label: "Fingerprint", icon: "F" },
     { id: "coach", label: "Writing Coach", icon: "?" },
     { id: "style", label: "Style Analysis", icon: "S" },
+    { id: "provenance", label: "Provenance", icon: "≡" },
     { id: "chat", label: "Chat", icon: "C" },
     { id: "disclosure", label: "Disclosure", icon: "D" },
     { id: "literacy", label: "Detector Literacy", icon: "L" },
@@ -143,7 +145,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v0.2.0 · MIT · local-only
+        v2.1.0 · MIT · local-only
       </div>
       <button
         class="walk-through-btn"
@@ -182,6 +184,8 @@
       <WritingCoach {ollamaOk} />
     {:else if active === "style"}
       <StyleAnalysis />
+    {:else if active === "provenance"}
+      <Provenance />
     {:else if active === "chat"}
       <Chat {ollamaOk} />
     {:else if active === "disclosure"}
