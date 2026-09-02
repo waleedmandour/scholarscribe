@@ -146,17 +146,62 @@
 
 <h1>Writing Provenance</h1>
 <p class="lead">
-  A signed, hash-chained record of your document's real revision history —
+  A signed, hash-chained record of your document's real revision history,
   built from Word's Track Changes or Google Docs' version history.
   <strong>Evidence, not verdict:</strong> this is not an AI-detection score and
   not proof of authorship.
 </p>
 
+<div class="card">
+  <h3 style="margin: 0 0 6px 0;">How to create provenance evidence, step by step</h3>
+  <ol class="howto">
+    <li>
+      <strong>Write with history on.</strong> In Word, keep Track Changes on
+      (Review tab, then Track Changes) while you draft. In Google Docs, version
+      history is captured automatically.
+    </li>
+    <li>
+      <strong>Turn the feature on.</strong> Click "Turn on Writing Provenance…"
+      below, read the disclosure dialog, and confirm. Nothing is recorded until
+      you accept, and you can switch the feature off at any time.
+    </li>
+    <li>
+      <strong>Pick a source.</strong> Choose ".docx (Word)" for a Word file, or
+      "Google Doc" to connect ScholarScribe to your Google account.
+    </li>
+    <li>
+      <strong>Analyze the document.</strong> For Word, click
+      "Choose .docx and analyze…" and select the file. For Google Docs, paste
+      the document URL and click "Import revision history".
+    </li>
+    <li>
+      <strong>Review the timeline.</strong> Check sessions, revision counts,
+      authors, total time span, and the largest single insertion. Unusual gaps
+      are flagged honestly for you to interpret, not judged.
+    </li>
+    <li>
+      <strong>Export the signed package.</strong> Click "Export provenance (.zip)"
+      to save the Ed25519-signed manifest, then "Export public key…" to save the
+      key reviewers need in order to verify it.
+    </li>
+    <li>
+      <strong>Share and verify.</strong> Send the .zip and the public key
+      together. Anyone can open <code>verifier/index.html</code> from the app
+      folder in any browser, fully offline, to confirm the hash chain and the
+      signature.
+    </li>
+  </ol>
+  <p class="muted small" style="margin: 10px 0 0 0;">
+    The exported package records writing process. It contains hashes and counts
+    only, never your document text, and it is not proof of authorship.
+  </p>
+</div>
+
 {#if checking}
   <p class="muted">Loading…</p>
 {:else if !enabled}
   <div class="card">
-    <h3>Opt-in feature — currently switched off</h3>
+    <h3>Opt-in feature (currently switched off)</h3>
     <p class="muted small">
       Writing Provenance is off by default. Turning it on lets you analyze the
       revision history of documents you choose and export a signed summary.
@@ -174,7 +219,7 @@
       {#if keyStatus.has_key}
         <code>{keyStatus.fingerprint}</code>
       {:else}
-        none yet — one will be created in your OS keychain on first export.
+        none yet; one will be created in your OS keychain on first export.
       {/if}
       <span class="muted small"> {keyStatus.note}</span>
     </div>
@@ -290,7 +335,7 @@
       </div>
       <div class="row">
         <button on:click={() => (showDisclosure = false)}>Cancel</button>
-        <button class="primary" on:click={acceptDisclosure}>I understand — turn it on</button>
+        <button class="primary" on:click={acceptDisclosure}>I understand, turn it on</button>
       </div>
     </div>
   </div>
@@ -346,6 +391,42 @@
     border: 1px solid var(--accent);
     border-radius: 999px;
     padding: 3px 10px;
+  }
+  .howto {
+    margin: 10px 0 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: howto-step;
+  }
+  .howto li {
+    counter-increment: howto-step;
+    position: relative;
+    padding-left: 36px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .howto li::before {
+    content: counter(howto-step);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .howto code {
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12.5px;
   }
   .overlay {
     position: fixed;

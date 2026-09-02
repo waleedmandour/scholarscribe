@@ -282,12 +282,28 @@ pub fn recommended_models() -> Vec<RecommendedModel> {
             description: "Flagship Qwen 3. Competitive with GPT-4-class models on academic benchmarks. Requires 32 GB+ RAM.".into(),
         },
         RecommendedModel {
+            name: "gpt-oss:20b".into(),
+            label: "GPT-OSS 20B (OpenAI, 2025)".into(),
+            size_gb: 14.0,
+            min_ram_gb: 16,
+            tags: vec!["high-quality".into(), "reasoning".into(), "academic".into()],
+            description: "OpenAI's first open-weight model since GPT-2, released under Apache 2.0. Runs within 16 GB of memory yet benchmarks on par with o4-mini on reasoning, math, and coding. Configurable reasoning effort and full chain of thought. Best-outcome choice in its size class.".into(),
+        },
+        RecommendedModel {
+            name: "gpt-oss:120b".into(),
+            label: "GPT-OSS 120B (OpenAI, 2025)".into(),
+            size_gb: 65.0,
+            min_ram_gb: 64,
+            tags: vec!["high-quality".into(), "reasoning".into(), "academic".into(), "long-context".into()],
+            description: "The larger GPT-OSS. Near-frontier reasoning with a 128K context window that fits on a single high-end workstation GPU. Best for complex argumentation, methodology critique, and manuscript-level review.".into(),
+        },
+        RecommendedModel {
             name: "llama3.3:70b".into(),
             label: "Llama 3.3 70B (Meta, 2024)".into(),
             size_gb: 40.0,
             min_ram_gb: 64,
             tags: vec!["high-quality".into(), "academic".into(), "long-context".into()],
-            description: "Meta's flagship open model. State-of-the-art on academic reasoning. Requires 64 GB+ RAM — only for high-end workstations.".into(),
+            description: "Meta's flagship open model. State-of-the-art on academic reasoning. Requires 64 GB+ RAM; intended for high-end workstations.".into(),
         },
         RecommendedModel {
             name: "phi4:14b".into(),
@@ -295,7 +311,7 @@ pub fn recommended_models() -> Vec<RecommendedModel> {
             size_gb: 8.4,
             min_ram_gb: 16,
             tags: vec!["reasoning".into(), "academic".into(), "stem".into()],
-            description: "Microsoft's latest Phi. Specifically trained on synthetic academic data — exceptional on STEM, math, and structured reasoning. Surprisingly strong for its size.".into(),
+            description: "Microsoft's latest Phi. Specifically trained on synthetic academic data, exceptional on STEM, math, and structured reasoning. Surprisingly strong for its size.".into(),
         },
         RecommendedModel {
             name: "deepseek-r1:14b".into(),
@@ -345,7 +361,7 @@ pub fn recommended_models() -> Vec<RecommendedModel> {
             size_gb: 3.5,
             min_ram_gb: 8,
             tags: vec!["academic".into(), "research".into()],
-            description: "Academic-tuned model from Tsinghua/KEG. Trained on scientific papers — strong on literature review and technical writing. Uses HuggingFace direct pull syntax.".into(),
+            description: "Academic-tuned model from Tsinghua/KEG. Trained on scientific papers, strong on literature review and technical writing. Uses HuggingFace direct pull syntax.".into(),
         },
     ]
 }

@@ -30,7 +30,7 @@
 
 <h1>About ScholarScribe</h1>
 <p class="lead">
-  A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device —
+  A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device:
   no telemetry, no cloud calls, no paid APIs.
 </p>
 

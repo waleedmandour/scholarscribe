@@ -57,7 +57,7 @@
   {#if anomalies.length > 0}
     <div class="callout warn" style="margin-top: 12px;">
       <strong>Anomalies observed in the revision history.</strong>
-      These are reported honestly — they can have innocent explanations
+      These are reported honestly: they can have innocent explanations
       (holidays, merged branches, clock changes) and are not accusations.
       <ul style="margin: 6px 0 0 16px; padding: 0;">
         {#each anomalies as a}

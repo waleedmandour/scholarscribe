@@ -22,11 +22,11 @@ Open the **Models** tab. The top card shows your CPU and RAM. Pick a model that 
 | Your RAM | Recommended models |
 |---|---|
 | 8 GB | Gemma 3 4B · Qwen 3 4B · Phi-4 Mini |
-| 16 GB | Gemma 3 12B · Qwen 3 8B · Phi-4 14B |
+| 16 GB | Gemma 3 12B · Qwen 3 8B · GPT-OSS 20B |
 | 32 GB | Gemma 3 27B · Qwen 3 32B · DeepSeek R1 32B |
-| 64 GB+ | Llama 3.3 70B |
+| 64 GB+ | Llama 3.3 70B · GPT-OSS 120B |
 
-Click **Download** and wait 2–15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…** — ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
+Click **Download** and wait 2–15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…**: ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
 
 ## 3. The 20 tabs at a glance
 

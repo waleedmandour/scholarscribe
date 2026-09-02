@@ -76,13 +76,15 @@ Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_0
 
 1. Launch ScholarScribe. The sidebar shows an "Ollama backend" status pill. It should be green ("running"). If it's red, see [Troubleshooting](#9-troubleshooting).
 2. Click the **Models** tab in the sidebar.
-3. The Recommended Catalog lists six pre-vetted models. Pick one that fits your RAM:
-   - **8 GB RAM** → Gemma 2 2B or Qwen 2.5 3B or Phi-3 Mini
-   - **16 GB RAM** → Gemma 2 9B or Qwen 2.5 7B or Llama 3.1 8B
+3. The Recommended Catalog lists 16 pre-vetted models. Pick one that fits your RAM:
+   - **8 GB RAM** → Gemma 3 4B or Qwen 3 4B or Phi-4 Mini
+   - **16 GB RAM** → Gemma 3 12B or Qwen 3 8B or GPT-OSS 20B
+   - **32 GB RAM** → Gemma 3 27B or Qwen 3 32B or DeepSeek R1 32B
+   - **64 GB+ RAM** → Llama 3.3 70B or GPT-OSS 120B
 4. Click **Download**. A progress bar appears. The first download can take 5-30 minutes depending on your connection and the model size.
 5. Once complete, the model appears in the "Installed on this device" table at the top of the tab.
 
-To install a model not in the catalog (e.g. `mistral:7b`, `qwen2.5:14b`, `command-r`), click **Install by name…** and type the Ollama model identifier.
+To install a model not in the catalog (e.g. `mistral:7b`, `gemma3:12b`, `command-r`), click **Install by name…** and type the Ollama model identifier.
 
 To remove a model and reclaim disk space, click **Delete** next to it in the installed list.
 
@@ -142,8 +144,8 @@ Generates a venue-compliant AI-use disclosure statement.
 1. Go to the **Disclosure** tab.
 2. Pick your target venue from the dropdown (ICMJE for most medical journals; Nature Portfolio; IEEE; Elsevier; ACL; or "Generic" if your venue isn't listed).
 3. Fill in:
-   - **Tool used** — e.g. "ChatGPT", "Gemini", "ScholarScribe with Gemma 2 9B"
-   - **Model (optional)** — e.g. "GPT-4o", "gemma2:9b"
+   - **Tool used** — e.g. "ChatGPT", "Gemini", "ScholarScribe with Gemma 3 12B"
+   - **Model (optional)** — e.g. "GPT-4o", "gemma3:12b"
    - **Your name (optional)** — signs the statement at the end
    - **What did you use the tool for?** — be specific: "improve language and readability", "generate an outline for the introduction", "suggest alternative phrasings for the abstract"
 4. Click **Generate disclosure**.
@@ -212,7 +214,7 @@ In short: ScholarScribe does not monitor students or researchers. It lets *them*
 
 **The app is slow / hangs.**
 
-- You probably picked a model too large for your RAM. Use a smaller model (e.g. Gemma 2 2B instead of 9B).
+- You probably picked a model too large for your RAM. Use a smaller model (e.g. Gemma 3 4B instead of 27B).
 - Close other memory-hungry apps (browsers with many tabs, other LLM tools).
 - On machines with integrated graphics, Ollama falls back to CPU inference which is much slower.
 

@@ -241,7 +241,7 @@ export const defaultCleanOptions: CleanOptions = {
   fix_mojibake: true,
   join_broken_urls: true,
   fix_broken_citations: true,
-  // v0.1.7 strict ops — OFF in default preset (opt in via Strict button)
+  // v0.1.7 strict ops: OFF in default preset (opt in via Strict button)
   convert_ellipsis: false,
   remove_asterisks: false,
   remove_markdown_headings: false,
@@ -269,7 +269,7 @@ export const strictCleanOptions: CleanOptions = {
   fix_mojibake: true,
   join_broken_urls: true,
   fix_broken_citations: true,
-  // v0.1.7 strict ops — all ON
+  // v0.1.7 strict ops: all ON
   convert_ellipsis: true,
   remove_asterisks: true,
   remove_markdown_headings: true,
@@ -508,7 +508,7 @@ export const api = {
       args: { model, messages, style_profile: styleProfile ?? null },
     }),
 
-  // v2.1.0+ — Writing Provenance
+  // v2.1.0+: Writing Provenance
   provenanceStatus: () => invoke<boolean>("provenance_status"),
   provenanceEnable: () => invoke<void>("provenance_enable"),
   provenanceDisable: () => invoke<void>("provenance_disable"),
@@ -669,7 +669,7 @@ export interface Snapshot {
   } | null;
 }
 
-// v0.2.0 API methods (append to the api object — need to find and edit it)
+// v0.2.0 API methods (appended to the api object below)
 
 // v0.2.1+
 
@@ -707,7 +707,7 @@ export interface StyleFingerprint {
   export_markdown: string;
 }
 
-// v2.1.0+ — Writing Provenance types
+// v2.1.0+: Writing Provenance types
 
 export interface DisclosureCopy {
   title: string;

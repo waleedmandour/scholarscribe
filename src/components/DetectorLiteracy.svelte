@@ -50,7 +50,7 @@
     </li>
     <li>
       <strong>Adversarial fragility.</strong> Light paraphrasing, translation round-trips, or stylistic prompts can
-      push AI text past detectors. This is why <em>detection scores are not a reliable integrity signal on their own</em> —
+      push AI text past detectors. This is why <em>detection scores are not a reliable integrity signal on their own</em>,
       which is also why building tools to "beat" them is a fool's errand: the underlying signal was never trustworthy
       enough to defend.
     </li>

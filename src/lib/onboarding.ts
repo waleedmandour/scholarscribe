@@ -1,5 +1,5 @@
 /**
- * Onboarding store — controls the welcome tour visibility.
+ * Onboarding store: controls the welcome tour visibility.
  *
  * Persistence model:
  *   localStorage["scholarscribe-onboarded"] = "v1"  -> user has seen/completed the tour

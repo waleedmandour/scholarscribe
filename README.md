@@ -9,9 +9,9 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 5-step welcome tour** — on first launch, an interactive modal walks you through privacy, model install, the 20 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 20 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)* — turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts — never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
-- **Run open LLMs fully offline** — Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google calls.
+- **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner — 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
@@ -130,7 +130,7 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 5-step welcome tour** appears automatically: Welcome → Privacy → Install a model → 20 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 20 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
@@ -140,10 +140,11 @@ See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The l
 
 ### Models tab
 
-Install and manage open LLMs. The catalog includes 14 models spanning 4 GB to 64 GB RAM:
+Install and manage open LLMs. The catalog includes 16 models spanning 4 GB to 64 GB RAM:
 
 - **Gemma 3 family** (Google 2025): 1B / 4B / 12B / 27B — multimodal, strong on academic text
 - **Qwen 3 family** (Alibaba 2025): 4B / 8B / 14B / 32B — multilingual (30+ languages), hybrid thinking-mode
+- **GPT-OSS family** (OpenAI 2025): 20B / 120B — OpenAI's first open-weight models since GPT-2 (Apache 2.0), benchmark on par with o4-mini on reasoning, math, and coding
 - **Phi-4** (Microsoft 2024): 14B + Mini 3.8B — STEM-specialized, trained on synthetic academic data
 - **DeepSeek R1** (2025): 14B / 32B — open reasoning model with explicit chain-of-thought
 - **Llama 3.3 70B** (Meta 2024) — flagship, requires 64 GB+ RAM
@@ -436,7 +437,7 @@ scholarscribe/
 │       ├── DetectorLiteracy.svelte
 │       ├── PrivacyAudit.svelte
 │       ├── SavedWork.svelte
-│       ├── WelcomeTour.svelte     5-step interactive first-run tour (v0.2.0+)
+│       ├── WelcomeTour.svelte     6-step interactive first-run tour (incl. Writing Provenance)
 │       └── About.svelte
 ├── docs/
 │   ├── ETHICS.md               Full ethical-use policy

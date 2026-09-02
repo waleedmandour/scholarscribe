@@ -5,10 +5,10 @@
   type TabId =
     | "models" | "cleaner" | "citations" | "stats" | "structure"
     | "abstract" | "risk" | "consistency" | "journal" | "appeal"
-    | "fingerprint" | "coach" | "style" | "chat" | "disclosure"
-    | "literacy" | "audit" | "saved" | "about";
+    | "fingerprint" | "coach" | "style" | "provenance" | "chat"
+    | "disclosure" | "literacy" | "audit" | "saved" | "about";
 
-  // Steps array — each entry renders one tour panel.
+  // Steps array: each entry renders one tour panel.
   const steps = [
     {
       title: "Welcome to ScholarScribe",
@@ -23,11 +23,15 @@
       icon: "⬇",
     },
     {
+      title: "New in 2.1.0: Writing Provenance",
+      icon: "📋",
+    },
+    {
       title: "20 tools at your service",
       icon: "▦",
     },
     {
-      title: "Ethical use — please read",
+      title: "Ethical use, please read",
       icon: "⚖",
     },
   ] as const;
@@ -37,7 +41,7 @@
   let modalEl: HTMLDivElement | null = null;
   let previouslyFocused: HTMLElement | null = null;
 
-  // Feature grid for step 4 — categorized, each cell clickable to jump.
+  // Feature grid for the tools step, categorized; each cell is clickable to jump.
   const featureGroups: { category: string; items: { id: TabId; name: string; desc: string }[] }[] = [
     {
       category: "Writing",
@@ -186,13 +190,13 @@
             A privacy-first, local-LLM writing companion for researchers.
           </p>
           <p class="tour-text">
-            ScholarScribe runs entirely on your device — no telemetry, no cloud calls,
-            no paid APIs. This 5-step tour will walk you through the essentials in
+            ScholarScribe runs entirely on your device: no telemetry, no cloud calls,
+            no paid APIs. This 6-step tour will walk you through the essentials in
             about a minute. You can re-open it any time from the sidebar or the
             About tab.
           </p>
           <div class="tour-meta">
-            <span class="tag">v0.2.0</span>
+            <span class="tag">v2.1.0</span>
             <span class="tag">MIT License</span>
             <span class="tag green">Local-only</span>
           </div>
@@ -205,9 +209,9 @@
             in memory or in local JSON files.
           </p>
           <ul class="tour-list">
-            <li><strong>No telemetry</strong> — no analytics, no crash reports.</li>
-            <li><strong>No third-party APIs</strong> — no OpenAI, Anthropic, or Google calls.</li>
-            <li><strong>One outbound host</strong>: <code>registry.ollama.ai</code>, only when you click "Download" on a model — and that carries no text or usage data.</li>
+            <li><strong>No telemetry:</strong> no analytics, no crash reports.</li>
+            <li><strong>No third-party APIs:</strong> no OpenAI, Anthropic, or Google AI calls.</li>
+            <li><strong>One outbound host</strong>: <code>registry.ollama.ai</code>, only when you click "Download" on a model, and that carries no text or usage data.</li>
           </ul>
           <div class="callout info" style="margin-top: 14px; font-size: 13.5px;">
             <strong>Verify it yourself.</strong> The <strong>Privacy Audit</strong> tab
@@ -225,19 +229,40 @@
             <thead><tr><th>Your RAM</th><th>Recommended models</th></tr></thead>
             <tbody>
               <tr><td><strong>8 GB</strong></td><td>Gemma 3 4B · Qwen 3 4B · Phi-4 Mini</td></tr>
-              <tr><td><strong>16 GB</strong></td><td>Gemma 3 12B · Qwen 3 8B · Phi-4 14B</td></tr>
+              <tr><td><strong>16 GB</strong></td><td>Gemma 3 12B · Qwen 3 8B · GPT-OSS 20B</td></tr>
               <tr><td><strong>32 GB</strong></td><td>Gemma 3 27B · Qwen 3 32B · DeepSeek R1 32B</td></tr>
-              <tr><td><strong>64 GB+</strong></td><td>Llama 3.3 70B</td></tr>
+              <tr><td><strong>64 GB+</strong></td><td>Llama 3.3 70B · GPT-OSS 120B</td></tr>
             </tbody>
           </table>
           <p class="tour-text" style="margin-top: 12px;">
-            Already have a <code>.gguf</code> file? Use <strong>Pick .gguf file…</strong> —
+            Already have a <code>.gguf</code> file? Use <strong>Pick .gguf file…</strong>:
             ScholarScribe checks your RAM and imports it via Ollama with zero outbound
             network.
           </p>
         {:else if step === 3}
-          <div class="tour-icon-big">▦</div>
+          <div class="tour-icon-big">📋</div>
           <h2 id="tour-title" class="tour-title">{steps[3].title}</h2>
+          <p class="tour-text">
+            Writing Provenance turns your document's own revision history into
+            signed, tamper-evident evidence of your writing process. It is
+            optional and switched off by default.
+          </p>
+          <ol class="tour-steps">
+            <li><strong>Open the Provenance tab</strong> and click "Turn on Writing Provenance". Read the disclosure dialog and confirm.</li>
+            <li><strong>Choose a source:</strong> a .docx written with Word's Track Changes on, or a Google Doc with its version history.</li>
+            <li><strong>Analyze it.</strong> The timeline shows sessions, revisions, authors, total time span, and the largest single insertion.</li>
+            <li><strong>Export</strong> the signed .zip package and your public key, then share both. Anyone can verify them offline with the bundled verifier.</li>
+          </ol>
+          <p class="tour-text" style="margin-top: 10px;">
+            Evidence, not verdict: the package records writing process. It is not
+            a detection score and not proof of authorship.
+          </p>
+          <button class="primary" on:click={() => jumpToTab("provenance")}>
+            Open the Provenance tab
+          </button>
+        {:else if step === 4}
+          <div class="tour-icon-big">▦</div>
+          <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
             The sidebar organizes 20 tools into 4 categories. <strong>Click any cell
             below to jump straight to that tab.</strong>
@@ -261,9 +286,9 @@
               </div>
             {/each}
           </div>
-        {:else if step === 4}
+        {:else if step === 5}
           <div class="tour-icon-big">⚖</div>
-          <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
+          <h2 id="tour-title" class="tour-title">{steps[5].title}</h2>
           <p class="tour-text">
             ScholarScribe is designed for researchers who have
             <strong>genuinely written</strong> their manuscript and want transparent,
@@ -290,7 +315,7 @@
             </div>
           </div>
           <p class="tour-text" style="margin-top: 12px;">
-            If you used AI assistance, <strong>disclose it</strong> — the Disclosure
+            If you used AI assistance, <strong>disclose it</strong>: the Disclosure
             tab makes this easy.
           </p>
         {/if}
@@ -447,6 +472,16 @@
     color: var(--text);
   }
   .tour-list li { margin-bottom: 4px; }
+
+  /* Numbered how-to list (Provenance step) */
+  .tour-steps {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .tour-steps li { margin-bottom: 5px; }
   .tour-meta {
     margin-top: 16px;
     display: flex;

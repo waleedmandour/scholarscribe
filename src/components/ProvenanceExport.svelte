@@ -8,7 +8,7 @@
   export let source: "docx" | "google" = "docx";
   /** File path (docx) or Google Doc URL/ID (google). */
   export let docRef = "";
-  /** Google OAuth client id — required for the google source. */
+  /** Google OAuth client id, required for the google source. */
   export let clientId = "";
 
   let busy = false;
@@ -54,7 +54,7 @@
       const pk = await api.provenanceExportPublicKey(path);
       result = result ?? null;
       error = "";
-      resultNote = `Public key written to ${pk.written_to} — share this with reviewers so they can verify your exports.`;
+      resultNote = `Public key written to ${pk.written_to}. Share this with reviewers so they can verify your exports.`;
     } catch (e) {
       error = String(e);
     } finally {
@@ -68,7 +68,7 @@
 <div class="card">
   <h3>Export signed package</h3>
   <p class="muted small">
-    Produces a .zip with a hash-chained, Ed25519-signed manifest — hashes and
+    Produces a .zip with a hash-chained, Ed25519-signed manifest: hashes and
     counts only, never document text. Anyone can verify it with the bundled
     verifier (works offline, no installation).
   </p>
@@ -88,7 +88,7 @@
   {#if showAdvanced}
     <div class="advanced">
       <label class="small" for="baseline">
-        Baseline text (optional) — a sample of your earlier writing (e.g. your
+        Baseline text (optional): a sample of your earlier writing (e.g. your
         previous paper). If empty, the earliest tracked session is used as the
         baseline and labeled as such.
       </label>
@@ -99,7 +99,7 @@
         placeholder="Paste a representative sample of your earlier writing…"
       ></textarea>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        The exported package contains aggregate metrics only — never this text
+        The exported package contains aggregate metrics only, never this text
         and never the document text.
       </p>
     </div>
