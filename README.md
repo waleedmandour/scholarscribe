@@ -99,12 +99,12 @@ Install with your platform's package manager:
 
 ```bash
 # Linux (Debian/Ubuntu)
-sudo apt install ./ScholarScribe_0.2.0_amd64.deb
+sudo apt install ./ScholarScribe_2.1.0_amd64.deb
 
 # Linux (Fedora/RHEL/SUSE)
-sudo dnf install ./ScholarScribe-0.2.0-1.x86_64.rpm
+sudo dnf install ./ScholarScribe-2.1.0-1.x86_64.rpm
 
-# Windows / macOS — double-click the .msi / .dmg
+# Windows / macOS: double-click the .msi / .dmg
 ```
 
 **Option B — build from source**

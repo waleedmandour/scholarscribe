@@ -50,14 +50,14 @@ To verify Ollama is running, open a browser and visit <http://localhost:11434>. 
 
 ## 3. Installing ScholarScribe
 
-### Option A — pre-built installer (recommended)
+### Option A: pre-built installer (recommended)
 
 1. Go to <https://github.com/waleedmandour/scholarscribe/releases>.
-2. Under the latest release, download `ScholarScribe_0.1.0_x64.msi` (or the `.exe` if you prefer NSIS installers).
-3. Double-click the file. Windows SmartScreen may warn you — click **More info → Run anyway** (the installer is unsigned in this pre-release; v1.0 will be code-signed).
+2. Under the latest release (v2.1.0), download `ScholarScribe_2.1.0_x64_en-US.msi` (or the `ScholarScribe_2.1.0_x64-setup.exe` NSIS installer).
+3. Double-click the file. Windows SmartScreen may warn you, click **More info → Run anyway** (the installer is currently unsigned; code signing is planned for a future release).
 4. The installer adds ScholarScribe to your Start menu. Launch it from there.
 
-### Option B — build from source
+### Option B: build from source
 
 Prerequisites: Rust 1.77+, Node.js 18+, Microsoft Visual Studio C++ Build Tools, WebView2 runtime.
 
@@ -68,7 +68,7 @@ npm install
 npm run tauri build
 ```
 
-Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_0.1.0_x64_en-US.msi`.
+Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_2.1.0_x64_en-US.msi`.
 
 ---
 
