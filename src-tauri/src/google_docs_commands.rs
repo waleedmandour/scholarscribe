@@ -257,7 +257,7 @@ fn wait_for_oauth_code(
             return Err(format!("Google authorization was declined ({err})."));
         }
         if got_state.as_deref() != Some(expected_state) {
-            return Err("OAuth state mismatch — the redirect did not come from the sign-in window we opened.".into());
+            return Err("OAuth state mismatch: the redirect did not come from the sign-in window we opened.".into());
         }
         if let Some(c) = code {
             let audit = app.state::<AuditLog>();
@@ -343,7 +343,7 @@ pub async fn google_import_doc(
         document_hash,
         total_chars_added: total_added,
         total_chars_removed: total_removed,
-        note: "Imported from Google Drive's revision history via the read-only scope. Revision text was diffed in memory and discarded — nothing was stored.".into(),
+        note: "Imported from Google Drive's revision history via the read-only scope. Revision text was diffed in memory and discarded; nothing was stored.".into(),
     })
 }
 
@@ -390,8 +390,7 @@ async fn fetch_all_revisions(
     let total = metas.len();
     if total == 0 {
         return Err(
-            "Google reports no revisions for this document — there is no history to analyze."
-                .into(),
+            "Google reports no revisions for this document; there is no history to analyze.".into(),
         );
     }
 
@@ -470,7 +469,7 @@ pub async fn google_export_zip(
         fetch_all_revisions(&app, &client_id, &file_id).await?;
     let raw = google_docs::revisions_to_raw_revisions(&revisions);
     if raw.is_empty() {
-        return Err("No usable revision history came back from Google — nothing to export.".into());
+        return Err("No usable revision history came back from Google; nothing to export.".into());
     }
     let grouping = crate::provenance::group_into_sessions(&raw);
     let final_text = revisions.last().map(|r| r.text.clone()).unwrap_or_default();

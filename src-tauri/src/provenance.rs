@@ -60,7 +60,7 @@ pub const ANOMALY_GAP_SECS: i64 = 7 * 24 * 3600;
 #[derive(Debug, Error)]
 pub enum ProvenanceError {
     /// The document contains no `w:ins` / `w:del` elements at all.
-    #[error("No tracked changes found in this document. Provenance needs an edit history — make sure Track Changes was switched on in Word while the document was edited.")]
+    #[error("No tracked changes found in this document. Provenance needs an edit history. Make sure Track Changes was switched on in Word while the document was edited.")]
     NoTrackChanges,
 
     /// Track-changes markup exists but no usable revisions were extracted.
@@ -68,7 +68,7 @@ pub enum ProvenanceError {
     NoRevisions,
 
     /// The OOXML inside the .docx could not be parsed.
-    #[error("Could not parse Track Changes data — the document.xml inside this file is not valid OOXML. Re-save the document from Word and try again. ({0})")]
+    #[error("Could not parse Track Changes data: the document.xml inside this file is not valid OOXML. Re-save the document from Word and try again. ({0})")]
     CorruptOoxml(String),
 
     /// Filesystem / IO problem.
@@ -476,7 +476,7 @@ pub struct VerificationResult {
 /// (docs/PROVENANCE_SPEC.md §7). Deliberately *not* pass/fail.
 pub fn interpret_style_distance(score: f32) -> String {
     if score < 0.2 {
-        "Very close to the baseline style. (Descriptive only — this is not a human-writing score.)"
+        "Very close to the baseline style. (Descriptive only; this is not a human-writing score.)"
             .into()
     } else if score < 0.4 {
         "Broadly consistent with the baseline style. (Descriptive only.)".into()
@@ -809,7 +809,7 @@ pub fn validate_citations_basic(
         citations_detected: count,
         sessions_with_citation_edits: with_cites,
         citation_density: (count as f64 / sentence_count as f64 * 1000.0).round() / 1000.0,
-        note: "Counts use a simple author-year/numeric pattern match. They are an inventory, not a validity check — use the Citations tab for source-level validation.".into(),
+        note: "Counts use a simple author-year/numeric pattern match. They are an inventory, not a validity check; use the Citations tab for source-level validation.".into(),
     }
 }
 
@@ -857,18 +857,18 @@ pub fn build_export_zip(
 pub const DISCLOSURE_DIALOG_TITLE: &str = "Before you turn on Writing Provenance";
 
 pub const DISCLOSURE_DIALOG_BODY: &str = "\
-This feature will let you export a cryptographically signed record of the tracked changes in your document — when edits were made, how large they were, and by which author name.
+This feature will let you export a cryptographically signed record of the tracked changes in your document: when edits were made, how large they were, and by which author name.
 
 What this does NOT do:
 
 1. It does not tell you whether text was AI-generated. This is not an AI-detection score.
-2. It does not prove authorship. It records the revision history your editor kept — nothing more.
+2. It does not prove authorship. It records the revision history your editor kept, nothing more.
 3. It only covers edits made while Track Changes was switched on. Untracked edits leave no evidence.
 
 No document content leaves your device. The exported file contains hashes and counts, not text.";
 
 pub const DISCLOSURE_TXT: &str = "\
-ScholarScribe Writing Provenance — Disclosure
+ScholarScribe Writing Provenance: Disclosure
 ================================================
 
 What this package is
@@ -884,14 +884,14 @@ What this package is NOT
 1. It is not an AI-detection score. Nothing here tells you whether any text
    was written by a human or by AI.
 2. It is not proof of authorship. It is a record of the revision history the
-   document carried — nothing more, nothing less.
+   document carried, nothing more, nothing less.
 3. It is not a complete edit history. Only edits made while Track Changes
    was switched on are recorded. Untracked edits leave no evidence.
 
 Privacy
 -------
 No document content leaves the author's device. This package contains
-hashes, counts, timestamps and author display names — never manuscript text.
+hashes, counts, timestamps and author display names, never manuscript text.
 
 How to verify
 -------------
@@ -905,7 +905,7 @@ Limitations (read before relying on this)
   edits happened; timestamps come from the document's own revision metadata.
 - A determined actor with access to the original .docx could in principle
   hand-edit revision XML before analysis. Treat this as one piece of
-  evidence alongside drafts, notes and version history — not as a verdict.
+  evidence alongside drafts, notes and version history, not as a verdict.
 - Files exported from other tools (Google Docs, LibreOffice) carry metadata
   with different fidelity; the manifest records the source pipeline used.
 

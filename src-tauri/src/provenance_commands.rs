@@ -127,7 +127,7 @@ pub fn provenance_key_status() -> ProvenanceKeyStatus {
                     has_key: false,
                     fingerprint: None,
                     keyring_available: true,
-                    note: "Keychain entry exists but is unreadable — re-export will create a new key. Any manifest signed with the old key will need its old key to verify.".into(),
+                    note: "Keychain entry exists but is unreadable; re-export will create a new key. Any manifest signed with the old key will need its old key to verify.".into(),
                 },
             },
             Err(keyring::Error::NoEntry) => ProvenanceKeyStatus {
@@ -195,7 +195,7 @@ pub(crate) fn require_provenance_enabled(app: &AppHandle) -> Result<(), String> 
         Ok(())
     } else {
         Err(
-            "Writing Provenance is switched off. Turn it on in the Provenance tab first — \
+            "Writing Provenance is switched off. Turn it on in the Provenance tab first; \
              it is opt-in by design."
                 .into(),
         )
@@ -223,7 +223,7 @@ pub struct ProvenanceAnalysis {
 }
 
 fn analysis_note() -> String {
-    "This is a record of process — when edits happened and how large they were. \
+    "This is a record of process: when edits happened and how large they were. \
      It is not an AI-detection score and not proof of authorship."
         .into()
 }
@@ -254,8 +254,8 @@ pub fn provenance_analyze_docx(
              re-saved with all revisions accepted or rejected."
                 .into()
         } else {
-            "No tracked changes found in this document. Provenance needs an edit history — \
-             make sure Track Changes was switched on in Word while the document was edited."
+            "No tracked changes found in this document. Provenance needs an edit history. \
+             Make sure Track Changes was switched on in Word while the document was edited."
                 .into()
         });
     }
@@ -354,9 +354,9 @@ pub fn provenance_export_zip(
     );
     if extraction.revisions.is_empty() {
         return Err(if extraction.has_track_changes_markup {
-            "Track Changes is on, but no revisions were recorded — nothing to export.".into()
+            "Track Changes is on, but no revisions were recorded; nothing to export.".into()
         } else {
-            "No tracked changes found in this document — nothing to export.".into()
+            "No tracked changes found in this document; nothing to export.".into()
         });
     }
     let grouping = group_into_sessions(&extraction.revisions);
@@ -517,14 +517,14 @@ fn build_readme(fingerprint: &str, session_count: usize, source: &str) -> String
     };
     format!(
         "\
-ScholarScribe Writing Provenance — Export Package
+ScholarScribe Writing Provenance: Export Package
 ===================================================
 
 Files in this package
 ---------------------
 manifest.json             Signed record of the document's tracked-change
                           sessions (hashes + counts, no document text).
-disclosure.txt            What this package is and is not — read first.
+disclosure.txt            What this package is and is not. Read first.
 style_analysis.json       Aggregate style-consistency metrics (descriptive).
 citation_validation.json  Inventory of citation-like patterns (descriptive).
 README.txt                This file.
