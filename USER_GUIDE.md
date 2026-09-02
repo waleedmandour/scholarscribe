@@ -1,7 +1,7 @@
 # ScholarScribe — User Guide
 
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device — no telemetry, no cloud calls, no paid APIs.
-> **Version 0.2.x · Windows · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
+> **Version 2.1.x · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
 
 ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
 
@@ -10,7 +10,7 @@ ScholarScribe helps you draft, clean, validate, and disclose your manuscript usi
 ## 1. Install (2 minutes)
 
 1. **Install Ollama** — the free, open-source local LLM runtime. Download from <https://ollama.com/download> (~150 MB) and run the installer. Look for the llama icon in your system tray.
-2. **Install ScholarScribe** — download the latest `.msi` from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases) and double-click. ScholarScribe appears in your Start menu.
+2. **Install ScholarScribe** — download the installer for your platform from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases): `.msi`/`.exe` (Windows), `.dmg` (macOS), or `.deb`/`.rpm`/`.AppImage` (Linux) — and run it. ScholarScribe appears in your Start menu, Applications folder, or app launcher.
 3. **Launch ScholarScribe.** The sidebar should show a green **Ollama backend: running** pill. If it's red, start the Ollama service from your tray.
 
 > **Build from source** (optional): `git clone … && npm install && npm run tauri build`. Requires Rust 1.77+, Node 18+, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
@@ -95,7 +95,7 @@ ScholarScribe is designed for researchers who have **genuinely written** their m
 - ✅ Maintains timestamped evidence of your writing process.
 - ❌ Does **not** evade AI detectors or lower detection scores.
 - ❌ Does **not** help misrepresent AI-generated text as original human work.
-- ❌ Does **not** contact any third-party API (OpenAI, Anthropic, Google, etc.).
+- ❌ Does **not** contact any third-party AI API (OpenAI, Anthropic, etc.). The only outbound hosts are `registry.ollama.ai` (model downloads, no text) and — only if you explicitly connect a Google Doc in the Provenance tab — Google's Docs API. Every outbound call is logged live in the Privacy Audit tab.
 
 If you used AI assistance, **disclose it** — the Disclosure tab makes this easy. See [`docs/ETHICS.md`](docs/ETHICS.md) for the full policy.
 

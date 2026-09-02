@@ -9,7 +9,7 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 5-step welcome tour** — on first launch, an interactive modal walks you through privacy, model install, the 19 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 5-step welcome tour** — on first launch, an interactive modal walks you through privacy, model install, the 20 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)* — turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts — never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline** — Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google calls.
 - **Import local `.gguf` files** — pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
@@ -89,10 +89,11 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v0.2.0 |
-| **Linux** (Fedora/RHEL/SUSE) | `.rpm` | ✅ Built for v0.2.0 |
-| **Windows** | `.msi` / `.exe` | Build from source, or wait for the v0.2.1 Windows build |
-| **macOS** (Intel / Apple Silicon) | `.dmg` | Build from source, or wait for the v0.2.1 macOS build |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.1.0 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.1.0 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.1.0 |
+| **Linux** (Fedora/RHEL/SUSE) | `.rpm` | ✅ Built for v2.1.0 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.1.0 |
 
 Install with your platform's package manager:
 
@@ -129,7 +130,7 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 5-step welcome tour** appears automatically: Welcome → Privacy → Install a model → 19 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 5-step welcome tour** appears automatically: Welcome → Privacy → Install a model → 20 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
@@ -367,7 +368,7 @@ Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour),
 | Saved drafts | Opt-in only. Plain JSON files on your device: `%APPDATA%\com.scholarscribe.app\data\` (Windows), `~/Library/Application Support/com.scholarscribe.app/data/` (macOS), `~/.local/share/com.scholarscribe.app/data/` (Linux). Never synced. |
 | Audit log | In-memory only. Cleared on app close. Never persisted. |
 
-The CSP in `tauri.conf.json` explicitly restricts outbound connections from the UI to `127.0.0.1:11434` (your local Ollama). The Rust backend only contacts `ollama.com` for model downloads and nothing else.
+The CSP in `tauri.conf.json` explicitly restricts outbound connections from the UI to `127.0.0.1:11434` (your local Ollama). The Rust backend contacts `ollama.com`/`registry.ollama.ai` for model downloads and — **only when you explicitly click "Connect Google Doc" in the Provenance tab** — Google's OAuth and Docs API endpoints. Every outbound call, file read, and keyring operation is logged live in the Privacy Audit tab.
 
 If you want to verify this yourself:
 1. Audit `src-tauri/src/ollama.rs` — every outbound HTTP call is in that file.
@@ -401,6 +402,10 @@ scholarscribe/
 │   │   ├── appeal_letter.rs    Evidence-based false-positive appeal generator
 │   │   ├── style_fingerprint.rs   Multi-paper stylistic fingerprint aggregation
 │   │   ├── disclosure.rs       Disclosure-statement generator
+│   │   ├── provenance.rs       Writing Provenance core (hash chain, Ed25519, manifest) — v2.1.0
+│   │   ├── provenance_commands.rs  Provenance Tauri command handlers
+│   │   ├── google_docs.rs      Google Docs revision bridge (opt-in) — v2.1.0
+│   │   ├── google_docs_commands.rs / google_docs_net.rs  Bridge commands + outbound HTTP
 │   │   ├── persistence.rs      Opt-in local storage (settings + drafts)
 │   │   └── audit.rs            In-memory privacy audit log
 │   ├── Cargo.toml
@@ -423,6 +428,9 @@ scholarscribe/
 │       ├── StyleFingerprint.svelte
 │       ├── WritingCoach.svelte
 │       ├── StyleAnalysis.svelte
+│       ├── Provenance.svelte          Writing Provenance tab (opt-in) — v2.1.0
+│       ├── ProvenanceTimeline.svelte  Session timeline view
+│       ├── ProvenanceExport.svelte    Integrity Packet (.zip) export
 │       ├── Chat.svelte
 │       ├── Disclosure.svelte
 │       ├── DetectorLiteracy.svelte
@@ -431,7 +439,9 @@ scholarscribe/
 │       ├── WelcomeTour.svelte     5-step interactive first-run tour (v0.2.0+)
 │       └── About.svelte
 ├── docs/
-│   └── ETHICS.md               Full ethical-use policy
+│   ├── ETHICS.md               Full ethical-use policy
+│   └── PROVENANCE_SPEC.md      Writing Provenance specification & limitations (v2.1.0)
+├── verifier/                   Standalone offline HTML verifier for exported packets
 ├── USER_GUIDE.md               2-page quick start (also shipped as PDF in releases)
 ├── USER_MANUAL.md              Full reference manual
 ├── CONTRIBUTING.md
@@ -450,7 +460,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v0.2.0 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.1.0 — © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 

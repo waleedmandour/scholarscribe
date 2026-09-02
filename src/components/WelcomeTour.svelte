@@ -23,7 +23,7 @@
       icon: "⬇",
     },
     {
-      title: "19 tools at your service",
+      title: "20 tools at your service",
       icon: "▦",
     },
     {
@@ -65,6 +65,7 @@
         { id: "fingerprint", name: "Fingerprint",    desc: "Multi-paper stylistic profile" },
         { id: "journal",     name: "Journal",        desc: "Timestamped draft snapshots" },
         { id: "appeal",      name: "Appeal Letter",  desc: "Evidence-based appeal draft" },
+        { id: "provenance",  name: "Provenance",     desc: "Signed revision-history evidence (opt-in)" },
       ],
     },
     {
@@ -238,7 +239,7 @@
           <div class="tour-icon-big">▦</div>
           <h2 id="tour-title" class="tour-title">{steps[3].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
-            The sidebar organizes 19 tools into 4 categories. <strong>Click any cell
+            The sidebar organizes 20 tools into 4 categories. <strong>Click any cell
             below to jump straight to that tab.</strong>
           </p>
           <div class="tour-grid">

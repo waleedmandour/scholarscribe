@@ -1,8 +1,8 @@
 # ScholarScribe — User Manual
 
-*v0.1.0 · Pre-release*
+*v2.1.0*
 
-This manual walks you through installing ScholarScribe, downloading a model, and using each of the four modules.
+This manual walks you through installing ScholarScribe, downloading a model, and using each of its modules — including the v2.1.0 Writing Provenance module.
 
 ---
 
@@ -205,8 +205,9 @@ Writing Provenance turns the revision history your document already carries into
 
 **.docx files can't be opened.**
 
-- v0.1 supports `.txt`, `.md`, `.tex`, `.rst`, `.csv`, `.json`. For Word documents, use **File → Save As → Plain Text** in Word, or paste the content directly into the text area.
-- `.docx` support is planned for v0.2 via the `docx-rs` crate.
+- ScholarScribe supports `.txt`, `.md`, `.tex`, `.rst`, `.csv`, `.json`, and `.docx` everywhere files are accepted — including the Text Cleaner (with format-preserving clean-and-save), Citations, Stats, Structure, Journal, and the v2.1.0 Provenance tab (which reads Word Track Changes directly).
+- If a `.docx` fails to open, it is probably a legacy `.doc` (Word 97–2003) or a password-protected file. Re-save it as `.docx` in Word first, then try again.
+- Very large `.docx` files (tens of MB, e.g. with many embedded images) can be slow to parse. Provenance sessions above 1,000 revisions are processed in chunks with a progress indicator.
 
 **The app crashes.**
 
