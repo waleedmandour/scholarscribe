@@ -75,8 +75,18 @@ The sidebar is organized in the order you'd typically use them while writing a m
 ### D. Disclose AI assistance (recommended)
 **Disclosure** tab → pick your venue (ICMJE, Nature, IEEE, Elsevier, ACL, or Generic) → fill in tool, task, model, name → **Generate disclosure** → paste the statement into your manuscript or cover letter. Each template links to the venue's official AI-use policy.
 
-### D2. Offer verifiable evidence of your writing process (v2.1.0)
-**Provenance** tab (opt-in — the first click shows exactly what the feature does and does not do) → choose a `.docx` you edited with **Word Track Changes on** (or connect a Google Doc) → review the session timeline → **Export provenance (.zip)**. The package contains a hash-chained, Ed25519-signed manifest — hashes and counts, never text. Anyone can verify it offline by opening `verifier/index.html` from the repository. Remember: this is *evidence you can offer*, not an AI-detection score and not proof of authorship. See `docs/PROVENANCE_SPEC.md` for the full limitations.
+### D2. Writing Provenance, step by step (v2.1.0)
+The feature is **off by default** — nothing is recorded until you opt in, and no document text ever leaves your device at any step.
+
+1. In Word, switch on **Review → Track Changes**, then write and revise as usual — Word itself records who inserted or deleted what, and when. A document you already edited with Track Changes on works as-is.
+2. Open the **Provenance** tab and read the disclosure dialog. Click **I understand — enable Provenance** to opt in.
+3. Click **Choose .docx...** and pick your document — or click **Connect Google Doc** to import its version history (read-only scope; every outbound call is logged in the **Privacy Audit** tab).
+4. Review the **session timeline**: edits are grouped into sessions per author (gaps up to 30 minutes), chained per author, and gaps longer than 7 days are flagged as anomalies — reported honestly, not treated as accusations.
+5. First export only: click **Export public key...** and keep the key file — reviewers need it to check your Ed25519 signature.
+6. Click **Export provenance (.zip)**. The package contains `manifest.json` (SHA-256 hash-chained, signed sessions), `disclosure.txt`, `style_analysis.json`, `citation_validation.json`, and `README.txt` — hashes and counts, never your text.
+7. Share the .zip. Anyone can verify it offline: open `verifier/index.html` from the repository in any browser, load the package and your public key → **chain intact** and **signature valid**.
+
+This is *evidence you can offer* — not an AI-detection score, and not proof of authorship. See `docs/PROVENANCE_SPEC.md` for the full format specification and limitations.
 
 ### E. Verify ScholarScribe's privacy claims yourself
 **Privacy Audit** tab — watch the live log as you use other tabs. The only outbound host you should ever see is `registry.ollama.ai` (model downloads, no text) — plus, if you explicitly connected a Google Doc, the Google endpoints it called. Anything else is a red flag.
