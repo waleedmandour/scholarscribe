@@ -16,8 +16,9 @@ This manual walks you through installing ScholarScribe, downloading a model, and
 6. [Module: Style Analysis](#6-module-style-analysis)
 7. [Module: Disclosure Assistant](#7-module-disclosure-assistant)
 8. [Module: Detector Literacy](#8-module-detector-literacy)
-9. [Troubleshooting](#9-troubleshooting)
-10. [Privacy audit](#10-privacy-audit)
+9. [Module: Writing Provenance](#8b-module-writing-provenance-v210--opt-in)
+10. [Troubleshooting](#9-troubleshooting)
+11. [Privacy audit](#10-privacy-audit)
 
 ---
 
@@ -176,6 +177,18 @@ Writing Provenance turns the revision history your document already carries into
 
 **Verification.** Anyone — editors, reviewers, co-authors — can verify a package by opening `verifier/index.html` from the repository in any browser. It works fully offline, re-derives every hash, checks the Ed25519 signature against the public key you export (`Export public key…` button), and can bind the package to the exact original `.docx`. The full format specification, including the threat model and honest limitations, is in `docs/PROVENANCE_SPEC.md`.
 
+### How ScholarScribe "monitors" writing — and what it never does
+
+If your institution, journal, or instructor asks for evidence of your writing process, you may wonder whether this feature *monitors* you. It does not — and the distinction matters. Here is exactly what happens:
+
+- **Passive by design.** ScholarScribe never watches you write. There is no background process, no keystroke logging, no screen capture, and no plugin that inserts itself into your word processor. Nothing at all happens until *you* pick a file and *you* click a button. Close the app and it is completely inert.
+- **It reads records that already exist.** When Track Changes is on, Microsoft Word itself already records who inserted or deleted what, and when (stored inside the `.docx` as `w:ins` / `w:del` entries — the same history you can see yourself in Word's Review pane). Google Docs does the same with its version history. ScholarScribe simply parses that existing, user-controlled history from the file you chose. It creates no new surveillance; it makes records you already own verifiable.
+- **Everything stays on your device.** Parsing, hashing (SHA-256), signing (Ed25519), and export all run locally. Your document's text is never uploaded anywhere and is never embedded in the exported package — the manifest contains hashes and counts only. The one optional exception is the Google Docs path, which contacts Google only when you explicitly click **Connect Google Doc**, with a read-only scope, and logs every call in the Privacy Audit tab.
+- **Evidence, not verdict.** The output is a signed, hash-chained record of the writing *process* that anyone can independently verify offline. It is deliberately **not** a score, not a percentage, not a "verified human" badge, and not an accusation. A reviewer sees the timeline and draws their own conclusion; the package never labels writing as "human" or "AI-generated".
+- **Opt-in and revocable.** The feature is off until you accept a disclosure dialog that states exactly what will and will not happen. You decide which documents to process, which packages to export, and whom to share them with — or whether to share them at all.
+
+In short: ScholarScribe does not monitor students or researchers. It lets *them* package the revision evidence their own editor already recorded, on their own machine, and share it only when they choose to. That is why the feature is framed throughout as **evidence, not verdict**.
+
 ---
 
 ## 9. Troubleshooting
@@ -220,7 +233,7 @@ Writing Provenance turns the revision history your document already carries into
 
 If you want to verify ScholarScribe's privacy claims yourself:
 
-1. **Outbound network calls.** All HTTP code is in `src-tauri/src/ollama.rs`. The base URL is `http://127.0.0.1:11434` — localhost only. The only external host ever contacted is `registry.ollama.ai`, and only when you click "Download" on a model. You can confirm this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
+1. **Outbound network calls.** All HTTP code lives in `src-tauri/src/ollama.rs` and `src-tauri/src/google_docs_net.rs`. The base URL for AI features is `http://127.0.0.1:11434` — localhost only. The only external hosts ever contacted are `registry.ollama.ai` (model downloads, no text) and — only when you explicitly connect a Google Doc in the Provenance tab — Google's OAuth/Docs endpoints, with every call logged in the Privacy Audit tab. You can confirm this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
 2. **Frontend CSP.** `src-tauri/tauri.conf.json` restricts the UI's `connect-src` to `self` and `127.0.0.1:11434`. The frontend literally cannot make an outbound request to any other host.
 3. **Telemetry.** Search the codebase for "telemetry", "analytics", "tracking", "posthog", "mixpanel", "amplitude" — you will find zero matches.
 4. **File system.** ScholarScribe only reads files you explicitly pick via the file dialog. It writes nothing to disk except its own log file (in `%APPDATA%\com.scholarscribe.app\logs\`).
