@@ -51,7 +51,7 @@ keyring = { version = "3", features = ["apple-native", "windows-native", "sync-s
 # has the original 1-argument signature. Remove this pin once cookie
 # publishes a release compatible with time >= 0.3.52.
 # (parsing/formatting features: Track Changes w:date timestamps, v2.1.0)
-time = { version = "=0.3.36", features = ["parsing", "formatting"] }
+time = { version = "=0.3.55", features = ["parsing", "formatting"] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
