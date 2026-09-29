@@ -35,11 +35,11 @@ url = "2"
 zip = "2"
 
 # Writing Provenance (v2.1.0), hash chain + Ed25519 signing + OOXML revisions
-sha2 = "0.10"
-ed25519-dalek = { version = "2", features = ["rand_core"] }
+sha2 = "0.11"
+ed25519-dalek = { version = "3", features = ["rand_core"] }
 quick-xml = "0.31"
 # CSPRNG for signing-key generation
-getrandom = "0.2"
+getrandom = "0.4"
 # OS keychain (Windows Credential Manager / macOS Keychain / Linux Secret Service)
 # for the signing key seed and the Google OAuth refresh token.
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
