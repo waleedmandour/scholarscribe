@@ -515,7 +515,7 @@ pub fn validate_citation_contexts(text: &str, bib_content: &str) -> Vec<Citation
                 citation_raw: cite.raw.clone(),
                 bib_key: entry.key.clone(),
                 bib_title: entry.title.clone(),
-                sentence: sentence,
+                sentence,
                 keyword_overlap_pct: (overlap_pct * 10.0).round() / 10.0,
                 verdict,
                 note,

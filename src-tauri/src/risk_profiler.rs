@@ -208,7 +208,7 @@ fn compute_passage_metrics(text: &str) -> PassageMetrics {
     // earlier token. Higher = more repetitive vocabulary = higher risk.
     // Distinct from TTR (which is length-sensitive and rewards text that
     // introduces many unique words regardless of repetition depth).
-    let vocab_uniformity_proxy = if word_count > 0 {
+    let vocabulary_uniformity_proxy = if word_count > 0 {
         (word_count - unique.len()) as f64 / word_count as f64
     } else {
         0.0
@@ -301,7 +301,7 @@ fn compute_excerpt(text: &str, start_char: usize, end_char: usize) -> String {
     if words.is_empty() {
         return String::new();
     }
-    let head: Vec<&str> = words.iter().take(15).collect();
+    let head: Vec<&str> = words.iter().take(15).copied().collect();
     let mut out = head.join(" ");
     if words.len() > 15 {
         out.push_str("...");
