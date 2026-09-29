@@ -195,6 +195,48 @@ input:focus, textarea:focus, select:focus {
 .nav-item:hover { background: var(--bg-elev-2); color: var(--text); }
 .nav-item.active { background: var(--accent-soft); color: var(--accent); }
 
+.nav-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 14px 11px 4px;
+  user-select: none;
+}
+.nav-group-label:first-child { padding-top: 4px; }
+
+/* Density toggle (Comfortable / Compact) in sidebar footer. Compact reduces
+   padding only; never changes font size. */
+.density-toggle {
+  display: inline-flex;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.density-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0;
+}
+.density-btn:hover { background: var(--bg-elev-2); color: var(--text); }
+.density-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Compact density: only sidebar and nav-item padding shrink. Font sizes never
+   change in compact mode. */
+[data-density="compact"] .sidebar { padding: 12px 10px; }
+[data-density="compact"] .nav-item { padding: 6px 8px; gap: 8px; }
+[data-density="compact"] .nav-group-label { padding: 9px 8px 2px; }
+
 .main {
   padding: 28px 36px;
   overflow-y: auto;

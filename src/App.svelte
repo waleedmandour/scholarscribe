@@ -32,6 +32,20 @@
   // Theme: "light" | "dark" | "auto". Persisted to localStorage.
   let theme: "light" | "dark" | "auto" = "auto";
 
+  // Sidebar density: "comfortable" | "compact". Persisted to localStorage.
+  // Compact reduces sidebar padding only; never changes font size.
+  let density: "comfortable" | "compact" = "comfortable";
+
+  function applyDensity(d: "comfortable" | "compact") {
+    density = d;
+    document.documentElement.setAttribute("data-density", d);
+    try {
+      localStorage.setItem("scholarscribe-density", d);
+    } catch {
+      // localStorage may be unavailable in some embedded contexts; non-fatal.
+    }
+  }
+
   function applyTheme(t: "light" | "dark" | "auto") {
     if (t === "auto") {
       document.documentElement.removeAttribute("data-theme");
@@ -50,27 +64,37 @@
     applyTheme(theme);
   }
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "models", label: "Models", icon: "M" },
-    { id: "cleaner", label: "Text Cleaner", icon: "T" },
-    { id: "citations", label: "Citations", icon: "C" },
-    { id: "stats", label: "Stats", icon: "#" },
-    { id: "structure", label: "Structure", icon: "S" },
-    { id: "abstract", label: "Abstract", icon: "A" },
-    { id: "risk", label: "Risk Profile", icon: "R" },
-    { id: "consistency", label: "Voice Check", icon: "V" },
-    { id: "journal", label: "Journal", icon: "J" },
-    { id: "appeal", label: "Appeal Letter", icon: "L" },
-    { id: "fingerprint", label: "Fingerprint", icon: "F" },
-    { id: "coach", label: "Writing Coach", icon: "?" },
-    { id: "style", label: "Style Analysis", icon: "S" },
-    { id: "provenance", label: "Provenance", icon: "≡" },
-    { id: "chat", label: "Chat", icon: "C" },
-    { id: "disclosure", label: "Disclosure", icon: "D" },
-    { id: "literacy", label: "Detector Literacy", icon: "L" },
-    { id: "audit", label: "Privacy Audit", icon: "P" },
-    { id: "saved", label: "Saved Work", icon: "W" },
-    { id: "about", label: "About", icon: "A" },
+  // Tabs grouped by workflow phase. Group is a presentation-only field;
+  // tab IDs, routes, and types are unchanged.
+  const tabs: { id: Tab; label: string; icon: string; group: string }[] = [
+    // Get started
+    { id: "models", label: "Models", icon: "M", group: "Get started" },
+    // Prepare the draft
+    { id: "cleaner", label: "Text Cleaner", icon: "T", group: "Prepare the draft" },
+    { id: "citations", label: "Citations", icon: "C", group: "Prepare the draft" },
+    // Understand the draft
+    { id: "stats", label: "Stats", icon: "#", group: "Understand the draft" },
+    { id: "structure", label: "Structure", icon: "S", group: "Understand the draft" },
+    // AI writing help
+    { id: "abstract", label: "Abstract", icon: "A", group: "AI writing help" },
+    { id: "coach", label: "Writing Coach", icon: "?", group: "AI writing help" },
+    { id: "chat", label: "Chat", icon: "C", group: "AI writing help" },
+    // Authenticity and style (Detector Literacy appears before Risk Profile;
+    // the mechanism is explained before a score is shown)
+    { id: "literacy", label: "Detector Literacy", icon: "L", group: "Authenticity and style" },
+    { id: "risk", label: "Risk Profile", icon: "R", group: "Authenticity and style" },
+    { id: "style", label: "Style Analysis", icon: "S", group: "Authenticity and style" },
+    { id: "fingerprint", label: "Fingerprint", icon: "F", group: "Authenticity and style" },
+    { id: "consistency", label: "Voice Check", icon: "V", group: "Authenticity and style" },
+    // Evidence and compliance
+    { id: "journal", label: "Journal", icon: "J", group: "Evidence and compliance" },
+    { id: "provenance", label: "Provenance", icon: "≡", group: "Evidence and compliance" },
+    { id: "appeal", label: "Appeal Letter", icon: "L", group: "Evidence and compliance" },
+    { id: "disclosure", label: "Disclosure", icon: "D", group: "Evidence and compliance" },
+    // Privacy and app
+    { id: "audit", label: "Privacy Audit", icon: "P", group: "Privacy and app" },
+    { id: "saved", label: "Saved Work", icon: "W", group: "Privacy and app" },
+    { id: "about", label: "About", icon: "A", group: "Privacy and app" },
   ];
 
   async function refreshStatus() {
@@ -91,6 +115,15 @@
       if (saved) {
         theme = saved;
         applyTheme(saved);
+      }
+    } catch {
+      // ignore
+    }
+    // Restore saved density on startup.
+    try {
+      const savedDensity = localStorage.getItem("scholarscribe-density") as "comfortable" | "compact" | null;
+      if (savedDensity) {
+        applyDensity(savedDensity);
       }
     } catch {
       // ignore
@@ -117,7 +150,10 @@
       </button>
     </div>
 
-    {#each tabs as t}
+    {#each tabs as t, i}
+      {#if i === 0 || tabs[i - 1].group !== t.group}
+        <div class="nav-group-label">{t.group}</div>
+      {/if}
       <div
         class="nav-item"
         class:active={active === t.id}
@@ -154,6 +190,22 @@
       >
         ✦ Walk me through the app
       </button>
+      <div class="density-toggle" role="group" aria-label="Sidebar density">
+        <button
+          class="density-btn"
+          class:active={density === "comfortable"}
+          aria-pressed={density === "comfortable"}
+          on:click={() => applyDensity("comfortable")}
+          title="Comfortable sidebar spacing"
+        >Comfortable</button>
+        <button
+          class="density-btn"
+          class:active={density === "compact"}
+          aria-pressed={density === "compact"}
+          on:click={() => applyDensity("compact")}
+          title="Compact sidebar spacing (does not change font size)"
+        >Compact</button>
+      </div>
     </div>
   </aside>
 
