@@ -65,9 +65,14 @@
     {:else}
       <div style="font-family: ui-monospace, monospace; font-size: var(--font-sm); line-height: 1.8;">
         {#each report.headings as h}
-          <div style="padding-left: {(h.level - 1) * 20}px;">
-            <span class="dim">H{h.level}:</span> <strong>{h.text}</strong>
-            {#if h.word_count > 0}<span class="dim" style="font-size: var(--font-sm); margin-left: 8px;">({h.word_count} words{#if h.word_count < 100}, short{/if})</span>{/if}
+          <div style="padding-left: {(h.level - 1) * 20}px; margin-bottom: 6px;">
+            <div>
+              <span class="dim">H{h.level}:</span> <strong>{h.text}</strong>
+              {#if h.word_count > 0}<span class="dim" style="font-size: var(--font-sm); margin-left: 8px;">({h.word_count} words{#if h.word_count < 100}, short{/if})</span>{/if}
+            </div>
+            {#if h.excerpt}
+              <div class="dim" style="font-family: inherit; font-size: var(--font-sm); margin-left: 28px; margin-top: 2px; line-height: 1.5; color: var(--text-muted); font-style: italic;">{h.excerpt}</div>
+            {/if}
           </div>
         {/each}
       </div>

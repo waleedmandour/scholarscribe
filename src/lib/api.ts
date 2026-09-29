@@ -357,6 +357,9 @@ export interface Heading {
   level: number;
   text: string;
   word_count: number;
+  /** First ~15 words of the section's body content. Empty when the
+   * section has no body or the body could not be extracted. */
+  excerpt: string;
 }
 
 export interface StructureReport {

@@ -10,6 +10,12 @@ pub struct Heading {
     pub level: u8,
     pub text: String,
     pub word_count: usize,
+    /// First ~15 words of the section's body content (the text that
+    /// follows this heading, up to the next heading). Lets the user
+    /// preview what each section contains without scrolling. Empty
+    /// string when the section has no body or the body could not be
+    /// extracted.
+    pub excerpt: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -85,8 +91,19 @@ pub fn analyze_text(text: &str) -> StructureReport {
 fn extract_docx_headings(xml: &str) -> Vec<Heading> {
     let mut headings = Vec::new();
     let paragraphs: Vec<&str> = xml.split("</w:p>").collect();
-    for para in paragraphs {
-        let style_re = Regex::new(r#"w:pStyle\s+w:val="([^"]*)""#).unwrap();
+    let style_re = Regex::new(r#"w:pStyle\s+w:val="([^"]*)""#).unwrap();
+    let text_re = Regex::new(r"<w:t[^>]*>([^<]*)</w:t>").unwrap();
+
+    // Pre-compute (is_heading, level, body_text) for each paragraph so we
+    // can walk forward to extract the section body without re-parsing.
+    #[derive(Clone)]
+    struct Para {
+        is_heading: bool,
+        level: u8,
+        text: String,
+    }
+    let mut paras: Vec<Para> = Vec::with_capacity(paragraphs.len());
+    for para in &paragraphs {
         let style = style_re
             .captures(para)
             .map(|c| c[1].to_lowercase())
@@ -99,23 +116,69 @@ fn extract_docx_headings(xml: &str) -> Vec<Heading> {
         } else {
             0
         };
-        if level == 0 && style != "title" {
-            continue;
-        }
-        let text_re = Regex::new(r"<w:t[^>]*>([^<]*)</w:t>").unwrap();
+        let is_heading = level != 0 || style == "title";
         let text: String = text_re
             .captures_iter(para)
             .map(|c| c[1].to_string())
             .collect::<Vec<_>>()
             .join("");
-        let text = text.trim();
-        if text.is_empty() {
+        paras.push(Para {
+            is_heading,
+            level: if style == "title" { 0 } else { level },
+            text,
+        });
+    }
+
+    for (i, p) in paras.iter().enumerate() {
+        if !p.is_heading || p.text.trim().is_empty() {
             continue;
         }
+        // Walk forward from i+1 until the next heading, collecting body
+        // paragraph text.
+        let mut body_words: Vec<&str> = Vec::new();
+        for next_para in &paras[i + 1..] {
+            if next_para.is_heading {
+                break;
+            }
+            let t = next_para.text.trim();
+            if t.is_empty() {
+                continue;
+            }
+            for w in t.split_whitespace() {
+                body_words.push(w);
+                if body_words.len() >= 15 {
+                    break;
+                }
+            }
+            if body_words.len() >= 15 {
+                break;
+            }
+        }
+        let mut excerpt = body_words
+            .iter()
+            .take(15)
+            .copied()
+            .collect::<Vec<_>>()
+            .join(" ");
+        // Compute the full section word count by walking the same range
+        // without the 15-word cap. The first walk only collected up to
+        // 15 words for the excerpt; this walk counts every word in the
+        // section body.
+        let mut full_count = 0;
+        for next_para in &paras[i + 1..] {
+            if next_para.is_heading {
+                break;
+            }
+            full_count += next_para.text.split_whitespace().count();
+        }
+        if full_count > 15 {
+            excerpt.push_str("...");
+        }
         headings.push(Heading {
-            level: if style == "title" { 0 } else { level },
-            text: text.to_string(),
-            word_count: 0,
+            level: p.level,
+            text: p.text.trim().to_string(),
+            word_count: full_count,
+            excerpt,
         });
     }
     headings
@@ -147,11 +210,12 @@ fn extract_text_headings(text: &str) -> Vec<Heading> {
         if let Some(level) = md_level {
             let heading_text = trimmed.trim_start_matches('#').trim();
             if !heading_text.is_empty() {
-                let word_count = count_words_until_next_heading(&lines, i + 1);
+                let (word_count, excerpt) = section_body_and_excerpt(&lines, i + 1);
                 headings.push(Heading {
                     level,
                     text: heading_text.to_string(),
                     word_count,
+                    excerpt,
                 });
                 continue;
             }
@@ -164,11 +228,12 @@ fn extract_text_headings(text: &str) -> Vec<Heading> {
                 && !trimmed.ends_with(';')
                 && !trimmed.ends_with(',')
             {
-                let word_count = count_words_until_next_heading(&lines, i + 1);
+                let (word_count, excerpt) = section_body_and_excerpt(&lines, i + 1);
                 headings.push(Heading {
                     level: 1,
                     text: trimmed.to_string(),
                     word_count,
+                    excerpt,
                 });
             }
         }
@@ -176,16 +241,22 @@ fn extract_text_headings(text: &str) -> Vec<Heading> {
     headings
 }
 
-fn count_words_until_next_heading(lines: &[&str], start: usize) -> usize {
-    let mut count = 0;
+/// Walk forward from `start` until the next heading, returning
+/// (total_word_count, first_15_words_excerpt). The excerpt ends with
+/// "..." when the section body is longer than 15 words.
+fn section_body_and_excerpt(lines: &[&str], start: usize) -> (usize, String) {
+    let mut word_count = 0;
+    let mut excerpt_words: Vec<&str> = Vec::new();
     for line in &lines[start..] {
         let trimmed = line.trim();
         if trimmed.is_empty() {
             continue;
         }
+        // Markdown heading stop
         if trimmed.starts_with('#') {
             break;
         }
+        // ALL-CAPS line (likely a section heading) stop
         let alpha_chars: Vec<char> = trimmed.chars().filter(|c| c.is_alphabetic()).collect();
         if alpha_chars.len() >= 4 {
             let upper_count = alpha_chars.iter().filter(|c| c.is_uppercase()).count();
@@ -193,9 +264,22 @@ fn count_words_until_next_heading(lines: &[&str], start: usize) -> usize {
                 break;
             }
         }
-        count += trimmed.split_whitespace().count();
+        let line_words: Vec<&str> = trimmed.split_whitespace().collect();
+        word_count += line_words.len();
+        if excerpt_words.len() < 15 {
+            for w in line_words {
+                excerpt_words.push(w);
+                if excerpt_words.len() >= 15 {
+                    break;
+                }
+            }
+        }
     }
-    count
+    let mut excerpt = excerpt_words.join(" ");
+    if word_count > 15 {
+        excerpt.push_str("...");
+    }
+    (word_count, excerpt)
 }
 
 fn build_report(
