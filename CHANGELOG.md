@@ -207,9 +207,18 @@ reasoning recorded here for future maintainers:
 8. Shared `VerifiedStat` component: added to enforce the "every
    statistic carries a source link and Last verified date" rule
    structurally rather than per page.
-9. `cargo clippy`: flipped from `continue-on-error: true` to fail the
-   build (separate commit in Task 7), per the global constraint "do not
-   commit a failing build".
+9. `cargo clippy`: intended to flip from `continue-on-error: true` to
+   fail the build, but the codebase carries approximately 21 pre-existing
+   clippy warnings across 9 source files (commands.rs, document_stats.rs,
+   docx_reading.rs, persistence.rs, structure_analyzer.rs, text_cleaner.rs,
+   voice_consistency.rs, writing_journal.rs, plus one in risk_profiler.rs
+   that was fixed). Lints include manual_inspect, if_same_then_else,
+   useless_format, collapsible_if, unnecessary_sort_by,
+   manual_pattern_char_comparison, regex_creation_in_loops, manual_strip,
+   let_and_return. Fixing all of them is a separate refactor sprint.
+   For this sprint, the clippy step keeps `continue-on-error: true` with a
+   code comment pointing at this CHANGELOG entry. Cargo fmt --check and
+   cargo check still fail the build; clippy is informational only.
 10. `Jump to passage`: scoped to RiskProfiler's own textarea (no
     cross-tab jump) because each tab manages its own input. A
     cross-editor jump would require a shared editor instance and is a
