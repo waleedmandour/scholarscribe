@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { open } from "@tauri-apps/plugin-dialog";
   import {
     api,
     type ModelInfo,
@@ -16,6 +17,13 @@
   let error = "";
   let temperature = 0.7;
   let modelsLoaded = false;
+  // Attached manuscript / paper section. When set, the file content is
+  // prepended to the next user message so the model has the manuscript
+  // as context for the user's question. The attachment is "consumed"
+  // (cleared) after the first send so subsequent questions rely on the
+  // conversation history rather than re-sending the full manuscript.
+  let attachedFile: { name: string; content: string } | null = null;
+  let attaching = false;
 
   const SYSTEM_PROMPT: ChatMessage = {
     role: "system",
@@ -39,12 +47,50 @@
   // Re-fetch when ollamaOk flips true (e.g. user starts Ollama while app is open).
   $: if (ollamaOk && !modelsLoaded) loadModels();
 
+  async function pickFile() {
+    const selected = await open({
+      multiple: false,
+      filters: [
+        { name: "Manuscript + text documents", extensions: ["txt", "md", "markdown", "tex", "rst", "docx"] },
+      ],
+    });
+    if (!selected || typeof selected !== "string") return;
+    attaching = true;
+    error = "";
+    try {
+      const content = await api.readTextFile(selected);
+      // Extract just the filename from the path for display.
+      const name = selected.split(/[\\/]/).pop() || selected;
+      attachedFile = { name, content };
+    } catch (e) {
+      error = String(e);
+    } finally {
+      attaching = false;
+    }
+  }
+
+  function removeAttached() {
+    attachedFile = null;
+  }
+
   async function send() {
     if (!input.trim() || !selectedModel) return;
     error = "";
-    const userMsg: ChatMessage = { role: "user", content: input };
+    // If a file is attached, prepend its content to the user's
+    // message so the model has the manuscript as context for this
+    // turn. The attachment is then cleared so subsequent questions
+    // rely on the conversation history (the manuscript is already
+    // in the messages list from this turn).
+    let userContent = input;
+    if (attachedFile) {
+      const separator = "\n\n---\n\n";
+      const header = `[Attached manuscript: ${attachedFile.name}]\n\n${attachedFile.content}`;
+      userContent = `${header}${separator}${input}`;
+    }
+    const userMsg: ChatMessage = { role: "user", content: userContent };
     messages = [...messages, userMsg];
     input = "";
+    attachedFile = null;
     busy = true;
     try {
       const response = await api.ollamaChat({
@@ -69,13 +115,22 @@
 
   function clear() {
     messages = [];
+    attachedFile = null;
   }
+
+  // Word count of the attached file content, for display in the
+  // context panel. Reactive: re-computes whenever attachedFile
+  // changes.
+  $: attachedWordCount = attachedFile
+    ? attachedFile.content.split(/\s+/).filter(Boolean).length
+    : 0;
 </script>
 
 <h1>Chat</h1>
 <p class="lead">
   A simple local-only chat interface to your installed models. Useful for brainstorming phrasing, asking a model to
-  critique a paragraph, or running a quick sanity check on an idea. Everything stays on your device.
+  critique a paragraph, or running a quick sanity check on an idea. Attach a manuscript or paper section to discuss
+  it directly with the model. Everything stays on your device.
 </p>
 
 {#if !ollamaOk}
@@ -104,7 +159,7 @@
   <div class="card" style="min-height: 320px; display: flex; flex-direction: column;">
     <div style="flex: 1; overflow-y: auto; padding: 4px;">
       {#if messages.length === 0}
-        <p class="no-data">No messages yet. Try asking the model to suggest three ways to phrase a tricky sentence, or to point out unclear arguments in a paragraph.</p>
+        <p class="no-data">No messages yet. Try asking the model to suggest three ways to phrase a tricky sentence, or to point out unclear arguments in a paragraph. You can also attach a manuscript or paper section using the "Attach manuscript" button below.</p>
       {:else}
         {#each messages as m}
           <div style="margin-bottom: 12px;">
@@ -114,17 +169,30 @@
         {/each}
       {/if}
     </div>
+
+    {#if attachedFile}
+      <div style="border-top: 1px solid var(--border); padding: 8px 12px; background: var(--accent-soft); display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: var(--font-sm); color: var(--accent); font-weight: 600;">Attached:</span>
+        <code style="font-size: var(--font-sm); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{attachedFile.name}</code>
+        <span class="dim" style="font-size: var(--font-sm);">{attachedWordCount.toLocaleString()} words</span>
+        <button class="shrink" on:click={removeAttached} style="font-size: var(--font-sm); padding: 2px 8px;">Remove</button>
+      </div>
+    {/if}
+
     <div style="border-top: 1px solid var(--border); padding-top: 12px;">
       <textarea
         bind:value={input}
         on:keydown={onKeydown}
         rows="3"
-        placeholder="Type a message. Ctrl+Enter to send."
+        placeholder={attachedFile ? "Ask a question about the attached manuscript. Ctrl+Enter to send." : "Type a message. Ctrl+Enter to send."}
         disabled={busy}
       ></textarea>
       <div class="row" style="margin-top: 6px;">
         <span class="dim" style="font-size: var(--font-sm);">Runs entirely on-device via Ollama.</span>
         <div class="spacer"></div>
+        <button class="shrink" on:click={pickFile} disabled={busy || attaching}>
+          {attaching ? "Loading…" : attachedFile ? "Replace manuscript…" : "Attach manuscript…"}
+        </button>
         <button class="primary shrink" on:click={send} disabled={busy || !input.trim()}>
           {busy ? "Working…" : "Send"}
         </button>
@@ -139,4 +207,14 @@
     submit AI-generated content as original work. If you find a model still complying with such requests, please
     open an issue, the guardrail wording is part of the project's ethical commitments.
   </div>
+
+  {#if attachedFile}
+    <div class="callout info" style="margin-top: 8px;">
+      <strong>How the attachment works.</strong>
+      When you send your next message, the attached manuscript is prepended to your question so the model has the
+      full text as context. The attachment is then cleared so subsequent questions rely on the conversation
+      history (the manuscript is already in the messages list from this turn). For very long manuscripts, consider
+      attaching just the section you want to discuss rather than the full document.
+    </div>
+  {/if}
 {/if}
