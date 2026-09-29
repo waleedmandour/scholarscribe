@@ -8,6 +8,95 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1] - 2026-09-30
+
+Four feature improvements based on user review of v2.2.0-pre.
+
+### Added
+- **User Guide PDF: app logo on cover + symmetric margins.** The cover
+  page now embeds the ScholarScribe app icon (30mm square, centered) at
+  the top of the cover. The cover frame's horizontal margins now match
+  the body's 18mm, so the cover's text column aligns with the body's
+  text column. The cover's typography is polished: thin accent rule
+  above the title, a second thin rule below the subtitle for visual
+  closure, and a copyright line at the very bottom of the cover.
+- **Structure Analyzer: first-phrase excerpts per section.** Mirrors
+  the Risk Profile's passage-excerpt pattern. Each heading in the
+  Structure Analyzer report now carries an `excerpt` field showing the
+  first ~15 words of the section's body content, sliced from the text
+  that follows the heading up to the next heading. The excerpt is
+  displayed in italic muted text indented under each heading row.
+  Lets the user preview what each section contains without scrolling.
+- **Citation Manager: paste-references mode.** A new mode toggle in
+  the Citation Manager lets researchers paste a plain-text reference
+  list (in their target venue's citation style) and have ScholarScribe
+  convert it to BibTeX, download the .bib file, and auto-validate it
+  against their draft. Supported styles: APA 7th, MLA 9th, Chicago
+  17th (notes-bibliography), Vancouver (medical), and Plain / auto-
+  detect. The parser is heuristic and tolerates mixed formats;
+  per-entry warnings flag references where fields could not be
+  extracted. Auto-validate runs when both the draft and the
+  references are loaded (either via .bib file or pasted-and-converted).
+- **Chat: file picker to attach manuscript or paper section.** The
+  Chat tab now has an "Attach manuscript" button that opens a native
+  file picker filtered to .txt, .md, .tex, .rst, and .docx. The
+  loaded file content is prepended to the user's next message so the
+  model has the full text as context for the user's question. The
+  attachment is then cleared so subsequent questions rely on the
+  conversation history (the manuscript is already in the messages
+  list from this turn). For very long manuscripts, the user is
+  encouraged to attach just the section they want to discuss.
+
+### Changed
+- `BibEntry` struct extended with `journal`, `volume`, `number`,
+  `pages`, `doi`, `publisher`, `booktitle`, and `raw` fields. The
+  existing `parse_bib` function now extracts these from existing .bib
+  files too (previously only `title`, `author`, `year` were extracted).
+- `Heading` struct gains an `excerpt: String` field. Both the
+  plain-text and .docx heading extractors now compute the excerpt
+  alongside the existing `word_count`.
+- Version bumped to 2.2.1 across `package.json`,
+  `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, the sidebar
+  footer in `src/App.svelte`, the README badge, the README install
+  table, the README apt/dnf install commands, the README license
+  footer, the USER_MANUAL version stamp and installer filename, and
+  the USER_GUIDE version line.
+
+### Files touched
+- `scripts/user_guide_pdf.py` - light-theme cover with app logo and
+  symmetric margins; metadata subject bumped to v2.2.1.
+- `src-tauri/src/structure_analyzer.rs` - Heading excerpt field;
+  `section_body_and_excerpt` helper; docx extractor rewritten to
+  pre-compute paragraph metadata and walk forward to collect section
+  body.
+- `src-tauri/src/plain_ref_parser.rs` (new) - plain-text references
+  to BibTeX converter with style-aware heuristics.
+- `src-tauri/src/citation_manager.rs` - BibEntry extended;
+  `normalize_pages` helper for BibTeX double-dash format.
+- `src-tauri/src/commands.rs` - two new Tauri commands:
+  `convert_plain_to_bib` and `validate_citations_inline`.
+- `src-tauri/src/lib.rs` - `plain_ref_parser` module registered;
+  both new commands added to the invoke_handler.
+- `src/lib/api.ts` - BibEntry interface extended; new
+  `PlainRefStyle` type; new `ConvertPlainToBibResult` interface;
+  new `convertPlainToBib` and `validateCitationsInline` api methods.
+- `src/components/StructureAnalyzer.svelte` - heading rows now
+  display the excerpt below each heading text.
+- `src/components/CitationManager.svelte` - rewritten with two-mode
+  UI (Load .bib file vs Paste references), style selector, convert +
+  download + validate buttons, auto-validate, and warnings panel.
+- `src/components/Chat.svelte` - new "Attach manuscript" button,
+  context panel, prepend-to-next-message logic, and "How the
+  attachment works" callout.
+- `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`,
+  `src/App.svelte`, `README.md`, `USER_GUIDE.md` - version bumps.
+
+### Verification
+- `npm run check`: 0 errors, 11 pre-existing warnings (baseline).
+- `npm run build`: success.
+- `cargo fmt --check`: clean.
+- Em dash grep across user-facing files: zero matches.
+
 ## [2.2.0] - 2026-09-29
 
 Improvement sprint: sidebar regrouping, legible risk-profile passages,
