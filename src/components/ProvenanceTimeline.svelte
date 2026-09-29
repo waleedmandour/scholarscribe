@@ -99,7 +99,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: var(--font-sm);
     font-weight: 700;
     z-index: 1;
   }
@@ -121,21 +121,21 @@
   .added {
     color: var(--ok, #1a7f37);
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .removed {
     color: var(--danger, #c0392b);
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .chain {
     margin-top: 6px;
     font-family: var(--mono, monospace);
-    font-size: 10.5px;
+    font-size: var(--font-sm);
     line-height: 1.5;
     word-break: break-all;
   }
   .small {
-    font-size: 11px;
+    font-size: var(--font-sm);
   }
 </style>

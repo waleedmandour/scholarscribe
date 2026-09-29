@@ -362,7 +362,7 @@
     background: transparent;
     border-radius: var(--radius-sm);
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: var(--font-sm);
     cursor: pointer;
   }
   .source-toggle button.active {
@@ -377,15 +377,15 @@
     flex-wrap: wrap;
   }
   .stat-row .dim {
-    font-size: 10.5px;
+    font-size: var(--font-sm);
     letter-spacing: 0.04em;
   }
   .stat-row .big {
-    font-size: 20px;
+    font-size: var(--font-lg);
     font-weight: 700;
   }
   .ok-pill {
-    font-size: 12px;
+    font-size: var(--font-sm);
     color: var(--accent);
     background: var(--accent-soft);
     border: 1px solid var(--accent);
@@ -403,7 +403,7 @@
     position: relative;
     padding-left: 36px;
     margin-bottom: 10px;
-    font-size: 13.5px;
+    font-size: var(--font-sm);
     line-height: 1.6;
   }
   .howto li::before {
@@ -416,7 +416,7 @@
     border-radius: 50%;
     background: var(--accent);
     color: white;
-    font-size: 12px;
+    font-size: var(--font-sm);
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -426,7 +426,7 @@
     background: var(--code-bg);
     padding: 1px 5px;
     border-radius: 3px;
-    font-size: 12.5px;
+    font-size: var(--font-sm);
   }
   .overlay {
     position: fixed;

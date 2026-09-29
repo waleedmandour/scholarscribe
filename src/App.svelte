@@ -36,11 +36,25 @@
   // Compact reduces sidebar padding only; never changes font size.
   let density: "comfortable" | "compact" = "comfortable";
 
+  // Font scale: 0.9 | 1.0 | 1.15. Persisted to localStorage.
+  // Set on document.documentElement via --font-scale CSS var.
+  let fontScale: number = 1.0;
+
   function applyDensity(d: "comfortable" | "compact") {
     density = d;
     document.documentElement.setAttribute("data-density", d);
     try {
       localStorage.setItem("scholarscribe-density", d);
+    } catch {
+      // localStorage may be unavailable in some embedded contexts; non-fatal.
+    }
+  }
+
+  function applyFontScale(s: number) {
+    fontScale = s;
+    document.documentElement.style.setProperty("--font-scale", String(s));
+    try {
+      localStorage.setItem("scholarscribe-font-scale", String(s));
     } catch {
       // localStorage may be unavailable in some embedded contexts; non-fatal.
     }
@@ -128,6 +142,17 @@
     } catch {
       // ignore
     }
+    // Restore saved font scale on startup. The pre-paint script in
+    // index.html also sets this before first paint to avoid FOUC; this
+    // call keeps the Svelte state in sync.
+    try {
+      const savedScale = parseFloat(localStorage.getItem("scholarscribe-font-scale") || "1");
+      if (savedScale === 0.9 || savedScale === 1.0 || savedScale === 1.15) {
+        fontScale = savedScale;
+      }
+    } catch {
+      // ignore
+    }
     refreshStatus();
     const id = setInterval(refreshStatus, 5000);
     return () => clearInterval(id);
@@ -169,7 +194,7 @@
 
     <div class="spacer"></div>
 
-    <div style="padding: 8px 10px; border-top: 1px solid var(--border); font-size: 11px;">
+    <div style="padding: 8px 10px; border-top: 1px solid var(--border); font-size: var(--font-sm);">
       <div class="dim">Ollama backend</div>
       <div style="margin-top: 4px;">
         {#if checking}
@@ -205,6 +230,29 @@
           on:click={() => applyDensity("compact")}
           title="Compact sidebar spacing (does not change font size)"
         >Compact</button>
+      </div>
+      <div class="font-scale-toggle" role="group" aria-label="Font size">
+        <button
+          class="font-scale-btn"
+          class:active={fontScale === 0.9}
+          aria-pressed={fontScale === 0.9}
+          on:click={() => applyFontScale(0.9)}
+          title="Smaller font size (90%)"
+        >A-</button>
+        <button
+          class="font-scale-btn"
+          class:active={fontScale === 1.0}
+          aria-pressed={fontScale === 1.0}
+          on:click={() => applyFontScale(1.0)}
+          title="Default font size (100%)"
+        >A</button>
+        <button
+          class="font-scale-btn"
+          class:active={fontScale === 1.15}
+          aria-pressed={fontScale === 1.15}
+          on:click={() => applyFontScale(1.15)}
+          title="Larger font size (115%)"
+        >A+</button>
       </div>
     </div>
   </aside>
@@ -261,7 +309,7 @@
     background: transparent;
     border: 1px solid var(--border);
     padding: 4px 8px;
-    font-size: 14px;
+    font-size: var(--font-md);
     line-height: 1;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -276,7 +324,7 @@
   .walk-through-btn {
     margin-top: 10px;
     width: 100%;
-    font-size: 12px;
+    font-size: var(--font-sm);
     padding: 6px 10px;
     color: var(--accent);
     background: var(--accent-soft);

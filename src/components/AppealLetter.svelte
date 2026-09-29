@@ -47,21 +47,21 @@
 <div class="card">
   <div class="card-title">Your details</div>
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-    <div><label class="dim" style="font-size:11px;">Title</label><input type="text" bind:value={input.researcher_title} /></div>
-    <div><label class="dim" style="font-size:11px;">Name *</label><input type="text" bind:value={input.researcher_name} placeholder="Dr. Waleed Mandour" /></div>
-    <div><label class="dim" style="font-size:11px;">Institution</label><input type="text" bind:value={input.institution} /></div>
-    <div><label class="dim" style="font-size:11px;">Manuscript title *</label><input type="text" bind:value={input.manuscript_title} /></div>
-    <div><label class="dim" style="font-size:11px;">Venue</label><input type="text" bind:value={input.venue} placeholder="Journal of X" /></div>
-    <div><label class="dim" style="font-size:11px;">Editor name (if known)</label><input type="text" bind:value={input.editor_name} /></div>
-    <div><label class="dim" style="font-size:11px;">Detector used</label><input type="text" bind:value={input.detector_used} /></div>
-    <div><label class="dim" style="font-size:11px;">Detector score</label><input type="text" bind:value={input.detector_score} placeholder="92% AI-generated" /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Title</label><input type="text" bind:value={input.researcher_title} /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Name *</label><input type="text" bind:value={input.researcher_name} placeholder="Dr. Waleed Mandour" /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Institution</label><input type="text" bind:value={input.institution} /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Manuscript title *</label><input type="text" bind:value={input.manuscript_title} /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Venue</label><input type="text" bind:value={input.venue} placeholder="Journal of X" /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Editor name (if known)</label><input type="text" bind:value={input.editor_name} /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Detector used</label><input type="text" bind:value={input.detector_used} /></div>
+    <div><label class="dim" style="font-size: var(--font-sm);">Detector score</label><input type="text" bind:value={input.detector_score} placeholder="92% AI-generated" /></div>
   </div>
   <div style="margin-top: 12px;">
-    <label class="dim" style="font-size:11px; display:block; margin-bottom:4px;">Describe your writing process</label>
+    <label class="dim" style="font-size: var(--font-sm); display:block; margin-bottom:4px;">Describe your writing process</label>
     <textarea bind:value={input.process_description} rows="4" placeholder="I drafted the manuscript over 3 weeks, starting from an outline I created on [date]. I conducted the literature review using [databases], collected data on [date], and wrote the methods section first, followed by results, discussion, and introduction. I revised the manuscript 5 times based on feedback from co-authors."></textarea>
   </div>
   <div style="margin-top: 8px;">
-    <label class="dim" style="font-size:11px; display:block; margin-bottom:4px;">Additional evidence (optional)</label>
+    <label class="dim" style="font-size: var(--font-sm); display:block; margin-bottom:4px;">Additional evidence (optional)</label>
     <textarea bind:value={input.additional_evidence} rows="3" placeholder="I can provide version history from Google Docs showing edits over time, draft comments from co-authors, and dated research notes."></textarea>
   </div>
   <div class="row" style="margin-top: 12px;">
@@ -76,6 +76,6 @@
       <div class="spacer"></div>
       <button class="shrink" on:click={copy}>{copied ? "Copied!" : "Copy letter"}</button>
     </div>
-    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: 14px; line-height: 1.6; background: var(--bg-elev-2); padding: 16px; border-radius: var(--radius-sm); max-height: 600px; overflow-y: auto;">{output.letter}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: var(--font-md); line-height: 1.6; background: var(--bg-elev-2); padding: 16px; border-radius: var(--radius-sm); max-height: 600px; overflow-y: auto;">{output.letter}</pre>
   </div>
 {/if}

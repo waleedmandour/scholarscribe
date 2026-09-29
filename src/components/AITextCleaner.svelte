@@ -235,14 +235,14 @@
     <div class="row" style="margin-bottom: 8px;">
       <button class="shrink" on:click={pickFile}>Open file…</button>
       {#if inputPath}
-        <span class="dim" style="font-size: 11px; word-break: break-all;">
+        <span class="dim" style="font-size: var(--font-sm); word-break: break-all;">
           {inputPath}
           {#if inputKind === "docx"}<span class="tag" style="margin-left: 6px;">.docx</span>{/if}
         </span>
       {/if}
     </div>
     <textarea bind:value={inputText} rows="14" placeholder="Paste your text here, or use Open file… to load a .txt/.md/.docx file"></textarea>
-    <div class="dim" style="font-size: 11px; margin-top: 4px;">
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">
       {inputText.length.toLocaleString()} characters
       {#if inputKind === "docx"}· .docx loaded: pick an action below{/if}
     </div>
@@ -258,13 +258,13 @@
     </div>
     <div style="display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px;">
       {#each optionLabels as o}
-        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; cursor: pointer;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: var(--font-sm); cursor: pointer;">
           <input type="checkbox" bind:checked={opts[o.key]} style="flex: 0 0 auto; margin-top: 3px;" />
           <span>
             <strong>{o.label}</strong>
-            {#if o.strict}<span class="tag" style="margin-left: 4px; font-size: 9px;">strict</span>{/if}
+            {#if o.strict}<span class="tag" style="margin-left: 4px; font-size: var(--font-sm);">strict</span>{/if}
             <br />
-            <span class="dim" style="font-size: 11px;">{o.hint}</span>
+            <span class="dim" style="font-size: var(--font-sm);">{o.hint}</span>
           </span>
         </label>
       {/each}
@@ -307,17 +307,17 @@
   <div class="card">
     <div class="row" style="margin-bottom: 12px;">
       <div>
-        <div class="dim" style="font-size: 11px;">ORIGINAL</div>
-        <div style="font-size: 16px; font-weight: 600;">{result.original_length.toLocaleString()} chars</div>
+        <div class="dim" style="font-size: var(--font-sm);">ORIGINAL</div>
+        <div style="font-size: var(--font-md); font-weight: 600;">{result.original_length.toLocaleString()} chars</div>
       </div>
       <div>→</div>
       <div>
-        <div class="dim" style="font-size: 11px;">CLEANED</div>
-        <div style="font-size: 16px; font-weight: 600;">{result.cleaned_length.toLocaleString()} chars</div>
+        <div class="dim" style="font-size: var(--font-sm);">CLEANED</div>
+        <div style="font-size: var(--font-md); font-weight: 600;">{result.cleaned_length.toLocaleString()} chars</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">SAVED</div>
-        <div style="font-size: 16px; font-weight: 600; color: var(--success);">
+        <div class="dim" style="font-size: var(--font-sm);">SAVED</div>
+        <div style="font-size: var(--font-md); font-weight: 600; color: var(--success);">
           {result.original_length > result.cleaned_length
             ? `${(result.original_length - result.cleaned_length).toLocaleString()}`
             : `+${(result.cleaned_length - result.original_length).toLocaleString()}`}
@@ -333,7 +333,7 @@
         <strong>Transformations applied:</strong>
         <ul style="margin: 6px 0 0 16px; padding: 0;">
           {#each result.transformations_applied as t}
-            <li style="font-size: 13px;">{t}</li>
+            <li style="font-size: var(--font-sm);">{t}</li>
           {/each}
         </ul>
       </div>
@@ -342,7 +342,7 @@
     {/if}
 
     <details>
-      <summary style="cursor: pointer; font-size: 13px; color: var(--text-muted);">Detailed stats</summary>
+      <summary style="cursor: pointer; font-size: var(--font-sm); color: var(--text-muted);">Detailed stats</summary>
       <table style="margin-top: 8px;">
         <thead><tr><th>Operation</th><th>Count</th></tr></thead>
         <tbody>
@@ -393,7 +393,7 @@
     {#if preserveResult.transformations_applied.length > 0}
       <ul style="margin: 6px 0 0 16px; padding: 0;">
         {#each preserveResult.transformations_applied as t}
-          <li style="font-size: 13px;">{t}</li>
+          <li style="font-size: var(--font-sm);">{t}</li>
         {/each}
       </ul>
     {:else}
@@ -405,10 +405,10 @@
     <div class="card-title">Skipped operations (don't apply to in-place .docx cleaning)</div>
     <ul style="margin: 6px 0 0 16px; padding: 0;">
       {#each preserveResult.skipped_operations as s}
-        <li style="font-size: 13px;" class="muted">{s}</li>
+        <li style="font-size: var(--font-sm);" class="muted">{s}</li>
       {/each}
     </ul>
-    <p class="muted" style="font-size: 12px; margin-top: 10px;">
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 10px;">
       These operations require cross-paragraph context (e.g. joining sentences that span
       paragraph breaks). Applying them would require restructuring the document, which would
       defeat the purpose of preserving your formatting. To apply them, use

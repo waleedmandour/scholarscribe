@@ -213,7 +213,7 @@
             <li><strong>No third-party APIs:</strong> no OpenAI, Anthropic, or Google AI calls.</li>
             <li><strong>One outbound host</strong>: <code>registry.ollama.ai</code>, only when you click "Download" on a model, and that carries no text or usage data.</li>
           </ul>
-          <div class="callout info" style="margin-top: 14px; font-size: 13.5px;">
+          <div class="callout info" style="margin-top: 14px; font-size: var(--font-sm);">
             <strong>Verify it yourself.</strong> The <strong>Privacy Audit</strong> tab
             shows a live log of every file read and outbound HTTP call. Anything other
             than <code>registry.ollama.ai</code> is a red flag.
@@ -391,7 +391,7 @@
     border: 1.5px solid var(--border);
     background: var(--bg-elev);
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--font-sm);
     font-weight: 600;
     padding: 0;
     display: flex;
@@ -432,27 +432,27 @@
     overflow-y: auto;
   }
   .tour-icon-big {
-    font-size: 38px;
+    font-size: var(--font-stat-xl);
     line-height: 1;
     margin-bottom: 8px;
     color: var(--accent);
     font-weight: 700;
   }
   .tour-title {
-    font-size: 22px;
+    font-size: var(--font-xl);
     font-weight: 600;
     margin: 0 0 8px;
     color: var(--text);
     line-height: 1.25;
   }
   .tour-tagline {
-    font-size: 15.5px;
+    font-size: var(--font-md);
     color: var(--accent);
     font-style: italic;
     margin: 0 0 14px;
   }
   .tour-text {
-    font-size: 14px;
+    font-size: var(--font-md);
     line-height: 1.65;
     color: var(--text);
     margin: 0 0 12px;
@@ -462,12 +462,12 @@
     padding: 1px 5px;
     border-radius: 3px;
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 12.5px;
+    font-size: var(--font-sm);
   }
   .tour-list {
     margin: 8px 0 0;
     padding-left: 18px;
-    font-size: 13.5px;
+    font-size: var(--font-sm);
     line-height: 1.7;
     color: var(--text);
   }
@@ -477,7 +477,7 @@
   .tour-steps {
     margin: 8px 0 0;
     padding-left: 20px;
-    font-size: 13.5px;
+    font-size: var(--font-sm);
     line-height: 1.7;
     color: var(--text);
   }
@@ -492,10 +492,10 @@
   /* RAM table */
   .tour-ram-table {
     margin: 8px 0 0;
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .tour-ram-table th {
-    font-size: 11.5px;
+    font-size: var(--font-sm);
   }
   .tour-ram-table td {
     padding: 7px 10px;
@@ -515,7 +515,7 @@
     padding: 10px;
   }
   .tour-group-title {
-    font-size: 11.5px;
+    font-size: var(--font-sm);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -541,7 +541,7 @@
     cursor: pointer;
     transition: all 0.12s ease;
     font-family: inherit;
-    font-size: 13px;
+    font-size: var(--font-sm);
     width: 100%;
   }
   .tour-cell:hover {
@@ -553,7 +553,7 @@
     color: var(--text);
   }
   .tour-cell-desc {
-    font-size: 11.5px;
+    font-size: var(--font-sm);
     color: var(--text-muted);
     margin-top: 1px;
   }
@@ -572,7 +572,7 @@
   }
   .tour-ethics-h {
     padding: 8px 12px;
-    font-size: 12.5px;
+    font-size: var(--font-sm);
     font-weight: 600;
     color: white;
   }
@@ -581,7 +581,7 @@
   .tour-ethics-col ul {
     margin: 0;
     padding: 10px 14px 12px 22px;
-    font-size: 12.5px;
+    font-size: var(--font-sm);
     line-height: 1.55;
     background: var(--bg-elev);
   }
@@ -605,7 +605,7 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 12.5px;
+    font-size: var(--font-sm);
     color: var(--text-muted);
     cursor: pointer;
     user-select: none;
@@ -621,7 +621,7 @@
     flex-wrap: wrap;
   }
   .tour-step-counter {
-    font-size: 12px;
+    font-size: var(--font-sm);
     color: var(--text-dim);
     margin-right: 4px;
   }

@@ -107,10 +107,10 @@
     <div class="card-subtitle">The text you're working on now.</div>
     <div class="row" style="margin-bottom: 8px;">
       <button class="shrink" on:click={() => pickFile("draft")}>Open file…</button>
-      {#if draftPath}<span class="dim" style="font-size: 11px;">{draftPath}</span>{/if}
+      {#if draftPath}<span class="dim" style="font-size: var(--font-sm);">{draftPath}</span>{/if}
     </div>
     <textarea bind:value={draftText} rows="10" placeholder="Paste your draft, or use Open file…"></textarea>
-    <div class="dim" style="font-size: 11px; margin-top: 4px;">{draftText.length.toLocaleString()} characters</div>
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">{draftText.length.toLocaleString()} characters</div>
   </div>
 
   <div class="card" style="flex: 1;">
@@ -118,10 +118,10 @@
     <div class="card-subtitle">A paper, chapter, or section that sounds like "you". 1,000+ words gives the most reliable profile.</div>
     <div class="row" style="margin-bottom: 8px;">
       <button class="shrink" on:click={() => pickFile("ref")}>Open file…</button>
-      {#if refPath}<span class="dim" style="font-size: 11px;">{refPath}</span>{/if}
+      {#if refPath}<span class="dim" style="font-size: var(--font-sm);">{refPath}</span>{/if}
     </div>
     <textarea bind:value={refText} rows="10" placeholder="Paste a sample of your own published writing"></textarea>
-    <div class="dim" style="font-size: 11px; margin-top: 4px;">{refText.length.toLocaleString()} characters</div>
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">{refText.length.toLocaleString()} characters</div>
   </div>
 </div>
 
@@ -135,7 +135,7 @@
   <h2>Result</h2>
   <div class="card">
     <div class="card-title">Summary</div>
-    <p class="muted" style="font-size: 13px; margin: 6px 0 12px;">
+    <p class="muted" style="font-size: var(--font-sm); margin: 6px 0 12px;">
       Overall distance: <strong>{fmt(comparison.overall_distance, 3)}</strong>
       <span class="dim">(lower = more similar. Typical within-author distance is &lt; 0.5.)</span>
     </p>

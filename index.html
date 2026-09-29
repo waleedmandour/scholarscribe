@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ScholarScribe</title>
     <link rel="stylesheet" href="/app.css" />
+    <script>
+      // Apply persisted font scale and density before first paint to avoid a
+      // flash of default size. These are the only inline scripts in the app;
+      // CSP allows 'unsafe-inline' for scripts per tauri.conf.json.
+      (function () {
+        try {
+          var scale = localStorage.getItem("scholarscribe-font-scale");
+          if (scale) {
+            document.documentElement.style.setProperty("--font-scale", scale);
+          }
+          var density = localStorage.getItem("scholarscribe-density");
+          if (density) {
+            document.documentElement.setAttribute("data-density", density);
+          }
+          var theme = localStorage.getItem("scholarscribe-theme");
+          if (theme && theme !== "auto") {
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+        } catch (e) {
+          // localStorage may be unavailable in some embedded contexts; non-fatal.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

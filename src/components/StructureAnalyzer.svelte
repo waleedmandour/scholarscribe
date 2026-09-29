@@ -47,7 +47,7 @@
 <div class="card">
   <div class="row" style="margin-bottom: 8px;">
     <button class="shrink" on:click={pickFile}>Open file…</button>
-    {#if inputPath}<span class="dim" style="font-size: 11px;">{inputPath}{#if inputKind === "docx"} <span class="tag">.docx</span>{/if}</span>{/if}
+    {#if inputPath}<span class="dim" style="font-size: var(--font-sm);">{inputPath}{#if inputKind === "docx"} <span class="tag">.docx</span>{/if}</span>{/if}
   </div>
   <textarea bind:value={inputText} rows="8" placeholder="Paste your manuscript here…"></textarea>
   <div class="row" style="margin-top: 12px;">
@@ -63,11 +63,11 @@
     {#if report.headings.length === 0}
       <div class="no-data">No headings detected.</div>
     {:else}
-      <div style="font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.8;">
+      <div style="font-family: ui-monospace, monospace; font-size: var(--font-sm); line-height: 1.8;">
         {#each report.headings as h}
           <div style="padding-left: {(h.level - 1) * 20}px;">
             <span class="dim">H{h.level}:</span> <strong>{h.text}</strong>
-            {#if h.word_count > 0}<span class="dim" style="font-size: 11px; margin-left: 8px;">({h.word_count} words{#if h.word_count < 100}, short{/if})</span>{/if}
+            {#if h.word_count > 0}<span class="dim" style="font-size: var(--font-sm); margin-left: 8px;">({h.word_count} words{#if h.word_count < 100}, short{/if})</span>{/if}
           </div>
         {/each}
       </div>
@@ -87,7 +87,7 @@
     <h2>Suggestions</h2>
     <div class="card">
       <ul style="margin: 6px 0 0 16px; line-height: 1.7;">
-        {#each report.suggestions as s}<li style="font-size: 13px;">{s}</li>{/each}
+        {#each report.suggestions as s}<li style="font-size: var(--font-sm);">{s}</li>{/each}
       </ul>
     </div>
   {/if}

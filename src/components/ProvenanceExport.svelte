@@ -149,7 +149,7 @@
     width: 100%;
     margin-top: 6px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: var(--font-sm);
     resize: vertical;
   }
 </style>

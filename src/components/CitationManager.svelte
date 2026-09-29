@@ -70,14 +70,14 @@
 <div class="card">
   <div class="row" style="align-items: flex-start; gap: 16px;">
     <div style="flex: 1;">
-      <label class="dim" for="cm-draft" style="font-size: 11px; display: block; margin-bottom: 4px;">Draft document (.txt, .md, .tex, .docx)</label>
+      <label class="dim" for="cm-draft" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Draft document (.txt, .md, .tex, .docx)</label>
       <div class="row">
         <input id="cm-draft" type="text" bind:value={draftPath} placeholder="Click Pick to choose a file…" readonly style="flex: 1;" />
         <button class="shrink" on:click={pickDraft}>Pick…</button>
       </div>
     </div>
     <div style="flex: 1;">
-      <label class="dim" for="cm-bib" style="font-size: 11px; display: block; margin-bottom: 4px;">BibTeX file (.bib)</label>
+      <label class="dim" for="cm-bib" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">BibTeX file (.bib)</label>
       <div class="row">
         <input id="cm-bib" type="text" bind:value={bibPath} placeholder="Click Pick to choose a file…" readonly style="flex: 1;" />
         <button class="shrink" on:click={pickBib}>Pick…</button>
@@ -95,24 +95,24 @@
   <h2>Results</h2>
 
   <div class="card" style="background: var(--bg-elev-2);">
-    <div class="row" style="text-align: center; font-size: 13px;">
+    <div class="row" style="text-align: center; font-size: var(--font-sm);">
       <div>
-        <div class="dim" style="font-size: 11px;">BIB ENTRIES</div>
-        <div style="font-size: 22px; font-weight: 600;">{report.bib_entries.length}</div>
+        <div class="dim" style="font-size: var(--font-sm);">BIB ENTRIES</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{report.bib_entries.length}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">IN-TEXT CITATIONS</div>
-        <div style="font-size: 22px; font-weight: 600;">{report.in_text_citations.length}</div>
+        <div class="dim" style="font-size: var(--font-sm);">IN-TEXT CITATIONS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{report.in_text_citations.length}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">UNDEFINED</div>
-        <div style="font-size: 22px; font-weight: 600; color: {report.undefined_citations.length > 0 ? "var(--danger)" : "var(--success)"};">
+        <div class="dim" style="font-size: var(--font-sm);">UNDEFINED</div>
+        <div style="font-size: var(--font-xl); font-weight: 600; color: {report.undefined_citations.length > 0 ? "var(--danger)" : "var(--success)"};">
           {report.undefined_citations.length}
         </div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">UNUSED REFS</div>
-        <div style="font-size: 22px; font-weight: 600; color: {report.unused_references.length > 0 ? "var(--warning)" : "var(--success)"};">
+        <div class="dim" style="font-size: var(--font-sm);">UNUSED REFS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600; color: {report.unused_references.length > 0 ? "var(--warning)" : "var(--success)"};">
           {report.unused_references.length}
         </div>
       </div>
@@ -124,10 +124,10 @@
       <strong>BibTeX parse warnings ({report.bib_parse_errors.length}):</strong>
       <ul style="margin: 6px 0 0 16px; padding: 0;">
         {#each report.bib_parse_errors.slice(0, 5) as err}
-          <li style="font-size: 13px;">{err}</li>
+          <li style="font-size: var(--font-sm);">{err}</li>
         {/each}
         {#if report.bib_parse_errors.length > 5}
-          <li style="font-size: 13px;" class="dim">… and {report.bib_parse_errors.length - 5} more</li>
+          <li style="font-size: var(--font-sm);" class="dim">… and {report.bib_parse_errors.length - 5} more</li>
         {/if}
       </ul>
     </div>
@@ -196,8 +196,8 @@
               <strong style="color: {count === 0 ? "var(--text-dim)" : count === 1 ? "var(--warning)" : "var(--text)"};">
                 {count}
               </strong>
-              {#if count === 0}<span class="dim" style="font-size: 11px;"> (unused)</span>{/if}
-              {#if count === 1}<span class="dim" style="font-size: 11px;"> (token?)</span>{/if}
+              {#if count === 0}<span class="dim" style="font-size: var(--font-sm);"> (unused)</span>{/if}
+              {#if count === 1}<span class="dim" style="font-size: var(--font-sm);"> (token?)</span>{/if}
             </td>
           </tr>
         {/each}

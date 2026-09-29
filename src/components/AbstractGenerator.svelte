@@ -65,10 +65,10 @@
   <div class="card-title">Draft input</div>
   <div class="row" style="margin-bottom: 8px;">
     <button class="shrink" on:click={pickFile}>Open file…</button>
-    {#if inputPath}<span class="dim" style="font-size: 11px;">{inputPath}</span>{/if}
+    {#if inputPath}<span class="dim" style="font-size: var(--font-sm);">{inputPath}</span>{/if}
   </div>
   <textarea bind:value={inputText} rows="8" placeholder="Paste your manuscript here…"></textarea>
-  <div class="dim" style="font-size: 11px;">{inputText.length.toLocaleString()} chars</div>
+  <div class="dim" style="font-size: var(--font-sm);">{inputText.length.toLocaleString()} chars</div>
 </div>
 
 <div class="card">
@@ -89,7 +89,7 @@
 {#if result}
   <h2>Generated abstract</h2>
   <div class="card">
-    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: 14px; line-height: 1.6; background: var(--bg-elev-2); padding: 16px; border-radius: var(--radius-sm);">{result.abstract_text}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: var(--font-md); line-height: 1.6; background: var(--bg-elev-2); padding: 16px; border-radius: var(--radius-sm);">{result.abstract_text}</pre>
   </div>
   <div class="callout warn"><strong>Review required.</strong> LLMs may hallucinate findings. Edit carefully before submission.</div>
 {/if}

@@ -78,10 +78,10 @@
   <div class="card-subtitle">Paste text or open a file (.txt, .md, .tex, .docx).</div>
   <div class="row" style="margin-bottom: 8px;">
     <button class="shrink" on:click={pickFile}>Open file…</button>
-    {#if inputPath}<span class="dim" style="font-size: 11px; word-break: break-all;">{inputPath}</span>{/if}
+    {#if inputPath}<span class="dim" style="font-size: var(--font-sm); word-break: break-all;">{inputPath}</span>{/if}
   </div>
   <textarea bind:value={inputText} rows="8" placeholder="Paste your draft here, or use Open file…"></textarea>
-  <div class="dim" style="font-size: 11px; margin-top: 4px;">{inputText.length.toLocaleString()} characters</div>
+  <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">{inputText.length.toLocaleString()} characters</div>
   <div class="row" style="margin-top: 12px;">
     <button class="primary" on:click={analyze} disabled={busy || !inputText.trim()}>
       {busy ? "Analyzing…" : "Analyze"}
@@ -94,36 +94,36 @@
   <div class="card">
     <div class="row" style="text-align: center; flex-wrap: wrap; gap: 20px;">
       <div>
-        <div class="dim" style="font-size: 11px;">WORDS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.word_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">WORDS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.word_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">SENTENCES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.sentence_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">SENTENCES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.sentence_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">PARAGRAPHS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.paragraph_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">PARAGRAPHS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.paragraph_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">SECTIONS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.section_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">SECTIONS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.section_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">CITATIONS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.citation_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">CITATIONS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.citation_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">FIGURES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.figure_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">FIGURES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.figure_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">TABLES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.table_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">TABLES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.table_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">READING TIME</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.estimated_reading_time_minutes}m</div>
+        <div class="dim" style="font-size: var(--font-sm);">READING TIME</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.estimated_reading_time_minutes}m</div>
       </div>
     </div>
   </div>
@@ -165,7 +165,7 @@
         </tr>
       </tbody>
     </table>
-    <p class="muted" style="font-size: 12px; margin-top: 12px;">
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 12px;">
       Most academic journals target a Flesch-Kincaid grade level of 12 to 16 (upper-high-school to college).
       A Flesch Reading Ease of 30 to 50 is typical for academic prose; above 60 is accessible to a general audience.
     </p>
@@ -207,7 +207,7 @@
         {/each}
       </tbody>
     </table>
-    <p class="muted" style="font-size: 12px; margin-top: 12px;">
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 12px;">
       These are approximate typical limits. Always check your specific journal's author guide for current limits.
       Many venues also have separate limits for abstracts (about 250 words), letters, and supplementary materials.
     </p>

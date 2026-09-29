@@ -26,7 +26,7 @@
       mixes short and long sentences. LLM output tends to be more uniform, so low burstiness is a flag.
     </li>
   </ul>
-  <p class="muted" style="font-size: 13px;">
+  <p class="muted" style="font-size: var(--font-sm);">
     A third family of detectors looks for stylistic "markers" (overused transitions, formulaic paragraph shapes,
     specific lexical choices). These marker-based detectors are the least reliable but increasingly common.
   </p>
