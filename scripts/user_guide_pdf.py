@@ -66,20 +66,25 @@ except Exception:
 
 # ---------- Palette ----------
 # Calm, scholarly, accessible palette. WCAG-AA contrast verified.
+# Light theme throughout (no dark cover) per user direction: a clean,
+# professional white background with a single accent color for headings
+# and rules.
 PALETTE = {
     "bg": colors.HexColor("#FFFFFF"),
+    "cover_bg": colors.HexColor("#FFFFFF"),
     "text": colors.HexColor("#1a1d23"),         # body text, near-black
     "text_muted": colors.HexColor("#5c6470"),   # secondary text
     "text_dim": colors.HexColor("#8a929e"),     # tertiary text
     "accent": colors.HexColor("#2a5bd7"),       # ScholarScribe blue
+    "accent_dark": colors.HexColor("#1f4abf"),  # darker blue for cover title
     "accent_soft": colors.HexColor("#e7eefb"),  # callout background
     "border": colors.HexColor("#dcdfe3"),       # table borders
     "table_header_bg": colors.HexColor("#f0f1f3"),
     "table_alt_row": colors.HexColor("#fafbfc"),
     "code_bg": colors.HexColor("#f0f1f3"),
-    "cover_bg": colors.HexColor("#1a1d23"),     # dark cover
-    "cover_text": colors.HexColor("#e6e8eb"),
-    "cover_accent": colors.HexColor("#6b8eef"),
+    "cover_rule": colors.HexColor("#2a5bd7"),   # accent rule on cover
+    "cover_meta_text": colors.HexColor("#5c6470"),
+    "cover_url_text": colors.HexColor("#2a5bd7"),
 }
 
 
@@ -183,33 +188,33 @@ def build_styles() -> dict[str, ParagraphStyle]:
         fontSize=9,
     )
 
-    # Cover styles
+    # Cover styles - light, professional, scholarly.
     styles["cover_title"] = ParagraphStyle(
         "cover_title",
         fontName=FONT_FAMILY_SANS,
-        fontSize=34,
-        leading=42,
-        textColor=PALETTE["cover_text"],
+        fontSize=36,
+        leading=44,
+        textColor=PALETTE["accent_dark"],
         alignment=1,  # center
         spaceBefore=0,
-        spaceAfter=8,
+        spaceAfter=4,
     )
     styles["cover_subtitle"] = ParagraphStyle(
         "cover_subtitle",
         fontName=FONT_FAMILY_SERIF,
-        fontSize=14,
-        leading=20,
-        textColor=PALETTE["cover_accent"],
+        fontSize=16,
+        leading=22,
+        textColor=PALETTE["text_muted"],
         alignment=1,
-        spaceBefore=4,
-        spaceAfter=20,
+        spaceBefore=2,
+        spaceAfter=24,
     )
     styles["cover_meta"] = ParagraphStyle(
         "cover_meta",
         fontName=FONT_FAMILY_SANS,
         fontSize=10,
         leading=14,
-        textColor=PALETTE["cover_text"],
+        textColor=PALETTE["cover_meta_text"],
         alignment=1,
         spaceBefore=2,
         spaceAfter=2,
@@ -219,10 +224,20 @@ def build_styles() -> dict[str, ParagraphStyle]:
         fontName=FONT_FAMILY_MONO,
         fontSize=9,
         leading=12,
-        textColor=PALETTE["cover_accent"],
+        textColor=PALETTE["cover_url_text"],
         alignment=1,
         spaceBefore=12,
         spaceAfter=2,
+    )
+    styles["cover_footer"] = ParagraphStyle(
+        "cover_footer",
+        fontName=FONT_FAMILY_SERIF,
+        fontSize=9,
+        leading=12,
+        textColor=PALETTE["text_dim"],
+        alignment=1,
+        spaceBefore=24,
+        spaceAfter=0,
     )
 
     return styles
@@ -476,26 +491,52 @@ class CoverBackground(Flowable):
 
 
 def build_cover(styles: dict) -> list:
-    """Build the cover page flowables."""
+    """Build the cover page flowables. Light, professional layout:
+    white background, a thin accent rule above the title, the title
+    and subtitle centered, version metadata below, repo URL at the
+    bottom, and a small copyright line at the very bottom.
+    """
     flow = []
-    # The CoverBackground is drawn via the page template's onPage callback,
-    # not as a flowable. But we need flowables to position the text.
-
-    flow.append(Spacer(1, 90 * mm))
+    # Top whitespace
+    flow.append(Spacer(1, 70 * mm))
+    # Thin accent rule
+    flow.append(HRFlowable(
+        width="40%",
+        thickness=1.2,
+        color=PALETTE["cover_rule"],
+        spaceBefore=0,
+        spaceAfter=18,
+        hAlign="CENTER",
+    ))
     flow.append(Paragraph("ScholarScribe", styles["cover_title"]))
     flow.append(Paragraph("User Guide", styles["cover_subtitle"]))
 
-    flow.append(Spacer(1, 50 * mm))
+    # A second thin rule below the subtitle for visual closure
+    flow.append(HRFlowable(
+        width="25%",
+        thickness=0.5,
+        color=PALETTE["border"],
+        spaceBefore=4,
+        spaceAfter=24,
+        hAlign="CENTER",
+    ))
+
     flow.append(Paragraph("Version 2.2.0", styles["cover_meta"]))
     flow.append(Paragraph("Windows · macOS · Linux", styles["cover_meta"]))
     flow.append(Paragraph("MIT License", styles["cover_meta"]))
 
-    flow.append(Spacer(1, 20 * mm))
+    # Push URL + copyright to the bottom of the page
+    flow.append(Spacer(1, 60 * mm))
     flow.append(Paragraph(
         '<link href="https://github.com/waleedmandour/scholarscribe">'
-        '<font color="#6b8eef">github.com/waleedmandour/scholarscribe</font>'
+        '<font color="#2a5bd7">github.com/waleedmandour/scholarscribe</font>'
         '</link>',
         styles["cover_url"],
+    ))
+    flow.append(Spacer(1, 8 * mm))
+    flow.append(Paragraph(
+        "© 2026 Dr. Waleed Mandour. Released under the MIT License.",
+        styles["cover_footer"],
     ))
 
     flow.append(PageBreak())
@@ -505,13 +546,13 @@ def build_cover(styles: dict) -> list:
 # ---------- Page templates ----------
 
 def cover_page(canvas, doc):
-    """Draw the dark cover background."""
+    """Draw the light cover background (plain white, no dark fill)."""
     canvas.saveState()
     canvas.setFillColor(PALETTE["cover_bg"])
     canvas.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
-    # Top accent stripe
-    canvas.setFillColor(PALETTE["cover_accent"])
-    canvas.rect(0, A4[1] - 6 * mm, A4[0], 6 * mm, fill=1, stroke=0)
+    # Subtle accent bar at the very top of the page (4mm thin stripe)
+    canvas.setFillColor(PALETTE["accent"])
+    canvas.rect(0, A4[1] - 4 * mm, A4[0], 4 * mm, fill=1, stroke=0)
     canvas.restoreState()
 
 
@@ -535,6 +576,9 @@ def body_page(canvas, doc):
         18 * mm, 14 * mm,
         A4[0] - 18 * mm, 14 * mm,
     )
+    # Subtle top accent on body pages too (matches cover)
+    canvas.setFillColor(PALETTE["accent"])
+    canvas.rect(0, A4[1] - 1.5 * mm, A4[0], 1.5 * mm, fill=1, stroke=0)
     canvas.restoreState()
 
 
