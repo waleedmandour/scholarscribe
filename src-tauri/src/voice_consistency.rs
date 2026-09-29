@@ -287,7 +287,7 @@ fn compute_excerpt(text: &str, start_char: usize, end_char: usize) -> String {
     if words.is_empty() {
         return String::new();
     }
-    let head: Vec<&str> = words.iter().take(15).collect();
+    let head: Vec<&str> = words.iter().take(15).copied().collect();
     let mut out = head.join(" ");
     if words.len() > 15 {
         out.push_str("...");
