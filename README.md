@@ -9,7 +9,7 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 20 tools, and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 20 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)*, turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts, never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
@@ -31,6 +31,7 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Verify the app's own privacy claims** via an in-app Privacy Audit log of every file read and outbound HTTP call.
 - **Save drafts locally**, opt-in persistence stores your work as plain JSON files on your device. Never synced to the cloud.
 - **Light, dark, and auto themes**, click the icon in the sidebar to cycle.
+- **Scalable font sizes and density toggle**: A-/A/A+ control in the sidebar footer scales all text from 90% to 115% to match your eyesight and screen. Comfortable / Compact density toggle adjusts sidebar padding only (never font size). Both persist across restarts.
 
 ---
 
@@ -130,7 +131,7 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 20 tools at a glance → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 20 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
@@ -214,7 +215,7 @@ A quick health-check panel for your draft:
 - Average sentence length, type-token ratio, complex-word ratio
 - Estimated reading time (at 200 wpm)
 - Flesch Reading Ease, Flesch-Kincaid Grade Level, Gunning Fog Index
-- Comparison panel: how your draft compares to common journal targets (e.g. Nature articles average ~5,000 words; ICMJE medical articles ~3,500 words; IEEE conference papers ~6,000 words)
+- Comparison panel: how your draft compares to common journal targets. Nature articles range from approximately 2,500 to 4,300 words (per the Nature author formatting guide, last verified 2026-09-29). ICMJE does not set word limits; journals following ICMJE typically range 3,000 to 6,000 words (per the ICMJE Recommendations, last verified 2026-09-29). IEEE conference papers are typically 6,000 words. All statistics in the comparison panel carry source links and "Last verified" dates inside the app and should be re-checked periodically.
 
 ### Structure Analyzer tab
 
@@ -239,9 +240,12 @@ Requires an installed model (see the Models tab).
 
 Assesses whether your draft shares surface features with typical AI-generated text. Reports:
 
-- **Perplexity and burstiness proxies**, the two main signals most AI-text detectors use.
-- **Comparison to known AI-text and human-text distributions** (based on Liang et al. 2023; Weber-Wulff et al. 2023).
-- **Plain-English interpretation**, "overlap is low / moderate / high".
+- **Four proxy signals**, not two: perplexity (vocabulary predictability via TTR), vocabulary uniformity (token repetition), burstiness (coefficient of variation of sentence lengths), and sentence-length variance (raw stdev). The combined risk score averages all four.
+- **Passage-by-passage heatmap**: each ~200-word passage is colored by risk level (low / medium / high). Click any block to expand an inline detail panel showing the excerpt, word count, tier, plain-language reason, and tier-specific copy.
+- **Jump to passage**: scroll the editor to the passage and select its text range with a brief border glow.
+- **Copy reason**: copy the plain-language cause to the clipboard for use in an appeal letter or discussion with an instructor.
+- **Keyboard support**: arrow keys move between blocks, Enter or Space opens the panel, Escape closes it.
+- **Comparison to known AI-text and human-text distributions** (based on Liang et al. 2023; Weber-Wulff et al. 2023). Both figures appear with source links and "Last verified" dates.
 
 **Not an evasion tool.** Risk Profile helps *you* understand whether your writing has stylistic fingerprints that overlap with AI text. It does not modify your draft or attempt to lower detection scores. See the Detector Literacy tab for context on why these proxies are imperfect.
 
@@ -354,6 +358,14 @@ The Privacy Audit log is **never** persisted, it stays in-memory only.
 ### About tab
 
 Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators, and a "Walk me through the app" button to re-open the welcome tour.
+
+---
+
+## Statistics and citations
+
+Every statistic that appears in ScholarScribe (Liang et al. 2023 false-positive rate in Risk Profile and Detector Literacy, Weber-Wulff et al. 2023 detector accuracy figures in Detector Literacy, Nature and ICMJE word-count ranges in Document Statistics) is rendered via a shared `VerifiedStat` component that pairs the figure with a clickable source link and a "Last verified: YYYY-MM-DD" caption. The same date is repeated in the journal-target comparison table's Source column.
+
+These figures come from peer-reviewed literature and author guidelines that are themselves periodically revised. The "Last verified" date records when the ScholarScribe maintainers last checked the figure against its source. Treat dates older than six months as a prompt to re-check before relying on the figure in a real submission. To update a figure, open the source link, confirm the new value, update the figure and date in the code, and open a PR.
 
 ---
 
