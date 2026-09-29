@@ -172,7 +172,7 @@
   }
 
   function fmtSize(bytes: number): string {
-    if (!bytes) return "—";
+    if (!bytes) return "n/a";
     const gb = bytes / (1024 * 1024 * 1024);
     if (gb >= 1) return `${gb.toFixed(1)} GB`;
     const mb = bytes / (1024 * 1024);

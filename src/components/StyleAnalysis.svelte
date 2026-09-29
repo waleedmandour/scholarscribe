@@ -61,7 +61,7 @@
   }
 
   function fmt(n: number, digits = 2): string {
-    return Number.isFinite(n) ? n.toFixed(digits) : "—";
+    return Number.isFinite(n) ? n.toFixed(digits) : "n/a";
   }
 
   const featureLabels: Record<string, string> = {
@@ -78,8 +78,8 @@
   function fleschLabel(score: number): string {
     if (score >= 90) return "very easy (5th grade)";
     if (score >= 70) return "easy (7th grade)";
-    if (score >= 60) return "standard (8th–9th grade)";
-    if (score >= 50) return "fairly hard (10th–12th grade)";
+    if (score >= 60) return "standard (8th-9th grade)";
+    if (score >= 50) return "fairly hard (10th-12th grade)";
     if (score >= 30) return "difficult (college)";
     return "very difficult (college graduate)";
   }
@@ -180,7 +180,7 @@
       <div class="card-subtitle">
         Heuristic estimates for the draft text. Useful as a sanity check for whether the prose is
         accessible to your target audience. Most academic journals target a Flesch-Kincaid grade
-        level of 12–16 (upper-high-school to college).
+        level of 12-16 (upper-high-school to college).
       </div>
       <table>
         <thead><tr><th>Metric</th><th>Draft</th><th>Interpretation</th></tr></thead>

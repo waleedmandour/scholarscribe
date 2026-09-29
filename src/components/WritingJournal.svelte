@@ -156,10 +156,10 @@
             <td class="muted">
               {#if snap.diff_from_previous}
                 +{snap.diff_from_previous.words_added} / -{snap.diff_from_previous.words_removed}
-              {:else}—{/if}
+              {:else} - {/if}
             </td>
             <td class="muted">
-              {#if snap.diff_from_previous}{snap.diff_from_previous.similarity_pct}%{:else}—{/if}
+              {#if snap.diff_from_previous}{snap.diff_from_previous.similarity_pct}%{:else} - {/if}
             </td>
             <td><button class="shrink" on:click={() => selectedSnapshot = snap}>View</button></td>
           </tr>

@@ -1,8 +1,8 @@
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 
-//! Multi-Paper Style Fingerprint — aggregates style metrics across multiple
+//! Multi-Paper Style Fingerprint, aggregates style metrics across multiple
 //! reference papers by the same author, producing a shareable (privacy-safe)
-//! stylometric signature. Only aggregate metrics are exported — no raw text
+//! stylometric signature. Only aggregate metrics are exported, no raw text
 //! ever leaves the device.
 //!
 //! The fingerprint can accompany a manuscript submission as supplementary

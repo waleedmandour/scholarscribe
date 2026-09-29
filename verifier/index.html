@@ -29,7 +29,7 @@
     <h1>ScholarScribe Provenance Verifier</h1>
     <p class="sub">
       Standalone checker for ScholarScribe Writing Provenance packages.
-      Runs entirely in your browser — no uploads, no network calls
+      Runs entirely in your browser, no uploads, no network calls
       (libraries are bundled locally).
     </p>
   </header>
@@ -68,12 +68,12 @@
         For a <strong>.docx</strong> source: the verifier hashes
         <code>word/document.xml</code> and compares it to the manifest's
         <code>document_hash</code>. For a <strong>Google Docs</strong> source:
-        export the document as plain text (.txt) from Google and load it — the
+        export the document as plain text (.txt) from Google and load it, the
         hash of that text is compared instead.
       </p>
       <div class="fileline">
         <input type="file" id="docInput" accept=".docx,.txt" />
-        <span class="muted small">optional — original .docx or exported .txt</span>
+        <span class="muted small">optional, original .docx or exported .txt</span>
       </div>
     </section>
 

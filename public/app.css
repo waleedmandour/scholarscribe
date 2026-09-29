@@ -1,4 +1,4 @@
-/* ScholarScribe — global styles. Minimal, light + dark, no external fonts. */
+/* ScholarScribe, global styles. Minimal, light + dark, no external fonts. */
 
 :root {
   /* Scalable font system. --font-scale is set on documentElement by
@@ -38,7 +38,7 @@
   color-scheme: light;
 }
 
-/* Dark theme — applied via [data-theme="dark"] on <html> or auto via prefers-color-scheme. */
+/* Dark theme, applied via [data-theme="dark"] on <html> or auto via prefers-color-scheme. */
 [data-theme="dark"] {
   --bg: #1a1c20;
   --bg-elev: #23262c;

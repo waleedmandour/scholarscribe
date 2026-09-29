@@ -1,4 +1,4 @@
-//! Tauri command handlers — the bridge between the Svelte frontend and Rust backend.
+//! Tauri command handlers, the bridge between the Svelte frontend and Rust backend.
 
 use crate::{audit, disclosure, docx_reading, ollama, style, text_cleaner};
 use serde::Deserialize;
@@ -133,7 +133,7 @@ pub async fn read_text_file(
                 .map_err(|e| format!("Failed to read {}: {}", path.display(), e))
         }
         "docx" => {
-            // .docx files are ZIP archives containing XML — we use the
+            // .docx files are ZIP archives containing XML, we use the
             // `docx-rs` crate to extract plain text. The extracted text is
             // suitable for cleaning, style analysis, or any other text op.
             let path_for_extract = path.clone();
@@ -361,7 +361,7 @@ pub async fn ollama_import_gguf(
 
     let create_url = format!("{}/api/create", ollama::base_url());
 
-    // Attempt 1: modern API — `from` field + `modelfile` text.
+    // Attempt 1: modern API, `from` field + `modelfile` text.
     let body_v1 = serde_json::json!({
         "name": name,
         "from": abs_path,
@@ -406,7 +406,7 @@ pub async fn ollama_import_gguf(
             let status2 = resp2.status();
             let body2 = resp2.text().await.unwrap_or_default();
             return Err(format!(
-                "Ollama rejected the import on both API variants.\n\nAttempt 1 (modern `from` field): HTTP {} — {}\nAttempt 2 (legacy `modelfile` only): HTTP {} — {}\n\nLikely causes:\n  • Your Ollama version is older than 0.5. Update from https://ollama.com/download\n  • The GGUF file is corrupt or incomplete. Re-download it from the source.\n  • The file path contains characters Ollama can't parse. Move the file to a simple path like C:\\\\models\\\\model.gguf and retry.",
+                "Ollama rejected the import on both API variants.\n\nAttempt 1 (modern `from` field): HTTP {}, {}\nAttempt 2 (legacy `modelfile` only): HTTP {}, {}\n\nLikely causes:\n  • Your Ollama version is older than 0.5. Update from https://ollama.com/download\n  • The GGUF file is corrupt or incomplete. Re-download it from the source.\n  • The file path contains characters Ollama can't parse. Move the file to a simple path like C:\\\\models\\\\model.gguf and retry.",
                 status, body_text, status2, body2
             ));
         }
@@ -439,7 +439,7 @@ pub struct CleanTextStrictArgs {
     pub text: String,
 }
 
-/// Strict cleaning — applies ALL 24 cleaning operations (the 12 default ones
+/// Strict cleaning, applies ALL 24 cleaning operations (the 12 default ones
 /// plus the 11 new v0.1.7 strict ones, with normalize_quotes also enabled).
 /// Use this when you want a maximally-clean plain-text version of the input.
 #[tauri::command]
@@ -472,7 +472,7 @@ pub struct CleanDocxResult {
 
 /// One-shot: read a .docx file, extract its text, run the text cleaner on it.
 /// Returns the cleaned text plus transformation stats. The original .docx is
-/// never modified — output is plain text the user can copy or save.
+/// never modified, output is plain text the user can copy or save.
 #[tauri::command]
 pub async fn clean_docx_file(
     args: CleanDocxArgs,
@@ -724,7 +724,7 @@ fn clean_docx_in_place(
     }
     if transformations_applied.is_empty() {
         transformations_applied
-            .push("No per-run transformations needed — document was already clean.".into());
+            .push("No per-run transformations needed, document was already clean.".into());
     }
 
     Ok(CleanDocxPreserveResult {
@@ -1083,7 +1083,7 @@ pub struct WritingCoachArgs {
     pub style_profile: Option<String>, // JSON-serialized style profile for context
 }
 
-/// Structured Writing Coach — a specialized chat mode where the LLM is given
+/// Structured Writing Coach, a specialized chat mode where the LLM is given
 /// the author's style profile and acts as a discipline-aware writing coach,
 /// asking Socratic questions that draw out the author's genuine reasoning
 /// rather than suggesting text.
@@ -1102,7 +1102,7 @@ pub async fn writing_coach_chat(
     );
 
     let coach_system_prompt = format!(
-        "You are a discipline-aware academic writing coach. Your role is to help the researcher develop their OWN ideas through Socratic questioning — NOT to write or rewrite text for them.\n\nRules:\n1. NEVER write paragraphs or sentences for the researcher. Always ask questions.\n2. When the researcher shares a draft, ask probing questions about their reasoning, evidence, and argument structure.\n3. Help them identify gaps in logic, unclear definitions, or unsupported claims.\n4. Ask questions like: 'What was your reasoning for choosing this method over X?' 'How does this finding connect to your earlier claim about Y?' 'What evidence supports this assertion?'\n5. If asked to rewrite or generate text, decline and instead ask: 'What are you trying to express here? Let's work through the logic first.'\n6. Be encouraging but rigorous. Push for clarity and precision.\n7. Respect the researcher's intellectual ownership — the content must remain authentically theirs.\n{}",
+        "You are a discipline-aware academic writing coach. Your role is to help the researcher develop their OWN ideas through Socratic questioning. NOT to write or rewrite text for them.\n\nRules:\n1. NEVER write paragraphs or sentences for the researcher. Always ask questions.\n2. When the researcher shares a draft, ask probing questions about their reasoning, evidence, and argument structure.\n3. Help them identify gaps in logic, unclear definitions, or unsupported claims.\n4. Ask questions like: 'What was your reasoning for choosing this method over X?' 'How does this finding connect to your earlier claim about Y?' 'What evidence supports this assertion?'\n5. If asked to rewrite or generate text, decline and instead ask: 'What are you trying to express here? Let's work through the logic first.'\n6. Be encouraging but rigorous. Push for clarity and precision.\n7. Respect the researcher's intellectual ownership, the content must remain authentically theirs.\n{}",
         if let Some(profile) = &args.style_profile {
             format!("\nThe author's style profile (from their prior writing):\n{}\n\nUse this to ask about stylistic consistency when relevant.", profile)
         } else {

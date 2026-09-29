@@ -1,10 +1,10 @@
-# Writing Provenance — Technical Specification (v2.1.0)
+# Writing Provenance. Technical Specification (v2.1.0)
 
 Status: **implemented** (Phase 1 + Phase 1.5) · Version: manifest format **1.0**
 
 Writing Provenance produces a **cryptographically signed, hash-chained record
-of a document's real revision history** — from Microsoft Word's Track Changes
-(Phase 1) or Google Docs' version history (Phase 1.5) — so an author can
+of a document's real revision history**, from Microsoft Word's Track Changes
+(Phase 1) or Google Docs' version history (Phase 1.5), so an author can
 *offer* verifiable evidence of their writing process.
 
 This document specifies exactly what is produced and how it is verified. It
@@ -19,13 +19,13 @@ commit.**
 
 1. **Evidence, not verdict.** Nothing in this feature is an AI-detection
    score, a humanness percentage, or a "verified human" badge. The style
-   statistic is descriptive, with interpretation bands — never pass/fail.
+   statistic is descriptive, with interpretation bands, never pass/fail.
 2. **No fabrication.** Every number comes from revision history the
    document itself carries. ScholarScribe never generates or edits history
    (docs/ETHICS.md §2.3).
 3. **Local-first / privacy-preserving.** Phase 1 performs zero network
    calls. The manifest contains hashes, counts, timestamps, author display
-   names — **never document text**. Phase 1.5's Google import downloads
+   names, **never document text**. Phase 1.5's Google import downloads
    revision text into memory for diffing and discards it; every outbound
    call is recorded in the in-app privacy audit log.
 4. **Opt-in.** The feature is off until the user accepts the disclosure
@@ -69,7 +69,7 @@ Google revisions ──(prefix/suffix diff)──▶ RawRevision[] ─┘       
   as **deletions**. Formatting-only changes (`w:rPrChange`, `w:pPrChange`)
   are ignored. `w:author` and `w:date` are taken verbatim from the markup.
 * **`document_hash`** = `sha256:` + SHA-256 hex of the raw
-  `word/document.xml` bytes — so a verifier holding the original `.docx`
+  `word/document.xml` bytes, so a verifier holding the original `.docx`
   can bind manifest to document.
 * Edge cases: no `w:ins`/`w:del` at all → error "No tracked changes
   found…". Markup present but no usable revisions → error "Track Changes
@@ -81,7 +81,7 @@ Google revisions ──(prefix/suffix diff)──▶ RawRevision[] ─┘       
 
 * OAuth 2.0 installed-app flow: PKCE (S256), loopback redirect on
   `http://127.0.0.1:{random port}`, scope **`drive.readonly`** only.
-  The system browser is used (never the webview) — the CSP is therefore
+  The system browser is used (never the webview), the CSP is therefore
   unchanged. The refresh token is stored in the OS keychain
   (`scholarscribe` / `google-refresh-token-v1`).
 * Revisions listed via `GET /drive/v3/files/{id}/revisions`; text fetched
@@ -118,7 +118,7 @@ for each revision (chronological): {kind} \n {date} \n {byte_len}:{text}
 ```
 → SHA-256 → `sha256:{hex}`. `{kind}` is `insertion`/`deletion`; `{byte_len}`
 is the UTF-8 byte length of `{text}` (length-prefixing defeats concatenation
-ambiguity). **The text itself never leaves memory** — only this hash is
+ambiguity). **The text itself never leaves memory**, only this hash is
 published.
 
 ### 5.2 Record hash (per session)
@@ -157,7 +157,7 @@ the **same author**, or the genesis marker
 is stored in the OS keychain (`scholarscribe` / `provenance-signing-key-v1`).
 The fingerprint is `ed25519:` + SHA-256 hex of the 32-byte public key.
 
-The signature covers the **canonical manifest payload** — a deterministic
+The signature covers the **canonical manifest payload**, a deterministic
 string derived from the manifest's values, *not* the JSON file bytes (this
 avoids float-formatting and key-ordering ambiguity between Rust and JS):
 
@@ -192,8 +192,8 @@ gunning_fog. Raw counts are excluded (they scale with length, not style).
   with no usable sample the score is `null` (`baseline_source:
   "unavailable"`).
 * Interpretation bands (reported as text, never pass/fail):
-  0.0–0.2 very close · 0.2–0.4 broadly consistent · 0.4–0.6 noticeable ·
-  0.6–1.0 substantially different.
+  0.0-0.2 very close · 0.2-0.4 broadly consistent · 0.4-0.6 noticeable ·
+  0.6-1.0 substantially different.
 * **This is not an AI-detection score.** It measures drift between two
   samples of writing; it cannot attribute text to humans or machines.
 
@@ -201,14 +201,14 @@ gunning_fog. Raw counts are excluded (they scale with length, not style).
 
 `manifest.json` · `disclosure.txt` · `style_analysis.json` ·
 `citation_validation.json` · `README.txt`. All contents are hashes, counts,
-timestamps, author display names and aggregate metrics — no document text.
+timestamps, author display names and aggregate metrics, no document text.
 `citation_validation.json` is an inventory (counts of author-year/numeric
 citation-like patterns), explicitly not a validity check.
 
 ## 9. Verification procedure (mirrored by verifier/)
 
 1. Re-hash every record (§5.2) → `chain_intact` + anomalies.
-2. Check per-author linkage (§5.2) — first record must equal genesis.
+2. Check per-author linkage (§5.2), first record must equal genesis.
 3. Rebuild the canonical payload (§6) and verify the Ed25519 signature
    with the author's public key; check `sha256(pubkey) = fingerprint`.
 4. Optionally bind the document: SHA-256 of `word/document.xml` (docx) or

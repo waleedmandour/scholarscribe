@@ -1,6 +1,6 @@
 //! Style analysis module.
 //!
-//! IMPORTANT — ETHICAL SCOPE:
+//! IMPORTANT. ETHICAL SCOPE:
 //! This module compares a draft to the author's *own* prior writing sample(s)
 //! and reports stylistic *consistency* between them. It is NOT designed to
 //! lower AI-detection scores. We do not implement any of the "6 markers"
@@ -106,7 +106,7 @@ pub fn analyze(text: &str) -> StyleProfile {
     let word_count = words.len();
 
     // Split into sentences. The regex captures the sentence-ending punctuation,
-    // so after split() each piece lacks its trailing punctuation — that's fine
+    // so after split() each piece lacks its trailing punctuation, that's fine
     // for word-counting purposes.
     let sentences: Vec<&str> = SENTENCE_END
         .split(text)
@@ -158,7 +158,7 @@ pub fn analyze(text: &str) -> StyleProfile {
     let first_person_plural_ratio = count_word(&words, "we") as f64 / sentence_count as f64;
     let citation_density = count_citations(text) as f64 / sentence_count as f64;
 
-    // Reading-level metrics (v0.1.1+). Syllable counting is heuristic —
+    // Reading-level metrics (v0.1.1+). Syllable counting is heuristic ,
     // accurate enough for English-language readability scoring.
     let syllable_counts: Vec<usize> = words.iter().map(|w| count_syllables(w)).collect();
     let total_syllables: usize = syllable_counts.iter().sum();
@@ -217,7 +217,7 @@ pub fn analyze(text: &str) -> StyleProfile {
 }
 
 /// Heuristic English syllable counter. Counts vowel groups, with a few
-/// common-sense adjustments. Accurate enough for readability scoring —
+/// common-sense adjustments. Accurate enough for readability scoring ,
 /// not intended for poetry or pronunciation work.
 fn count_syllables(word: &str) -> usize {
     let w = word.to_lowercase();
@@ -279,7 +279,7 @@ fn count_phrase_matches(text: &str, targets: &[&str]) -> usize {
 }
 
 /// Count citation-like patterns (author-year or numeric). Exposed to the
-/// provenance module (aggregate counts only — no text leaves the device).
+/// provenance module (aggregate counts only, no text leaves the device).
 pub(crate) fn count_citations(text: &str) -> usize {
     // Author-year (Smith, 2020) or (Smith et al., 2020; Jones, 2021)
     // or numeric [1, 2, 3-5]
@@ -375,7 +375,7 @@ pub fn compare(draft: &StyleProfile, reference: &StyleProfile) -> StyleCompariso
     } else if overall_distance < 1.2 {
         notes.push("The draft is broadly consistent with your reference writing, with a few features standing out (see per-feature notes).".into());
     } else {
-        notes.push("The draft diverges noticeably from your reference writing. This may simply mean you wrote in a different register — but if you expected it to sound like 'you', review the highlighted features.".into());
+        notes.push("The draft diverges noticeably from your reference writing. This may simply mean you wrote in a different register, but if you expected it to sound like 'you', review the highlighted features.".into());
     }
     for fd in &feature_distances {
         if fd.relative_diff_pct > 50.0 {

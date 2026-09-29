@@ -1,4 +1,4 @@
-//! Writing Process Journal — auto-saves timestamped snapshots of draft text,
+//! Writing Process Journal, auto-saves timestamped snapshots of draft text,
 //! creating a verifiable process record that can serve as evidence of
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! authentic authorship. Aligns with the opt-in persistence architecture.
@@ -273,7 +273,7 @@ pub fn journal_export_session(
     ));
     out.push_str("---\n\n");
     for (i, snap) in snaps.iter().enumerate() {
-        out.push_str(&format!("## Snapshot {} — {}\n", i + 1, snap.timestamp));
+        out.push_str(&format!("## Snapshot {}, {}\n", i + 1, snap.timestamp));
         out.push_str(&format!(
             "Words: {} | Characters: {}\n",
             snap.word_count, snap.char_count

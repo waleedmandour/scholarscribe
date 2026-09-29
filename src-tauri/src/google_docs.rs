@@ -1,4 +1,4 @@
-//! Google Docs Bridge (Phase 1.5) — pure logic.
+//! Google Docs Bridge (Phase 1.5), pure logic.
 //!
 //! Pulls the *revision history* of a Google Doc through the Drive API and
 //! feeds it through the exact same RawSession → SessionRecord pipeline the
@@ -7,14 +7,14 @@
 //!
 //! PRIVACY (this is the ONLY ScholarScribe feature that talks to the
 //! network besides Ollama-on-localhost):
-//! - Scope is `drive.readonly` — the app cannot modify anything.
+//! - Scope is `drive.readonly`, the app cannot modify anything.
 //! - OAuth uses PKCE; the refresh token is stored in the OS keychain, never
 //!   in a file, never in the webview.
 //! - Revision text is downloaded into memory only for diffing; nothing
 //!   textual is persisted or exported (the manifest carries hashes/counts).
 //! - EVERY outbound call is recorded in the privacy audit log
 //!   (google_docs_commands.rs). Remove that logging and the feature breaks
-//!   its own ethics contract — don't.
+//!   its own ethics contract, don't.
 //!
 //! Mock-friendly: parsing/derivation lives here and is unit-tested against
 //! recorded response shapes; the thin HTTP layer lives in
@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::provenance::{RawRevision, RevisionKind};
 
-/// OAuth scope — read-only access to Drive files (revisions included).
+/// OAuth scope, read-only access to Drive files (revisions included).
 pub const GOOGLE_SCOPE: &str = "https://www.googleapis.com/auth/drive.readonly";
 
 /// One revision of a Google Doc as Drive reports it.
@@ -106,7 +106,7 @@ pub fn parse_google_doc_id(input: &str) -> Option<String> {
 
 /// Character-level diff of two revision snapshots (common-prefix/suffix).
 /// Returns (deleted_from_prev, inserted_in_next). Good enough for session
-/// statistics — this is not a general-purpose diff engine.
+/// statistics, this is not a general-purpose diff engine.
 pub fn diff_consecutive(prev: &str, next: &str) -> (String, String) {
     let a: Vec<char> = prev.chars().collect();
     let b: Vec<char> = next.chars().collect();
@@ -152,7 +152,7 @@ pub fn revisions_to_raw_revisions(revs: &[GoogleRevision]) -> Vec<RawRevision> {
         let prev_text = sorted[i - 1].text.clone();
         let (deleted, inserted) = diff_consecutive(&prev_text, &rev.text);
         // Replacements are recorded as a deletion followed by an insertion
-        // at the same timestamp — order does not affect session aggregates.
+        // at the same timestamp, order does not affect session aggregates.
         if !deleted.is_empty() {
             out.push(RawRevision {
                 author: author.clone(),

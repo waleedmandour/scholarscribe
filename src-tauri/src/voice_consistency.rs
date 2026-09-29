@@ -1,4 +1,4 @@
-//! Voice Consistency Checker — flags within-document stylistic inconsistencies
+//! Voice Consistency Checker, flags within-document stylistic inconsistencies
 //! where sentence length, hedging density, or vocabulary diversity abruptly
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! shifts. Sudden stylistic shifts within a single paper are a legitimate
@@ -140,7 +140,7 @@ pub fn check(text: &str) -> ConsistencyReport {
     let consistency = 1.0 - (inconsistencies.len() as f64 / total_checks as f64).min(1.0);
 
     let explanation = format!(
-        "This checker compares stylistic metrics across sections of your document. Abrupt shifts in sentence length, vocabulary diversity, or hedging density can indicate a change in voice — whether from co-authorship, AI assistance, or simply a shift in writing mode. Addressing inconsistencies improves cohesion and is good editorial practice regardless of how the text was produced."
+        "This checker compares stylistic metrics across sections of your document. Abrupt shifts in sentence length, vocabulary diversity, or hedging density can indicate a change in voice, whether from co-authorship, AI assistance, or simply a shift in writing mode. Addressing inconsistencies improves cohesion and is good editorial practice regardless of how the text was produced."
     );
 
     let mut recommendations = Vec::new();
@@ -161,7 +161,7 @@ pub fn check(text: &str) -> ConsistencyReport {
             .iter()
             .any(|i| i.metric == "type_token_ratio");
         if has_ttr {
-            recommendations.push("Vocabulary diversity shifts detected. One section may use notably different vocabulary than the rest — verify this is intentional.".into());
+            recommendations.push("Vocabulary diversity shifts detected. One section may use notably different vocabulary than the rest, verify this is intentional.".into());
         }
     }
 

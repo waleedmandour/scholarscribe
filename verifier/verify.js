@@ -1,4 +1,4 @@
-/* ScholarScribe Provenance Verifier — standalone, offline, no build step. */
+/* ScholarScribe Provenance Verifier, standalone, offline, no build step. */
 
 (function () {
   "use strict";
@@ -33,7 +33,7 @@
     return new TextEncoder(); // UTF-8, available in all modern browsers
   }
 
-  // ---------- canonical forms (docs/PROVENANCE_SPEC.md §5–6) ----------
+  // ---------- canonical forms (docs/PROVENANCE_SPEC.md §5-6) ----------
 
   function canonicalRecordString(r) {
     return [
@@ -53,7 +53,7 @@
   function styleScoreLine(m) {
     var sc = m.style_consistency || {};
     if (sc.distance_score === null || sc.distance_score === undefined) return "null";
-    // Must match Rust's format!("{:.4}", value) — 4 decimal places.
+    // Must match Rust's format!("{:.4}", value), 4 decimal places.
     return Number(sc.distance_score).toFixed(4);
   }
 
@@ -187,7 +187,7 @@
     var html = "";
     html += '<div class="chips">';
     html += verdictChip(chain.intact, "Hash chain intact");
-    html += sig ? verdictChip(sig.ok, "Ed25519 signature") : '<span class="chip pending">Signature — awaiting public key</span>';
+    html += sig ? verdictChip(sig.ok, "Ed25519 signature") : '<span class="chip pending">Signature, awaiting public key</span>';
     html += docHashResult ? verdictChip(docHashResult.match, "Document binding") : "";
     html += "</div>";
 
@@ -231,8 +231,8 @@
     });
     html += "</tbody></table>";
 
-    html += '<p class="note">Interpretation bands for the style distance score are descriptive only — ' +
-      "0.0–0.2 very close, 0.2–0.4 broadly consistent, 0.4–0.6 noticeable, 0.6–1.0 substantial. " +
+    html += '<p class="note">Interpretation bands for the style distance score are descriptive only, ' +
+      "0.0-0.2 very close, 0.2-0.4 broadly consistent, 0.4-0.6 noticeable, 0.6-1.0 substantial. " +
       "This is <strong>not</strong> an AI-detection score.</p>";
 
     if (zipEntries) {

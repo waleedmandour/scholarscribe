@@ -1,4 +1,4 @@
-//! Google Docs Bridge (Phase 1.5) — Tauri command layer.
+//! Google Docs Bridge (Phase 1.5). Tauri command layer.
 //!
 //! PRIVACY CONTRACT (enforced here, verified by the Privacy Audit tab):
 //! - Every outbound HTTP call performed by this module is written to the
@@ -127,7 +127,7 @@ pub async fn google_connect(
 
     let url = net::consent_url(&client_id, &redirect_uri, &code_challenge, &state);
 
-    // Open the system browser (the webview is NOT used for OAuth — no CSP
+    // Open the system browser (the webview is NOT used for OAuth, no CSP
     // changes, and the token never enters the JS context).
     {
         use tauri_plugin_shell::ShellExt;

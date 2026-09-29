@@ -1,10 +1,10 @@
-//! Writing Provenance — Tauri command layer (Phase 1).
+//! Writing Provenance. Tauri command layer (Phase 1).
 //!
 //! Wraps the pure `provenance` core with:
 //! - OS-keychain key management (signing key never leaves the keychain
 //!   except as a derived public key the user explicitly exports),
 //! - the privacy audit log (every file read is recorded; Phase 1 performs
-//!   ZERO outbound HTTP calls — if that ever changes, it must be reflected
+//!   ZERO outbound HTTP calls, if that ever changes, it must be reflected
 //!   in the audit trail and SECURITY.md),
 //! - the opt-in gate (the whole feature is off until the user accepts the
 //!   disclosure dialog, mirroring the persistence design).

@@ -1,11 +1,11 @@
-//! Citation Manager — validates in-text citations against a .bib (BibTeX) file.
+//! Citation Manager, validates in-text citations against a .bib (BibTeX) file.
 //!
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! Three checks:
-//! 1. Undefined citations — in-text citations in the draft that don't match
+//! 1. Undefined citations, in-text citations in the draft that don't match
 //!    any .bib entry. These are the dangerous ones (likely fabricated).
-//! 2. Unused references — .bib entries never cited in the draft.
-//! 3. Citation count per reference — how many times each .bib entry is cited.
+//! 2. Unused references, .bib entries never cited in the draft.
+//! 3. Citation count per reference, how many times each .bib entry is cited.
 //!
 //! All parsing is local. The .bib content never leaves the device.
 
@@ -49,7 +49,7 @@ pub fn parse_bib(content: &str) -> (Vec<BibEntry>, Vec<String>) {
     let mut entries = Vec::new();
     let mut errors = Vec::new();
 
-    // Match @type{key, ... } — non-greedy, balanced-brace-aware via simple state machine.
+    // Match @type{key, ... }, non-greedy, balanced-brace-aware via simple state machine.
     let mut chars = content.chars().peekable();
     let mut pos = 0;
     let content_bytes = content.as_bytes();
@@ -74,7 +74,7 @@ pub fn parse_bib(content: &str) -> (Vec<BibEntry>, Vec<String>) {
         }
         let entry_type = content[type_start..type_end].trim().to_lowercase();
         if entry_type.is_empty() || entry_type == "comment" || entry_type == "string" {
-            // Skip @comment and @string — they're not bibliography entries.
+            // Skip @comment and @string, they're not bibliography entries.
             // Find the matching close brace/paren and continue.
             pos = type_end + 1;
             continue;
@@ -214,7 +214,7 @@ fn extract_field(body: &str, fieldname: &str) -> Option<String> {
         }
         None
     } else {
-        // Bare value (e.g. year = 2020) — read until comma or end
+        // Bare value (e.g. year = 2020), read until comma or end
         let mut j = i;
         while j < bytes.len() && bytes[j] != b',' && bytes[j] != b'\n' && bytes[j] != b'}' {
             j += 1;
@@ -262,7 +262,7 @@ pub fn extract_in_text_citations(text: &str) -> Vec<InTextCitation> {
         });
     }
 
-    // Author-year: narrative — Smith (2020), Smith et al. (2020), Smith and Jones (2020)
+    // Author-year: narrative. Smith (2020), Smith et al. (2020), Smith and Jones (2020)
     let re_narrative = Regex::new(r"\b([A-Z][a-zA-Z'\-]+(?:(?:\s+et\s+al\.?)|(?:\s+and\s+[A-Z][a-zA-Z'\-]+)|(?:\s+&\s+[A-Z][a-zA-Z'\-]+))?)\s+\((\d{4}[a-z]?)\)").unwrap();
     for cap in re_narrative.captures_iter(text) {
         let m = cap.get(0).unwrap();
@@ -318,7 +318,7 @@ pub fn validate(draft_text: &str, bib_content: &str) -> CitationReport {
     let in_text_citations = extract_in_text_citations(draft_text);
 
     // Build a lookup: for each .bib entry, what (author_last_name, year) pairs
-    // would match it? Most .bib entries have author = "Smith, John" — last name "Smith".
+    // would match it? Most .bib entries have author = "Smith, John", last name "Smith".
     let mut bib_lookup: HashMap<(String, String), &BibEntry> = HashMap::new();
     let mut bib_by_key: HashMap<String, &BibEntry> = HashMap::new();
     for entry in &bib_entries {
@@ -336,14 +336,14 @@ pub fn validate(draft_text: &str, bib_content: &str) -> CitationReport {
 
     for cite in &in_text_citations {
         if let Some(n) = cite.numeric {
-            // Numeric style — match by position in .bib (1-indexed)
+            // Numeric style, match by position in .bib (1-indexed)
             if let Some(entry) = bib_entries.get(n.saturating_sub(1)) {
                 cited_keys.insert(entry.key.clone());
             } else {
                 undefined_citations.push(cite.clone());
             }
         } else {
-            // Author-year style — match by (last_name, year)
+            // Author-year style, match by (last_name, year)
             let last_name = extract_last_name(&cite.author);
             let key = (last_name.to_lowercase(), cite.year.clone());
             if let Some(entry) = bib_lookup.get(&key) {
@@ -406,7 +406,7 @@ fn extract_last_name(author: &str) -> String {
     if author.is_empty() {
         return String::new();
     }
-    // Strip "et al." (with or without period) — we want the first author only.
+    // Strip "et al." (with or without period), we want the first author only.
     let cleaned = {
         let re = Regex::new(r"(?i)\s+et\s+al\.?").unwrap();
         re.replace_all(author, "").to_string()
@@ -438,7 +438,7 @@ pub fn read_bib_file(path: &Path) -> Result<String, String> {
 /// For each in-text citation, extract the surrounding context (the sentence
 /// containing the citation) and check whether the citation's attributed
 /// concept appears relevant to the cited work's title. This is a heuristic
-/// check — it flags potential misattributions for human review.
+/// check, it flags potential misattributions for human review.
 ///
 /// Uses simple keyword overlap between the surrounding sentence and the
 /// .bib entry's title/keywords. A local LLM could improve this, but the

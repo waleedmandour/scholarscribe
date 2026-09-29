@@ -1,4 +1,4 @@
-//! Structure Analyzer — extracts a document's heading tree and suggests
+//! Structure Analyzer, extracts a document's heading tree and suggests
 //! missing sections based on common academic structure.
 
 use regex::Regex;

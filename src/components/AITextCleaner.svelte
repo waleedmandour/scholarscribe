@@ -29,10 +29,10 @@
   let opts: CleanOptions = { ...defaultCleanOptions };
 
   const optionLabels: { key: keyof CleanOptions; label: string; hint: string; strict?: boolean }[] = [
-    { key: "fix_mojibake", label: "Fix mojibake", hint: "Repair text decoded with the wrong charset (e.g. â€” → —)" },
+    { key: "fix_mojibake", label: "Fix mojibake", hint: "Repair text decoded with the wrong charset (e.g. the broken bytes that display as garbled quotes or dashes)" },
     { key: "expand_ligatures", label: "Expand ligatures", hint: "ﬁ → fi, ﬂ → fl, ﬀ → ff, etc." },
     { key: "normalize_quotes", label: "Normalize quotes", hint: "Curly → straight quotes (off by default; preserves academic style)" },
-    { key: "normalize_dashes", label: "Normalize dashes", hint: "-- → —, en-dash → hyphen" },
+    { key: "normalize_dashes", label: "Normalize dashes to plain hyphens", hint: "Convert --, em dash, en dash to plain hyphens. Recommended per project copy style." },
     { key: "strip_zero_width", label: "Strip zero-width chars", hint: "Remove U+200B/200C/200D/FEFF/2060 (often invisible but cause issues)" },
     { key: "strip_control_chars", label: "Strip control chars", hint: "Remove non-printable C0/C1 chars (except tab/newline)" },
     { key: "join_hyphenated_words", label: "Join hyphenated line breaks", hint: "exam-\\nple → example (common PDF artifact)" },
@@ -47,7 +47,7 @@
     { key: "convert_nbsp", label: "Convert non-breaking spaces", hint: "U+00A0, U+2007, U+202F → regular ASCII space", strict: true },
     { key: "normalize_unicode_whitespace", label: "Normalize Unicode whitespace", hint: "en/em/thin/hair/figure/ideographic spaces → ASCII space", strict: true },
     { key: "strip_soft_hyphens", label: "Strip soft hyphens", hint: "Remove U+00AD (invisible chars that cause search misses)", strict: true },
-    { key: "strip_variation_selectors", label: "Strip variation selectors", hint: "Remove U+FE00–FE0F and U+E0100–E01EF (emoji modifiers)", strict: true },
+    { key: "strip_variation_selectors", label: "Strip variation selectors", hint: "Remove U+FE00-FE0F and U+E0100-E01EF (emoji modifiers)", strict: true },
     { key: "convert_ellipsis", label: "Convert ellipsis", hint: "Unicode … → three ASCII dots (...)", strict: true },
     { key: "remove_asterisks", label: "Remove asterisks", hint: "Strip all * characters (markdown bold/italic markers, footnote refs)", strict: true },
     { key: "remove_markdown_headings", label: "Remove markdown headings", hint: "Strip leading #, ##, ### from lines (preserves heading text)", strict: true },

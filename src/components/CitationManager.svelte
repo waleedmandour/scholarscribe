@@ -143,8 +143,8 @@
           {#each report.undefined_citations as c}
             <tr>
               <td><code>{c.raw}</code></td>
-              <td>{c.author || "—"}</td>
-              <td>{c.year || (c.numeric ? `[${c.numeric}]` : "—")}</td>
+              <td>{c.author || "-"}</td>
+              <td>{c.year || (c.numeric ? `[${c.numeric}]` : "-")}</td>
             </tr>
           {/each}
         </tbody>

@@ -1,4 +1,4 @@
-//! Appeal Letter Generator — drafts a professional, evidence-based appeal
+//! Appeal Letter Generator, drafts a professional, evidence-based appeal
 //! letter for researchers whose work has been falsely flagged by AI
 //! detection tools. References the peer-reviewed literature and Turnitin's
 //! own guidance that scores are indicators, not proof.
@@ -73,7 +73,7 @@ I respectfully draw your attention to the following:
 
 - Liang et al. (2023) demonstrated that GPT detectors are biased against non-native English writers, frequently misclassifying genuine human writing as AI-generated. This finding has been replicated across multiple detector platforms and raises serious fairness concerns, particularly for researchers writing in English as a second or additional language (Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). GPT detectors are biased against non-native English writers. Patterns, 4(7), 100779. https://doi.org/10.1016/j.patter.2023.100779).
 
-- Weber-Wulff et al. (2023) evaluated 14 publicly available AI-generated text detection tools and found that all of them exhibited high false-positive rates on human-written text, particularly on texts with simpler vocabulary and shorter sentences — features common in academic writing by non-native English speakers and in technical/methods sections (Weber-Wulff, D., et al. (2023). Testing of detection tools for AI-generated text. International Journal for Educational Integrity, 19, 26. https://doi.org/10.1007/s40979-023-00146-z).
+- Weber-Wulff et al. (2023) evaluated 14 publicly available AI-generated text detection tools and found that all of them exhibited high false-positive rates on human-written text, particularly on texts with simpler vocabulary and shorter sentences, features common in academic writing by non-native English speakers and in technical/methods sections (Weber-Wulff, D., et al. (2023). Testing of detection tools for AI-generated text. International Journal for Educational Integrity, 19, 26. https://doi.org/10.1007/s40979-023-00146-z).
 
 - Several universities, including Vanderbilt University, University of Pittsburgh, and University of Texas at Austin, have discontinued or significantly restricted the use of Turnitin's AI-detection feature due to reliability concerns.
 

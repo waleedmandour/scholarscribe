@@ -1,4 +1,4 @@
-# ScholarScribe — Ethical Use Policy
+# ScholarScribe. Ethical Use Policy
 
 This document is the authoritative statement of ScholarScribe's ethical commitments. It expands on the brief summary in the main README.
 
@@ -15,7 +15,7 @@ ScholarScribe exists to help researchers who are writing their own manuscripts w
 The following features are out of scope and will not be added to ScholarScribe, regardless of user demand:
 
 1. **AI-detection evasion.** Any feature whose stated or implicit purpose is to lower a detector's score (Turnitin AI, GPTZero, Originality.ai, Copyleaks, etc.). This includes "marker targeting", "humanizer" pipelines, "AI-stealth" modes, and adversarial-perturbation engines.
-2. **Detection-score feedback loops.** Running a detector in-app and showing "your AI score dropped from 92% to 14%" — even framed as informational — primarily serves evasion.
+2. **Detection-score feedback loops.** Running a detector in-app and showing "your AI score dropped from 92% to 14%", even framed as informational, primarily serves evasion.
 3. **Misrepresentation aids.** Features whose purpose is to obscure that AI was used at all, including fake "draft history" generators or "make this look like a real revision trail" tools.
 4. **Citation fabrication.** Generating references that don't exist. The chat system prompt explicitly forbids this and instructs the model to ask the user for sources.
 
@@ -23,9 +23,9 @@ The following features are out of scope and will not be added to ScholarScribe, 
 
 The author of this project began from a repo whose stated purpose included evading AI-plagiarism detectors. After reflection, that direction was rejected for three reasons:
 
-1. **Net harm to research integrity.** Evasion tools undermine the social contract that makes peer review work. Even when used by honest researchers, they make the whole detection ecosystem less trustworthy — which hurts honest researchers most.
-2. **Disproportionate impact on non-native English writers.** Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023) show AI detectors have high false-positive rates on writing by non-native English authors. An arms race between evaders and detectors makes this worse, not better. The right response is institutional — push back on detector use, not build better evasion.
-3. **Doesn't actually solve the user's problem.** If a researcher's real concern is "I used AI and I'm worried about being accused" — the answer is *disclosure*, not evasion. Disclosure sidesteps the detector entirely and is required by every major venue's policy. ScholarScribe makes disclosure easy.
+1. **Net harm to research integrity.** Evasion tools undermine the social contract that makes peer review work. Even when used by honest researchers, they make the whole detection ecosystem less trustworthy, which hurts honest researchers most.
+2. **Disproportionate impact on non-native English writers.** Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023) show AI detectors have high false-positive rates on writing by non-native English authors. An arms race between evaders and detectors makes this worse, not better. The right response is institutional, push back on detector use, not build better evasion.
+3. **Doesn't actually solve the user's problem.** If a researcher's real concern is "I used AI and I'm worried about being accused", the answer is *disclosure*, not evasion. Disclosure sidesteps the detector entirely and is required by every major venue's policy. ScholarScribe makes disclosure easy.
 
 ## 4. Features that fit
 
@@ -42,7 +42,7 @@ The following are in scope and welcome as contributions:
   revision history a document genuinely carries (Word Track Changes /
   Google Docs version history). It fits this list under the same rules as
   everything else: it is *evidence about process offered by the author*,
-  never a verdict about text. It reads real history — it never fabricates
+  never a verdict about text. It reads real history, it never fabricates
   or edits any (that would violate §2.3). It contains no AI-detection
   score. Its style statistic is descriptive, with interpretation bands and
   no pass/fail reading. It performs zero network calls in its .docx path,
@@ -52,7 +52,7 @@ The following are in scope and welcome as contributions:
 
 ## 5. Handling pull requests
 
-Pull requests will be reviewed against this policy. PRs that add evasion features will be closed without merge, with a pointer to this document. This is not censorship — the author is happy to fork the project under a different name if your use case genuinely requires evasion. But it won't ship under the ScholarScribe name.
+Pull requests will be reviewed against this policy. PRs that add evasion features will be closed without merge, with a pointer to this document. This is not censorship, the author is happy to fork the project under a different name if your use case genuinely requires evasion. But it won't ship under the ScholarScribe name.
 
 ## 6. Changes to this policy
 
