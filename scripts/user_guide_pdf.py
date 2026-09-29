@@ -40,6 +40,7 @@ from reportlab.platypus import (
     HRFlowable,
     ListFlowable,
     ListItem,
+    Image,
 )
 from reportlab.platypus.flowables import Flowable
 
@@ -490,16 +491,39 @@ class CoverBackground(Flowable):
         c.restoreState()
 
 
-def build_cover(styles: dict) -> list:
-    """Build the cover page flowables. Light, professional layout:
-    white background, a thin accent rule above the title, the title
-    and subtitle centered, version metadata below, repo URL at the
-    bottom, and a small copyright line at the very bottom.
+def build_cover(styles: dict, logo_path: Path | None = None) -> list:
+    """Build the cover page flowables. Light, professional layout with
+    SYMMETRIC margins matching the body (18mm horizontal), the app logo
+    centered at the top, a thin accent rule above the title, the title
+    and subtitle centered, version metadata below, repo URL near the
+    bottom, and a copyright line at the very bottom.
+
+    Args:
+        styles: ParagraphStyle dict from build_styles().
+        logo_path: Optional Path to a PNG logo to embed at the top of the
+            cover. If None or the path doesn't exist, the cover is built
+            without a logo (text-only).
     """
     flow = []
-    # Top whitespace
-    flow.append(Spacer(1, 70 * mm))
-    # Thin accent rule
+
+    # Top whitespace to push the logo down from the top accent stripe
+    flow.append(Spacer(1, 30 * mm))
+
+    # App logo, centered. If the path is missing or unreadable, skip
+    # silently and let the typography carry the cover.
+    if logo_path and logo_path.exists():
+        try:
+            # Render at 30mm wide, preserving aspect ratio. The icons are
+            # square (1:1) so the height matches.
+            logo = Image(str(logo_path), width=30 * mm, height=30 * mm)
+            logo.hAlign = "CENTER"
+            flow.append(logo)
+            flow.append(Spacer(1, 12 * mm))
+        except Exception:
+            # Image flowable can fail on bad PNG; non-fatal.
+            pass
+
+    # Thin accent rule (40% width, centered) above the title
     flow.append(HRFlowable(
         width="40%",
         thickness=1.2,
@@ -521,21 +545,21 @@ def build_cover(styles: dict) -> list:
         hAlign="CENTER",
     ))
 
-    flow.append(Paragraph("Version 2.2.0", styles["cover_meta"]))
-    flow.append(Paragraph("Windows · macOS · Linux", styles["cover_meta"]))
+    flow.append(Paragraph("Version 2.2.1", styles["cover_meta"]))
+    flow.append(Paragraph("Windows &middot; macOS &middot; Linux", styles["cover_meta"]))
     flow.append(Paragraph("MIT License", styles["cover_meta"]))
 
-    # Push URL + copyright to the bottom of the page
-    flow.append(Spacer(1, 60 * mm))
+    # Push URL + copyright to the bottom of the page (matches body bottom margin)
+    flow.append(Spacer(1, 50 * mm))
     flow.append(Paragraph(
         '<link href="https://github.com/waleedmandour/scholarscribe">'
         '<font color="#2a5bd7">github.com/waleedmandour/scholarscribe</font>'
         '</link>',
         styles["cover_url"],
     ))
-    flow.append(Spacer(1, 8 * mm))
+    flow.append(Spacer(1, 6 * mm))
     flow.append(Paragraph(
-        "© 2026 Dr. Waleed Mandour. Released under the MIT License.",
+        "&copy; 2026 Dr. Waleed Mandour. Released under the MIT License.",
         styles["cover_footer"],
     ))
 
@@ -564,7 +588,7 @@ def body_page(canvas, doc):
     canvas.setFont(FONT_FAMILY_SANS, 8)
     canvas.drawString(
         18 * mm, 10 * mm,
-        "ScholarScribe User Guide · v2.2.0",
+        "ScholarScribe User Guide · v2.2.1",
     )
     canvas.drawRightString(
         A4[0] - 18 * mm, 10 * mm,
@@ -629,13 +653,16 @@ def main():
         bottomMargin=20 * mm,
         title="ScholarScribe User Guide",
         author="Dr. Waleed Mandour",
-        subject="ScholarScribe v2.2.0 User Guide",
+        subject="ScholarScribe v2.2.1 User Guide",
         creator="ScholarScribe build pipeline",
     )
 
-    # Cover frame: full-bleed, content centered
+    # Cover frame: SAME horizontal margins as body (18mm) so the cover
+    # content aligns with the body text columns. Vertical padding is zero
+    # because the cover uses Spacer flowables to position content.
     cover_frame = Frame(
-        0, 0, A4[0], A4[1],
+        18 * mm, 0,
+        A4[0] - 36 * mm, A4[1],
         leftPadding=0, rightPadding=0,
         topPadding=0, bottomPadding=0,
         id="cover_frame",
@@ -658,7 +685,14 @@ def main():
     # Use the cover template for the first page
     from reportlab.platypus.doctemplate import NextPageTemplate
     story.append(NextPageTemplate("cover"))
-    story.extend(build_cover(styles))
+    # Resolve logo path: try repo-relative locations for the app icon.
+    logo_candidates = [
+        Path(args.input).parent.parent / "src-tauri" / "icons" / "128x128@2x.png",
+        Path(args.input).parent.parent / "src-tauri" / "icons" / "128x128.png",
+        Path(args.input).parent.parent / "src-tauri" / "icons" / "icon.png",
+    ]
+    logo_path = next((p for p in logo_candidates if p.exists()), None)
+    story.extend(build_cover(styles, logo_path=logo_path))
     # Switch to body template for the rest
     story.append(NextPageTemplate("body"))
     story.extend(body_flowables)

@@ -292,6 +292,42 @@ export interface BibEntry {
   title: string;
   author: string;
   year: string;
+  /** Journal name (for @article). Empty for other entry types. */
+  journal: string;
+  /** Volume number as a string. */
+  volume: string;
+  /** Issue / number as a string. */
+  number: string;
+  /** Page range in BibTeX format ("12--34"). */
+  pages: string;
+  /** DOI ("10.1234/abcd"). */
+  doi: string;
+  /** Publisher name (for @book / @inproceedings). */
+  publisher: string;
+  /** Book title (for @inbook / @inproceedings). */
+  booktitle: string;
+  /** Original raw text the entry was parsed from. Useful for debugging
+   * and for showing the user the source when fields are missing. */
+  raw: string;
+}
+
+/** Supported plain-text reference styles for the paste-references mode
+ * of the Citation Manager. The parser is heuristic and tolerates mixed
+ * formats; the style hint helps disambiguate field boundaries. */
+export type PlainRefStyle = "apa" | "mla" | "chicago" | "vancouver" | "plain";
+
+/** Result of converting a plain-text reference list to BibTeX. */
+export interface ConvertPlainToBibResult {
+  /** The generated BibTeX content, ready to write to a .bib file or
+   * feed back into the citation validator. */
+  bibtex: string;
+  /** Number of references parsed. */
+  entry_count: number;
+  /** Per-entry warnings (e.g., "Entry 3: could not extract year"). */
+  warnings: string[];
+  /** The parsed entries, returned for in-memory validation without a
+   * round-trip through a .bib file. */
+  entries: BibEntry[];
 }
 
 export interface InTextCitation {
@@ -357,6 +393,9 @@ export interface Heading {
   level: number;
   text: string;
   word_count: number;
+  /** First ~15 words of the section's body content. Empty when the
+   * section has no body or the body could not be extracted. */
+  excerpt: string;
 }
 
 export interface StructureReport {
@@ -445,6 +484,14 @@ export const api = {
   validateCitations: (draftPath: string, bibPath: string) =>
     invoke<CitationReport>("validate_citations", {
       args: { draft_path: draftPath, bib_path: bibPath },
+    }),
+  convertPlainToBib: (content: string, style: PlainRefStyle) =>
+    invoke<ConvertPlainToBibResult>("convert_plain_to_bib", {
+      args: { content, style },
+    }),
+  validateCitationsInline: (draftPath: string, bibContent: string) =>
+    invoke<CitationReport>("validate_citations_inline", {
+      args: { draft_path: draftPath, bib_content: bibContent },
     }),
   analyzeStructure: (path: string) =>
     invoke<StructureReport>("analyze_structure", { args: { path } }),

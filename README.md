@@ -3,7 +3,7 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no cloud calls, no paid APIs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.0](https://img.shields.io/badge/Status-v2.2.0-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.2.0)
+[![Status: v2.2.1](https://img.shields.io/badge/Status-v2.2.1-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.2.1)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -90,20 +90,20 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.0 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.0 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.0 (new) |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.0 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.0 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 (new) |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 |
 
 Install with your platform's package manager:
 
 ```bash
 # Linux (Debian/Ubuntu)
-sudo apt install ./ScholarScribe_2.2.0_amd64.deb
+sudo apt install ./ScholarScribe_2.2.1_amd64.deb
 
 # Linux (Fedora/RHEL/SUSE)
-sudo dnf install ./ScholarScribe-2.2.0-1.x86_64.rpm
+sudo dnf install ./ScholarScribe-2.2.1-1.x86_64.rpm
 
 # Windows / macOS: double-click the .msi / .dmg
 ```
@@ -473,7 +473,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.0, © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.1, © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 
