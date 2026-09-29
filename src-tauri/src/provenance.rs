@@ -1,6 +1,6 @@
-//! Writing Provenance — Phase 1 core.
+//! Writing Provenance. Phase 1 core.
 //!
-//! ETHICAL SCOPE — READ THIS FIRST:
+//! ETHICAL SCOPE. READ THIS FIRST:
 //! This module produces *evidence about process*, not verdicts about text.
 //! It reads the revision history that Microsoft Word's Track Changes feature
 //! genuinely recorded, groups edits into work sessions, chains those sessions
@@ -10,7 +10,7 @@
 //! What this module deliberately does NOT do:
 //! - No AI-detection score of any kind. `style_consistency.distance_score`
 //!   measures how similar the *final* text is to a *baseline the author
-//!   supplied* (or to the earliest tracked session) — it is a descriptive
+//!   supplied* (or to the earliest tracked session), it is a descriptive
 //!   statistic, never a "humanness" verdict, and the UI presents it with
 //!   interpretation bands, not pass/fail.
 //! - No fabrication. Every number in the manifest is derived from revisions
@@ -23,7 +23,7 @@
 //!
 //! VERIFICATION MODEL
 //! The manifest is a JSON file plus a detached Ed25519 signature over a
-//! *canonical payload string* (not the JSON bytes — this avoids any float /
+//! *canonical payload string* (not the JSON bytes, this avoids any float /
 //! key-ordering ambiguity between Rust and the JavaScript verifier). The
 //! canonical payload format is specified in docs/PROVENANCE_SPEC.md and
 //! mirrored byte-for-byte by verifier/verify.js. Any change to the format
@@ -35,7 +35,7 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 /// Genesis marker: the `prev_record_hash` of the first record in each
-/// author's chain. 64 zeros — the verifier expects exactly this.
+/// author's chain. 64 zeros, the verifier expects exactly this.
 pub const GENESIS_HASH: &str =
     "sha256:0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -124,7 +124,7 @@ pub struct RawSession {
     pub chars_added: u32,
     pub chars_removed: u32,
     /// Longest single insertion in this session (chars). Part of the record
-    /// hash — large unedited blocks are the signature of pasted-in text.
+    /// hash, large unedited blocks are the signature of pasted-in text.
     pub largest_insertion: u32,
     /// Revisions in this session, chronological.
     pub revisions: Vec<RawRevision>,
@@ -140,7 +140,7 @@ pub struct SessionGrouping {
 /// Group raw revisions into sessions.
 ///
 /// Rules (see docs/PROVENANCE_SPEC.md §4):
-/// - Revisions are sorted by timestamp (stable — ties keep markup order).
+/// - Revisions are sorted by timestamp (stable, ties keep markup order).
 /// - Consecutive revisions by the SAME author whose timestamps are at most
 ///   `SESSION_GAP_SECS` apart join the current session of that author.
 /// - Each author owns an independent session sequence (and, later, an
@@ -268,7 +268,7 @@ pub fn group_into_sessions(revisions: &[RawRevision]) -> SessionGrouping {
 // ---------------------------------------------------------------------------
 
 /// The published, privacy-safe record of one session. This is what goes in
-/// the manifest — note there is no revision text here, only aggregates.
+/// the manifest, note there is no revision text here, only aggregates.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SessionRecord {
     pub session_id: String,
@@ -276,7 +276,7 @@ pub struct SessionRecord {
     /// Unix seconds, UTC.
     pub start_time: i64,
     pub end_time: i64,
-    /// SHA-256 over the session's revision content (canonical form — see
+    /// SHA-256 over the session's revision content (canonical form, see
     /// `snapshot_hash`). Hash only: no text.
     pub snapshot_hash: String,
     pub chars_added: u32,
@@ -333,7 +333,7 @@ pub fn compute_snapshot_hash(session: &RawSession) -> String {
 /// Canonical record string (docs/PROVENANCE_SPEC.md §5.2). The verifier
 /// rebuilds this exact string from the manifest JSON and re-hashes it.
 pub fn canonical_record_string(rec: &SessionRecord) -> String {
-    // Fixed field order, fixed count — unambiguous without delimiters.
+    // Fixed field order, fixed count, unambiguous without delimiters.
     format!(
         "scholarscribe-record-v1\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
         rec.session_id,
@@ -488,7 +488,7 @@ pub fn interpret_style_distance(score: f32) -> String {
 }
 
 /// Build the canonical manifest payload string (docs/PROVENANCE_SPEC.md §6).
-/// This — not the JSON file — is what the Ed25519 signature covers. Both this
+/// This, not the JSON file, is what the Ed25519 signature covers. Both this
 /// function and verifier/verify.js must construct it byte-identically.
 pub fn canonical_manifest_payload(m: &ProvenanceManifest) -> String {
     let mut p = String::new();
@@ -639,7 +639,7 @@ pub fn verify_chain(records: &[SessionRecord]) -> (bool, Vec<String>) {
 
 /// Produce a full VerificationResult for a manifest (chain + aggregate stats).
 /// Signature checking needs the key, so it is a separate step (see
-/// `verify_manifest_signature`) — callers merge the two flags.
+/// `verify_manifest_signature`), callers merge the two flags.
 pub fn summarize_verification(m: &ProvenanceManifest) -> VerificationResult {
     let (chain_intact, anomalies) = verify_chain(&m.sessions);
     let time_span_hours = if m.sessions.is_empty() {
@@ -681,9 +681,9 @@ fn decode_hex(s: &str) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-/// Decode an `ed25519:{hex}` fingerprint's key component? No — fingerprints
+/// Decode an `ed25519:{hex}` fingerprint's key component? No, fingerprints
 /// are SHA-256 digests, not keys. Public keys are shared separately as
-/// `ed25519-pub:{hex}` (64 bytes → 32 bytes raw) — see provenance_commands.
+/// `ed25519-pub:{hex}` (64 bytes → 32 bytes raw), see provenance_commands.
 #[allow(dead_code)]
 pub fn verifying_key_from_hex(hex_key: &str) -> Result<VerifyingKey, String> {
     let bytes = decode_hex(hex_key).map_err(|e| format!("bad public key hex: {e}"))?;
@@ -735,7 +735,7 @@ fn style_vector(profile: &crate::style::StyleProfile) -> Vec<f64> {
 
 /// 1 − cosine similarity between baseline and final style vectors, clamped
 /// to [0, 1] and rounded to 4 decimals (the canonical-payload format).
-/// Descriptive only — see the interpretation bands, never a verdict.
+/// Descriptive only, see the interpretation bands, never a verdict.
 pub fn style_distance(baseline_text: &str, final_text: &str) -> Option<f32> {
     let a = style_vector(&crate::style::analyze(baseline_text));
     let b = style_vector(&crate::style::analyze(final_text));
@@ -743,7 +743,7 @@ pub fn style_distance(baseline_text: &str, final_text: &str) -> Option<f32> {
     let na: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
     let nb: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
     if na == 0.0 || nb == 0.0 {
-        return None; // empty or degenerate sample — no honest number available
+        return None; // empty or degenerate sample, no honest number available
     }
     let cos = (dot / (na * nb)).clamp(-1.0, 1.0);
     Some(round4((1.0 - cos) as f32))
@@ -777,7 +777,7 @@ pub fn compute_style_consistency(
 }
 
 /// A lightweight, transparent citation inventory for the final text.
-/// Evidence about structure — not a "citation quality" judgment.
+/// Evidence about structure, not a "citation quality" judgment.
 #[derive(Debug, Clone, Serialize)]
 pub struct CitationValidation {
     /// Author-year or numeric citations detected in the final text.
@@ -814,7 +814,7 @@ pub fn validate_citations_basic(
 }
 
 // ---------------------------------------------------------------------------
-// Export bundle (.zip) — built in-memory, caller writes to disk
+// Export bundle (.zip), built in-memory, caller writes to disk
 // ---------------------------------------------------------------------------
 
 /// Build the provenance export bundle as a ZIP archive in memory.
@@ -851,7 +851,7 @@ pub fn build_export_zip(
 }
 
 // ---------------------------------------------------------------------------
-// Disclosure copy (single source of truth — UI dialog and export both use it)
+// Disclosure copy (single source of truth. UI dialog and export both use it)
 // ---------------------------------------------------------------------------
 
 pub const DISCLOSURE_DIALOG_TITLE: &str = "Before you turn on Writing Provenance";
@@ -1305,7 +1305,7 @@ mod tests {
         let p2 = canonical_manifest_payload(&m);
         assert_eq!(p1, p2);
         assert!(p1.starts_with("SCHOLARSCRIBE-MANIFEST-v1\n"));
-        // 0.12344 rounds to 4 places — the exact string the JS verifier builds.
+        // 0.12344 rounds to 4 places, the exact string the JS verifier builds.
         assert!(p1.contains("0.1234\n"));
     }
 

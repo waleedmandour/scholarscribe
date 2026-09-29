@@ -76,7 +76,7 @@
     <li>Does <strong>not</strong> collect telemetry, analytics, or crash reports.</li>
     <li>Does <strong>not</strong> read any file you didn't explicitly pick in a file dialog.</li>
   </ul>
-  <p class="muted" style="margin: 12px 0 0; font-size: 13px;">
+  <p class="muted" style="margin: 12px 0 0; font-size: var(--font-sm);">
     See <code>docs/ETHICS.md</code> in the source repository for the full ethical-use policy.
   </p>
 </div>
@@ -87,7 +87,7 @@
     ScholarScribe v{appVersion}<br />
     © 2026 Dr. Waleed Mandour. Released under the MIT License.
   </p>
-  <div style="margin: 0 0 12px; font-size: 14px;">
+  <div style="margin: 0 0 12px; font-size: var(--font-md);">
     <strong>Developer:</strong> Dr. Waleed Mandour<br />
     <strong>Email:</strong> <a href="mailto:waleedmandour@gmail.com">waleedmandour@gmail.com</a><br />
     <strong>Institutional Email:</strong> <a href="mailto:w.abumandour@squ.edu.om">w.abumandour@squ.edu.om</a><br />
@@ -95,15 +95,15 @@
     <strong>ORCID:</strong> <a href="https://orcid.org/0000-0002-9262-5993" target="_blank" rel="noopener">0000-0002-9262-5993</a><br />
     <strong>GitHub:</strong> <a href="https://github.com/waleedmandour" target="_blank" rel="noopener">github.com/waleedmandour</a>
   </div>
-  <p class="muted" style="margin: 0 0 12px; font-size: 13px;">
+  <p class="muted" style="margin: 0 0 12px; font-size: var(--font-sm);">
     Designed and directed by Dr. Waleed Mandour, 2026. Gratefully developed with engineering
     support from <strong>GLM 5.1</strong> (architectural design and ethical-use policy) and
     <strong>GLM 5.2</strong> (implementation, CI/CD, and debugging), both AI agents by Z.ai.
   </p>
-  <p class="muted" style="margin: 0; font-size: 13px;">
+  <p class="muted" style="margin: 0; font-size: var(--font-sm);">
     Built on top of outstanding open-source work, including:
   </p>
-  <ul style="margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.7;">
+  <ul style="margin: 6px 0 0; padding-left: 20px; font-size: var(--font-sm); line-height: 1.7;">
     <li><a href="https://tauri.app" target="_blank" rel="noopener">Tauri</a>: the cross-platform desktop framework that keeps the installer tiny.</li>
     <li><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>: the local LLM runtime that does the heavy lifting of model management.</li>
     <li><a href="https://svelte.dev" target="_blank" rel="noopener">Svelte</a>: the frontend framework.</li>

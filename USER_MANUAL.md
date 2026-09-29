@@ -1,8 +1,8 @@
-# ScholarScribe — User Manual
+# ScholarScribe. User Manual
 
-*v2.1.0*
+*v2.2.0*
 
-This manual walks you through installing ScholarScribe, downloading a model, and using each of its modules — including the v2.1.0 Writing Provenance module.
+This manual walks you through installing ScholarScribe, downloading a model, and using each of its modules, including the v2.1.0 Writing Provenance module.
 
 ---
 
@@ -29,7 +29,7 @@ This manual walks you through installing ScholarScribe, downloading a model, and
 | OS | Windows 10 64-bit (1809+) | Windows 11 |
 | RAM | 8 GB | 16 GB or more |
 | Disk | 3 GB free (app + one small model) | 20 GB+ (multiple models) |
-| WebView2 | Pre-installed on Windows 11; on Windows 10 the installer will fetch it | — |
+| WebView2 | Pre-installed on Windows 11; on Windows 10 the installer will fetch it |, |
 
 Models have their own RAM requirements shown in the Models tab. A 9B-parameter model needs ~16 GB RAM; a 2B model runs on 8 GB.
 
@@ -37,7 +37,7 @@ Models have their own RAM requirements shown in the Models tab. A 9B-parameter m
 
 ## 2. Installing Ollama
 
-ScholarScribe does not include the LLM engine — it uses [Ollama](https://ollama.com) as a separate, free, open-source runtime. Keeping them separate means you can use the same models across Ollama, ScholarScribe, and any other tool that speaks the Ollama API.
+ScholarScribe does not include the LLM engine, it uses [Ollama](https://ollama.com) as a separate, free, open-source runtime. Keeping them separate means you can use the same models across Ollama, ScholarScribe, and any other tool that speaks the Ollama API.
 
 1. Go to <https://ollama.com/download>.
 2. Click **Download for Windows**.
@@ -53,7 +53,7 @@ To verify Ollama is running, open a browser and visit <http://localhost:11434>. 
 ### Option A: pre-built installer (recommended)
 
 1. Go to <https://github.com/waleedmandour/scholarscribe/releases>.
-2. Under the latest release (v2.1.0), download `ScholarScribe_2.1.0_x64_en-US.msi` (or the `ScholarScribe_2.1.0_x64-setup.exe` NSIS installer).
+2. Under the latest release (v2.2.0), download `ScholarScribe_2.2.0_x64_en-US.msi` (or the `ScholarScribe_2.2.0_x64-setup.exe` NSIS installer).
 3. Double-click the file. Windows SmartScreen may warn you, click **More info → Run anyway** (the installer is currently unsigned; code signing is planned for a future release).
 4. The installer adds ScholarScribe to your Start menu. Launch it from there.
 
@@ -68,7 +68,7 @@ npm install
 npm run tauri build
 ```
 
-Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_2.1.0_x64_en-US.msi`.
+Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_2.2.0_x64_en-US.msi`.
 
 ---
 
@@ -103,12 +103,12 @@ A simple, local-only chat interface to your installed models.
 **Good prompts for academic writing:**
 
 - "I'm writing the methods section of a paper on X. Here's my draft: [paste]. Suggest three ways to make the procedure description more reproducible without adding length."
-- "Critique this paragraph for logical flow. Don't rewrite it — just point out where the argument jumps."
+- "Critique this paragraph for logical flow. Don't rewrite it, just point out where the argument jumps."
 - "What are three alternative ways to phrase 'this study demonstrates that...'?"
 
 **What the chat module will refuse:**
 
-The system prompt instructs the model to decline requests to evade AI detectors, submit AI text as original work, or fabricate citations. If you find a model complying with such requests, please [open an issue](https://github.com/waleedmandour/scholarscribe/issues) — this guardrail is part of the project's ethical commitments.
+The system prompt instructs the model to decline requests to evade AI detectors, submit AI text as original work, or fabricate citations. If you find a model complying with such requests, please [open an issue](https://github.com/waleedmandour/scholarscribe/issues), this guardrail is part of the project's ethical commitments.
 
 ---
 
@@ -118,22 +118,22 @@ Compares a draft's stylistic profile to a sample of your own prior writing.
 
 1. Go to the **Style Analysis** tab.
 2. In the **Draft** panel, paste your current draft (or click **Open file…** to load a `.txt`, `.md`, `.tex`, etc.).
-3. In the **Reference** panel, paste a sample of your own published or finished writing — something that sounds like "you". Aim for 1,000+ words for a reliable profile.
+3. In the **Reference** panel, paste a sample of your own published or finished writing, something that sounds like "you". Aim for 1,000+ words for a reliable profile.
 4. Click **Analyze & compare**.
 
 The output shows:
 
-- **Overall distance** — a single number; lower = more similar to your reference. Typical within-author distance is under 0.5.
-- **Summary notes** — plain-English interpretation, including which features stand out.
-- **Feature-by-feature comparison** — for each metric (avg sentence length, vocabulary diversity, passive-voice density, hedging, connector use, first-person usage, citation density), the draft value, reference value, percent difference, and a one-word interpretation (very close / minor / notable / substantial difference).
+- **Overall distance**, a single number; lower = more similar to your reference. Typical within-author distance is under 0.5.
+- **Summary notes**, plain-English interpretation, including which features stand out.
+- **Feature-by-feature comparison**, for each metric (avg sentence length, vocabulary diversity, passive-voice density, hedging, connector use, first-person usage, citation density), the draft value, reference value, percent difference, and a one-word interpretation (very close / minor / notable / substantial difference).
 
 **How to read the results:**
 
-Differences aren't inherently bad. A methods section legitimately reads differently from a discussion. The tool is most useful for catching unintentional drift: "I thought this sounded like me, but I'm using way more 'however' than I usually do — let me check if a co-author (or an AI tool) inserted those."
+Differences aren't inherently bad. A methods section legitimately reads differently from a discussion. The tool is most useful for catching unintentional drift: "I thought this sounded like me, but I'm using way more 'however' than I usually do, let me check if a co-author (or an AI tool) inserted those."
 
 **What this module does NOT do:**
 
-It does not predict whether your text will be flagged by an AI detector. It does not "humanize" text. It compares your draft to your own writing — that's all.
+It does not predict whether your text will be flagged by an AI detector. It does not "humanize" text. It compares your draft to your own writing, that's all.
 
 ---
 
@@ -144,10 +144,10 @@ Generates a venue-compliant AI-use disclosure statement.
 1. Go to the **Disclosure** tab.
 2. Pick your target venue from the dropdown (ICMJE for most medical journals; Nature Portfolio; IEEE; Elsevier; ACL; or "Generic" if your venue isn't listed).
 3. Fill in:
-   - **Tool used** — e.g. "ChatGPT", "Gemini", "ScholarScribe with Gemma 3 12B"
-   - **Model (optional)** — e.g. "GPT-4o", "gemma3:12b"
-   - **Your name (optional)** — signs the statement at the end
-   - **What did you use the tool for?** — be specific: "improve language and readability", "generate an outline for the introduction", "suggest alternative phrasings for the abstract"
+   - **Tool used**, e.g. "ChatGPT", "Gemini", "ScholarScribe with Gemma 3 12B"
+   - **Model (optional)**, e.g. "GPT-4o", "gemma3:12b"
+   - **Your name (optional)**, signs the statement at the end
+   - **What did you use the tool for?**, be specific: "improve language and readability", "generate an outline for the introduction", "suggest alternative phrasings for the abstract"
 4. Click **Generate disclosure**.
 5. The generated statement appears in the result card. Click **Copy** to copy it to your clipboard.
 6. The result also tells you where to include the statement (manuscript, cover letter, or both) and links to the venue's official AI-use policy.
@@ -158,36 +158,36 @@ Generates a venue-compliant AI-use disclosure statement.
 
 ## 8. Module: Detector Literacy
 
-A short, plain-English explainer of how AI-detection tools work and where they fail. No interactive features — just reading material.
+A short, plain-English explainer of how AI-detection tools work and where they fail. No interactive features, just reading material.
 
 The four cards cover:
 
-1. **Perplexity and burstiness** — the two main signals most detectors use.
-2. **Where detectors fail** — false-positive bias against non-native English writers, unreliability on short passages, sensitivity to editing, and adversarial fragility. Each point links to peer-reviewed evaluations.
-3. **What this means for you** — practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer.
-4. **Further reading** — Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024), and university statements on detector reliability.
+1. **Perplexity and burstiness**, the two main signals most detectors use.
+2. **Where detectors fail**, false-positive bias against non-native English writers, unreliability on short passages, sensitivity to editing, and adversarial fragility. Each point links to peer-reviewed evaluations.
+3. **What this means for you**, practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer.
+4. **Further reading**. Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024), and university statements on detector reliability.
 
-## 8b. Module: Writing Provenance (v2.1.0 — opt-in)
+## 8b. Module: Writing Provenance (v2.1.0, opt-in)
 
 Writing Provenance turns the revision history your document already carries into **verifiable evidence of process**. It is switched off until you accept its disclosure dialog, which states plainly what it does *not* do: it is not an AI-detection score, not proof of authorship, and it only covers edits made while Track Changes (or Google Docs version history) was on.
 
-**What it produces.** A `.zip` package containing `manifest.json` — a SHA-256 hash-chained list of work sessions (per session: the author name your editor recorded, start/end time, characters inserted/deleted, largest single insertion) — signed with an **Ed25519** key whose seed never leaves your OS keychain. The package also includes `disclosure.txt` (what the evidence is and isn't), `style_analysis.json` (descriptive style-consistency metrics with interpretation bands), `citation_validation.json` (a citation-pattern inventory) and `README.txt` (verification steps). **No document text is ever included** — only hashes and counts.
+**What it produces.** A `.zip` package containing `manifest.json`, a SHA-256 hash-chained list of work sessions (per session: the author name your editor recorded, start/end time, characters inserted/deleted, largest single insertion), signed with an **Ed25519** key whose seed never leaves your OS keychain. The package also includes `disclosure.txt` (what the evidence is and isn't), `style_analysis.json` (descriptive style-consistency metrics with interpretation bands), `citation_validation.json` (a citation-pattern inventory) and `README.txt` (verification steps). **No document text is ever included**, only hashes and counts.
 
-**Word path (.docx).** Choose a document edited with Track Changes enabled. ScholarScribe parses the real `w:ins`/`w:del` history, groups edits into sessions (same author, gaps ≤ 30 minutes), chains the sessions per author, signs the chain and exports. Documents with no tracked changes produce a clear error rather than an empty package. If a gap longer than 7 days appears between sessions, it is listed as an *anomaly* — reported honestly, not treated as an accusation.
+**Word path (.docx).** Choose a document edited with Track Changes enabled. ScholarScribe parses the real `w:ins`/`w:del` history, groups edits into sessions (same author, gaps ≤ 30 minutes), chains the sessions per author, signs the chain and exports. Documents with no tracked changes produce a clear error rather than an empty package. If a gap longer than 7 days appears between sessions, it is listed as an *anomaly*, reported honestly, not treated as an accusation.
 
 **Google Docs path (optional, Phase 1.5).** Click **Connect Google Doc**. ScholarScribe performs a standard Google OAuth sign-in in your **system browser** (read-only scope `drive.readonly`; the refresh token is stored in your OS keychain). It then imports the document's version history and runs it through the identical pipeline. Every outbound call to Google is recorded in the **Privacy Audit** tab. One-time setup requires creating a free Google OAuth Client ID (instructions are shown in the tab).
 
-**Verification.** Anyone — editors, reviewers, co-authors — can verify a package by opening `verifier/index.html` from the repository in any browser. It works fully offline, re-derives every hash, checks the Ed25519 signature against the public key you export (`Export public key…` button), and can bind the package to the exact original `.docx`. The full format specification, including the threat model and honest limitations, is in `docs/PROVENANCE_SPEC.md`.
+**Verification.** Anyone, editors, reviewers, co-authors, can verify a package by opening `verifier/index.html` from the repository in any browser. It works fully offline, re-derives every hash, checks the Ed25519 signature against the public key you export (`Export public key…` button), and can bind the package to the exact original `.docx`. The full format specification, including the threat model and honest limitations, is in `docs/PROVENANCE_SPEC.md`.
 
-### How ScholarScribe "monitors" writing — and what it never does
+### How ScholarScribe "monitors" writing, and what it never does
 
-If your institution, journal, or instructor asks for evidence of your writing process, you may wonder whether this feature *monitors* you. It does not — and the distinction matters. Here is exactly what happens:
+If your institution, journal, or instructor asks for evidence of your writing process, you may wonder whether this feature *monitors* you. It does not, and the distinction matters. Here is exactly what happens:
 
 - **Passive by design.** ScholarScribe never watches you write. There is no background process, no keystroke logging, no screen capture, and no plugin that inserts itself into your word processor. Nothing at all happens until *you* pick a file and *you* click a button. Close the app and it is completely inert.
-- **It reads records that already exist.** When Track Changes is on, Microsoft Word itself already records who inserted or deleted what, and when (stored inside the `.docx` as `w:ins` / `w:del` entries — the same history you can see yourself in Word's Review pane). Google Docs does the same with its version history. ScholarScribe simply parses that existing, user-controlled history from the file you chose. It creates no new surveillance; it makes records you already own verifiable.
-- **Everything stays on your device.** Parsing, hashing (SHA-256), signing (Ed25519), and export all run locally. Your document's text is never uploaded anywhere and is never embedded in the exported package — the manifest contains hashes and counts only. The one optional exception is the Google Docs path, which contacts Google only when you explicitly click **Connect Google Doc**, with a read-only scope, and logs every call in the Privacy Audit tab.
+- **It reads records that already exist.** When Track Changes is on, Microsoft Word itself already records who inserted or deleted what, and when (stored inside the `.docx` as `w:ins` / `w:del` entries, the same history you can see yourself in Word's Review pane). Google Docs does the same with its version history. ScholarScribe simply parses that existing, user-controlled history from the file you chose. It creates no new surveillance; it makes records you already own verifiable.
+- **Everything stays on your device.** Parsing, hashing (SHA-256), signing (Ed25519), and export all run locally. Your document's text is never uploaded anywhere and is never embedded in the exported package, the manifest contains hashes and counts only. The one optional exception is the Google Docs path, which contacts Google only when you explicitly click **Connect Google Doc**, with a read-only scope, and logs every call in the Privacy Audit tab.
 - **Evidence, not verdict.** The output is a signed, hash-chained record of the writing *process* that anyone can independently verify offline. It is deliberately **not** a score, not a percentage, not a "verified human" badge, and not an accusation. A reviewer sees the timeline and draws their own conclusion; the package never labels writing as "human" or "AI-generated".
-- **Opt-in and revocable.** The feature is off until you accept a disclosure dialog that states exactly what will and will not happen. You decide which documents to process, which packages to export, and whom to share them with — or whether to share them at all.
+- **Opt-in and revocable.** The feature is off until you accept a disclosure dialog that states exactly what will and will not happen. You decide which documents to process, which packages to export, and whom to share them with, or whether to share them at all.
 
 In short: ScholarScribe does not monitor students or researchers. It lets *them* package the revision evidence their own editor already recorded, on their own machine, and share it only when they choose to. That is why the feature is framed throughout as **evidence, not verdict**.
 
@@ -220,8 +220,8 @@ In short: ScholarScribe does not monitor students or researchers. It lets *them*
 
 **.docx files can't be opened.**
 
-- ScholarScribe supports `.txt`, `.md`, `.tex`, `.rst`, `.csv`, `.json`, and `.docx` everywhere files are accepted — including the Text Cleaner (with format-preserving clean-and-save), Citations, Stats, Structure, Journal, and the v2.1.0 Provenance tab (which reads Word Track Changes directly).
-- If a `.docx` fails to open, it is probably a legacy `.doc` (Word 97–2003) or a password-protected file. Re-save it as `.docx` in Word first, then try again.
+- ScholarScribe supports `.txt`, `.md`, `.tex`, `.rst`, `.csv`, `.json`, and `.docx` everywhere files are accepted, including the Text Cleaner (with format-preserving clean-and-save), Citations, Stats, Structure, Journal, and the v2.1.0 Provenance tab (which reads Word Track Changes directly).
+- If a `.docx` fails to open, it is probably a legacy `.doc` (Word 97-2003) or a password-protected file. Re-save it as `.docx` in Word first, then try again.
 - Very large `.docx` files (tens of MB, e.g. with many embedded images) can be slow to parse. Provenance sessions above 1,000 revisions are processed in chunks with a progress indicator.
 
 **The app crashes.**
@@ -235,9 +235,9 @@ In short: ScholarScribe does not monitor students or researchers. It lets *them*
 
 If you want to verify ScholarScribe's privacy claims yourself:
 
-1. **Outbound network calls.** All HTTP code lives in `src-tauri/src/ollama.rs` and `src-tauri/src/google_docs_net.rs`. The base URL for AI features is `http://127.0.0.1:11434` — localhost only. The only external hosts ever contacted are `registry.ollama.ai` (model downloads, no text) and — only when you explicitly connect a Google Doc in the Provenance tab — Google's OAuth/Docs endpoints, with every call logged in the Privacy Audit tab. You can confirm this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
+1. **Outbound network calls.** All HTTP code lives in `src-tauri/src/ollama.rs` and `src-tauri/src/google_docs_net.rs`. The base URL for AI features is `http://127.0.0.1:11434`, localhost only. The only external hosts ever contacted are `registry.ollama.ai` (model downloads, no text) and, only when you explicitly connect a Google Doc in the Provenance tab. Google's OAuth/Docs endpoints, with every call logged in the Privacy Audit tab. You can confirm this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
 2. **Frontend CSP.** `src-tauri/tauri.conf.json` restricts the UI's `connect-src` to `self` and `127.0.0.1:11434`. The frontend literally cannot make an outbound request to any other host.
-3. **Telemetry.** Search the codebase for "telemetry", "analytics", "tracking", "posthog", "mixpanel", "amplitude" — you will find zero matches.
+3. **Telemetry.** Search the codebase for "telemetry", "analytics", "tracking", "posthog", "mixpanel", "amplitude", you will find zero matches.
 4. **File system.** ScholarScribe only reads files you explicitly pick via the file dialog. It writes nothing to disk except its own log file (in `%APPDATA%\com.scholarscribe.app\logs\`).
 5. **Crash reports.** None. Errors are logged locally only.
 

@@ -108,7 +108,7 @@
       {#if activeSessionId}Session: <code>{activeSessionId.slice(0, 8)}</code>{:else}No active session{/if}
     </div>
     <textarea bind:value={currentText} rows="12" placeholder="Type or paste your draft here…"></textarea>
-    <div class="dim" style="font-size: 11px; margin-top: 4px;">{currentText.split(/\s+/).filter(Boolean).length} words</div>
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">{currentText.split(/\s+/).filter(Boolean).length} words</div>
     <div class="row" style="margin-top: 12px; gap: 8px;">
       <button class="shrink" on:click={createSession}>New session</button>
       <button class="primary shrink" on:click={saveSnapshot} disabled={!activeSessionId}>Save snapshot</button>
@@ -130,7 +130,7 @@
         <tbody>
           {#each sessions as s}
             <tr class:active={s.session_id === activeSessionId} on:click={() => selectSession(s.session_id)} style="cursor: pointer;">
-              <td class="muted" style="font-size: 12px;">{fmtTime(s.created_at)}</td>
+              <td class="muted" style="font-size: var(--font-sm);">{fmtTime(s.created_at)}</td>
               <td>{s.snapshot_count}</td>
               <td>{s.total_words_final}</td>
               <td><button class="danger shrink" on:click|stopPropagation={() => deleteSession(s.session_id)}>Delete</button></td>
@@ -151,15 +151,15 @@
         {#each snapshots as snap, i}
           <tr>
             <td>{i + 1}</td>
-            <td class="muted" style="font-size: 12px;">{fmtTime(snap.timestamp)}</td>
+            <td class="muted" style="font-size: var(--font-sm);">{fmtTime(snap.timestamp)}</td>
             <td>{snap.word_count}</td>
             <td class="muted">
               {#if snap.diff_from_previous}
                 +{snap.diff_from_previous.words_added} / -{snap.diff_from_previous.words_removed}
-              {:else}—{/if}
+              {:else} - {/if}
             </td>
             <td class="muted">
-              {#if snap.diff_from_previous}{snap.diff_from_previous.similarity_pct}%{:else}—{/if}
+              {#if snap.diff_from_previous}{snap.diff_from_previous.similarity_pct}%{:else} - {/if}
             </td>
             <td><button class="shrink" on:click={() => selectedSnapshot = snap}>View</button></td>
           </tr>

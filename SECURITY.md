@@ -5,7 +5,7 @@
 If you find a security vulnerability in ScholarScribe, please report it responsibly:
 
 1. **Do not open a public GitHub issue.**
-2. Email the maintainer at: **[TBD — maintainer to add a contact address in this file before v1.0 release]**. (For the pre-release, please use GitHub's private vulnerability reporting: Security tab → "Report a vulnerability".)
+2. Email the maintainer at: **[TBD, maintainer to add a contact address in this file before v1.0 release]**. (For the pre-release, please use GitHub's private vulnerability reporting: Security tab → "Report a vulnerability".)
 3. Include:
    - ScholarScribe version
    - Operating system and version
@@ -27,7 +27,7 @@ The following are **not** security issues for this project:
 
 - The app not preventing users from doing things the user is fully authorized to do (e.g., deleting their own models).
 - Slow performance or crashes that don't expose data.
-- "The local LLM produced harmful text" — the model is the user's choice and runs locally; ScholarScribe is not responsible for model outputs.
+- "The local LLM produced harmful text", the model is the user's choice and runs locally; ScholarScribe is not responsible for model outputs.
 
 ## Privacy commitments (security-relevant)
 

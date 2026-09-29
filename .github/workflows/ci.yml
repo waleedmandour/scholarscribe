@@ -1,7 +1,7 @@
-# ScholarScribe — continuous integration.
+# ScholarScribe. continuous integration.
 # Runs on every push to main and on every pull request.
 # Verifies the frontend type-checks and the Rust code compiles.
-# Does NOT build installers — that's release.yml's job.
+# Does NOT build installers. that's release.yml's job.
 
 name: CI
 
@@ -47,7 +47,14 @@ jobs:
       - name: cargo clippy
         working-directory: src-tauri
         run: cargo clippy -- -D warnings
-        continue-on-error: true   # don't block PRs on clippy yet during pre-release
+        # Pre-existing clippy debt across 9 source files (~21 warnings:
+        # manual_inspect, if_same_then_else, useless_format, collapsible_if,
+        # unnecessary_sort_by, manual_pattern_char_comparison,
+        # regex_creation_in_loops, manual_strip, let_and_return, etc.)
+        # blocks strict clippy in this sprint. Tracked as a follow-up task
+        # in CHANGELOG.md decision 9. Re-enable strict mode (remove the
+        # continue-on-error line below) once that debt is cleared.
+        continue-on-error: true
       - name: cargo check
         working-directory: src-tauri
         run: cargo check

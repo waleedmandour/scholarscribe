@@ -1,10 +1,10 @@
-// ScholarScribe — library entry point.
+// ScholarScribe, library entry point.
 //
 // ETHICAL DESIGN NOTICE:
 // This software does NOT include any feature whose purpose is to evade
 // AI-detection systems (Turnitin, GPTZero, Originality.ai, etc.). The
 // style-analysis module compares a draft against the *author's own* prior
-// writing — it is not designed to lower detector scores. See README.md
+// writing, it is not designed to lower detector scores. See README.md
 // "Ethical Use" section for the full policy.
 
 mod abstract_generator;
@@ -105,7 +105,7 @@ pub fn run() {
             writing_journal::journal_get_snapshots,
             writing_journal::journal_delete_session,
             writing_journal::journal_export_session,
-            // Writing Provenance (v2.1.0) — Phase 1 (.docx) + Phase 1.5 (Google)
+            // Writing Provenance (v2.1.0). Phase 1 (.docx) + Phase 1.5 (Google)
             persistence::provenance_enable,
             persistence::provenance_disable,
             persistence::provenance_status,

@@ -172,7 +172,7 @@
   }
 
   function fmtSize(bytes: number): string {
-    if (!bytes) return "—";
+    if (!bytes) return "n/a";
     const gb = bytes / (1024 * 1024 * 1024);
     if (gb >= 1) return `${gb.toFixed(1)} GB`;
     const mb = bytes / (1024 * 1024);
@@ -195,7 +195,7 @@
 
 {#if sysInfo}
   <div class="card" style="padding: 12px 16px;">
-    <div class="row" style="font-size: 13px;">
+    <div class="row" style="font-size: var(--font-sm);">
       <div><span class="dim">CPU:</span> {sysInfo.cpu_brand} ({sysInfo.cpu_cores} cores)</div>
       <div><span class="dim">Total RAM:</span> {sysInfo.total_ram_gb.toFixed(1)} GB</div>
       <div><span class="dim">Free RAM:</span> {sysInfo.available_ram_gb.toFixed(1)} GB</div>
@@ -260,13 +260,13 @@
     <div style="flex: 1;">
       <button class="shrink" on:click={pickGguf}>Pick .gguf file…</button>
       {#if ggufPath}
-        <div class="muted" style="font-size: 12px; margin-top: 6px; word-break: break-all;">
+        <div class="muted" style="font-size: var(--font-sm); margin-top: 6px; word-break: break-all;">
           {ggufPath}
         </div>
       {/if}
     </div>
     <div style="flex: 1;">
-      <label class="dim" for="gguf-name" style="font-size: 11px; display: block; margin-bottom: 4px;">Model name (what Ollama will call it)</label>
+      <label class="dim" for="gguf-name" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Model name (what Ollama will call it)</label>
       <input id="gguf-name" type="text" bind:value={ggufModelName} placeholder="e.g. local-llama-7b" />
     </div>
     <button class="primary shrink" on:click={importGguf} disabled={ggufImporting || !ggufPath || !ggufModelName.trim() || !ollamaOk}>
@@ -297,13 +297,13 @@
       <div style="flex: 1;">
         <div class="card-title">{r.label}</div>
         <div class="card-subtitle"><code>{r.name}</code> · {r.size_gb.toFixed(1)} GB · min RAM {r.min_ram_gb} GB</div>
-        <div class="muted" style="font-size: 13px; margin-bottom: 8px;">{r.description}</div>
+        <div class="muted" style="font-size: var(--font-sm); margin-bottom: 8px;">{r.description}</div>
         {#each r.tags as t}<span class="tag">{t}</span>{/each}
       </div>
       <div class="shrink" style="text-align: right;">
         {#if pullInProgress[r.name]}
           {@const p = pullInProgress[r.name]}
-          <div style="margin-bottom: 8px; font-size: 12px;" class="muted">
+          <div style="margin-bottom: 8px; font-size: var(--font-sm);" class="muted">
             {p ? p.status : ""} · {p ? pct(p) : 0}%
           </div>
           <div class="progress"><div style="width: {p ? pct(p) : 0}%"></div></div>
@@ -312,7 +312,7 @@
         {:else}
           <button class="primary" on:click={() => pull(r.name)} disabled={!ollamaOk}>Download</button>
         {/if}
-        {#if pullError[r.name]}<div class="muted" style="margin-top: 6px; font-size: 12px; color: var(--danger);">{pullError[r.name]}</div>{/if}
+        {#if pullError[r.name]}<div class="muted" style="margin-top: 6px; font-size: var(--font-sm); color: var(--danger);">{pullError[r.name]}</div>{/if}
       </div>
     </div>
   </div>

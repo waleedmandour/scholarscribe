@@ -86,13 +86,13 @@
   <div class="card">
     <div class="row">
       <div>
-        <label class="dim" for="chat-model" style="font-size: 11px; display: block; margin-bottom: 4px;">Model</label>
+        <label class="dim" for="chat-model" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Model</label>
         <select id="chat-model" bind:value={selectedModel}>
           {#each models as m}<option value={m.name}>{m.name}</option>{/each}
         </select>
       </div>
       <div style="flex: 0 0 200px;">
-        <label class="dim" for="chat-temp" style="font-size: 11px; display: block; margin-bottom: 4px;">
+        <label class="dim" for="chat-temp" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">
           Temperature: {temperature.toFixed(2)}
         </label>
         <input id="chat-temp" type="range" min="0" max="1" step="0.05" bind:value={temperature} style="padding: 0; width: 100%;" />
@@ -108,7 +108,7 @@
       {:else}
         {#each messages as m}
           <div style="margin-bottom: 12px;">
-            <div class="dim" style="font-size: 11px; margin-bottom: 2px; text-transform: capitalize;">{m.role}</div>
+            <div class="dim" style="font-size: var(--font-sm); margin-bottom: 2px; text-transform: capitalize;">{m.role}</div>
             <div style="background: var(--bg-elev-2); padding: 8px 12px; border-radius: var(--radius-sm); white-space: pre-wrap;">{m.content}</div>
           </div>
         {/each}
@@ -123,7 +123,7 @@
         disabled={busy}
       ></textarea>
       <div class="row" style="margin-top: 6px;">
-        <span class="dim" style="font-size: 11px;">Runs entirely on-device via Ollama.</span>
+        <span class="dim" style="font-size: var(--font-sm);">Runs entirely on-device via Ollama.</span>
         <div class="spacer"></div>
         <button class="primary shrink" on:click={send} disabled={busy || !input.trim()}>
           {busy ? "Working…" : "Send"}

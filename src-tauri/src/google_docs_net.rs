@@ -1,13 +1,13 @@
-//! Google Docs Bridge — thin HTTP layer (Phase 1.5).
+//! Google Docs Bridge, thin HTTP layer (Phase 1.5).
 //!
 //! ALL functions here perform outbound HTTPS. Every call site MUST log to
-//! the privacy audit log — that is enforced by convention in
+//! the privacy audit log, that is enforced by convention in
 //! google_docs_commands.rs, which is the only module allowed to call these.
 //!
 //! Endpoints (all Google-owned, documented):
-//! - accounts.google.com  — authorization (browser, PKCE + loopback redirect)
-//! - oauth2.googleapis.com/token — code/token exchange + refresh
-//! - www.googleapis.com/drive/v3 — revision list + per-revision download
+//! - accounts.google.com , authorization (browser, PKCE + loopback redirect)
+//! - oauth2.googleapis.com/token, code/token exchange + refresh
+//! - www.googleapis.com/drive/v3, revision list + per-revision download
 
 use crate::google_docs::{RevisionMeta, TokenResponse};
 

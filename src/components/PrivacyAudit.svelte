@@ -31,7 +31,7 @@
   }
 
   function fmtBytes(n: number): string {
-    if (n === 0) return "—";
+    if (n === 0) return " - ";
     if (n < 1024) return `${n} B`;
     if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
     return `${(n / 1024 / 1024).toFixed(2)} MB`;
@@ -63,32 +63,32 @@
   <div class="card">
     <div class="row" style="text-align: center;">
       <div>
-        <div class="dim" style="font-size: 11px;">TOTAL EVENTS</div>
-        <div style="font-size: 22px; font-weight: 600;">{summary.total_events}</div>
+        <div class="dim" style="font-size: var(--font-sm);">TOTAL EVENTS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{summary.total_events}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">FILE READS</div>
-        <div style="font-size: 22px; font-weight: 600;">{summary.file_reads}</div>
+        <div class="dim" style="font-size: var(--font-sm);">FILE READS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{summary.file_reads}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">HTTP CALLS</div>
-        <div style="font-size: 22px; font-weight: 600;">{summary.http_calls}</div>
+        <div class="dim" style="font-size: var(--font-sm);">HTTP CALLS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{summary.http_calls}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">OLLAMA COMMANDS</div>
-        <div style="font-size: 22px; font-weight: 600;">{summary.ollama_commands}</div>
+        <div class="dim" style="font-size: var(--font-sm);">OLLAMA COMMANDS</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{summary.ollama_commands}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">DATA IN</div>
-        <div style="font-size: 22px; font-weight: 600;">{fmtBytes(summary.bytes_in)}</div>
+        <div class="dim" style="font-size: var(--font-sm);">DATA IN</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{fmtBytes(summary.bytes_in)}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">DATA OUT</div>
-        <div style="font-size: 22px; font-weight: 600;">{fmtBytes(summary.bytes_out)}</div>
+        <div class="dim" style="font-size: var(--font-sm);">DATA OUT</div>
+        <div style="font-size: var(--font-xl); font-weight: 600;">{fmtBytes(summary.bytes_out)}</div>
       </div>
     </div>
     <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
-      <div class="dim" style="font-size: 11px;">OUTBOUND HOSTS CONTACTED THIS SESSION</div>
+      <div class="dim" style="font-size: var(--font-sm);">OUTBOUND HOSTS CONTACTED THIS SESSION</div>
       {#if summary.outbound_hosts.length === 0}
         <div class="no-data" style="padding: 6px 0;">None yet. Download a model or chat with one to see activity here.</div>
       {:else}
@@ -96,7 +96,7 @@
           {#each summary.outbound_hosts as h}<li><code>{h}</code></li>{/each}
         </ul>
       {/if}
-      <div class="muted" style="font-size: 12px; margin-top: 8px;">
+      <div class="muted" style="font-size: var(--font-sm); margin-top: 8px;">
         Expected hosts: <code>registry.ollama.ai</code> (model downloads only).
         All other hosts appearing here should be reported.
       </div>

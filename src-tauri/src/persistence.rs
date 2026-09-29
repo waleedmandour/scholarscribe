@@ -1,10 +1,10 @@
-//! Persistence — opt-in local storage of drafts, chat history, and settings.
+//! Persistence, opt-in local storage of drafts, chat history, and settings.
 //!
 //! PRIVACY DESIGN:
 //! - Persistence is OFF by default. The user must explicitly enable it.
 //! - All data is stored in the Tauri app_data_dir (e.g. %APPDATA%\com.scholarscribe.app\data\
 //!   on Windows). Never synced to cloud.
-//! - The audit log is NEVER persisted — it stays in-memory only and is cleared
+//! - The audit log is NEVER persisted, it stays in-memory only and is cleared
 //!   on app close. This is intentional: the audit log exists so users can verify
 //!   the app's behavior in-session; persisting it would create a record of every
 //!   file they read, which is the opposite of privacy.
@@ -31,7 +31,7 @@ pub struct Settings {
     /// Whether the user has opted in to local persistence. Default: false.
     pub persistence_enabled: bool,
     /// Whether the user has opted in to the Writing Provenance feature
-    /// (v2.1.0). Default: false — the disclosure dialog sets this to true.
+    /// (v2.1.0). Default: false, the disclosure dialog sets this to true.
     #[serde(default)]
     pub provenance_enabled: bool,
     /// Last-used theme: "light" | "dark" | "auto". Default: "auto".

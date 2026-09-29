@@ -64,7 +64,7 @@
   <div class="card">
     <div class="row">
       <div>
-        <label class="dim" for="wc-model" style="font-size: 11px; display: block; margin-bottom: 4px;">Model</label>
+        <label class="dim" for="wc-model" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Model</label>
         <select id="wc-model" bind:value={selectedModel}>
           {#each models as m}<option value={m.name}>{m.name}</option>{/each}
         </select>
@@ -81,7 +81,7 @@
       {:else}
         {#each messages as m}
           <div style="margin-bottom: 12px;">
-            <div class="dim" style="font-size: 11px; margin-bottom: 2px; text-transform: capitalize;">
+            <div class="dim" style="font-size: var(--font-sm); margin-bottom: 2px; text-transform: capitalize;">
               {m.role === "user" ? "You" : "Coach"}
             </div>
             <div style="background: var(--bg-elev-2); padding: 8px 12px; border-radius: var(--radius-sm); white-space: pre-wrap;">{m.content}</div>
@@ -98,7 +98,7 @@
         disabled={busy}
       ></textarea>
       <div class="row" style="margin-top: 6px;">
-        <span class="dim" style="font-size: 11px;">The coach asks questions; it does not write for you.</span>
+        <span class="dim" style="font-size: var(--font-sm);">The coach asks questions; it does not write for you.</span>
         <div class="spacer"></div>
         <button class="primary shrink" on:click={send} disabled={busy || !input.trim()}>
           {busy ? "Thinking…" : "Send"}

@@ -68,25 +68,25 @@
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
     <div>
-      <label class="dim" for="disc-venue" style="font-size: 11px; display: block; margin-bottom: 4px;">Target venue</label>
+      <label class="dim" for="disc-venue" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Target venue</label>
       <select id="disc-venue" bind:value={selectedVenue}>
         {#each venues as v}<option value={v.id}>{v.label}</option>{/each}
       </select>
     </div>
     <div>
-      <label class="dim" for="disc-tool" style="font-size: 11px; display: block; margin-bottom: 4px;">Tool used</label>
+      <label class="dim" for="disc-tool" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Tool used</label>
       <input id="disc-tool" type="text" bind:value={toolName} placeholder="e.g. ChatGPT (GPT-4o), Gemini, Claude" />
     </div>
     <div>
-      <label class="dim" for="disc-model" style="font-size: 11px; display: block; margin-bottom: 4px;">Model (optional)</label>
+      <label class="dim" for="disc-model" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Model (optional)</label>
       <input id="disc-model" type="text" bind:value={modelUsed} placeholder="e.g. GPT-4o, gemma2:9b" />
     </div>
     <div>
-      <label class="dim" for="disc-author" style="font-size: 11px; display: block; margin-bottom: 4px;">Your name (optional, signs the statement)</label>
+      <label class="dim" for="disc-author" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">Your name (optional, signs the statement)</label>
       <input id="disc-author" type="text" bind:value={authorName} placeholder="e.g. Waleed Mandour" />
     </div>
     <div style="grid-column: 1 / -1;">
-      <label class="dim" for="disc-task" style="font-size: 11px; display: block; margin-bottom: 4px;">What did you use the tool for?</label>
+      <label class="dim" for="disc-task" style="font-size: var(--font-sm); display: block; margin-bottom: 4px;">What did you use the tool for?</label>
       <textarea id="disc-task"
         bind:value={taskDescription}
         rows="3"
@@ -98,7 +98,7 @@
   <div class="row" style="margin-top: 12px;">
     <button class="primary" on:click={generate}>Generate disclosure</button>
     {#if currentVenue?.policy_url}
-      <a href={currentVenue.policy_url} target="_blank" rel="noopener" class="dim" style="font-size: 12px; align-self: center;">
+      <a href={currentVenue.policy_url} target="_blank" rel="noopener" class="dim" style="font-size: var(--font-sm); align-self: center;">
         Read the venue's official policy →
       </a>
     {/if}
@@ -111,8 +111,8 @@
   <div class="card">
     <div class="card-title">{currentVenue.label}</div>
     <div class="card-subtitle">Quick policy summary</div>
-    <p class="muted" style="font-size: 13px; margin: 0 0 8px;">{currentVenue.notes}</p>
-    <p class="muted" style="font-size: 13px; margin: 0;">
+    <p class="muted" style="font-size: var(--font-sm); margin: 0 0 8px;">{currentVenue.notes}</p>
+    <p class="muted" style="font-size: var(--font-sm); margin: 0;">
       Requires disclosure in:
       {#if currentVenue.requires_in_manuscript}<span class="tag">manuscript</span>{/if}
       {#if currentVenue.requires_in_cover_letter}<span class="tag">cover letter</span>{/if}
@@ -128,7 +128,7 @@
       <div class="spacer"></div>
       <button class="shrink" on:click={copy}>{copied ? "Copied!" : "Copy"}</button>
     </div>
-    <p class="muted" style="font-size: 13px; margin: 0 0 12px; white-space: pre-wrap;">{result.where_to_include}</p>
+    <p class="muted" style="font-size: var(--font-sm); margin: 0 0 12px; white-space: pre-wrap;">{result.where_to_include}</p>
     <pre style="white-space: pre-wrap;">{result.statement}</pre>
     {#each result.warnings as w}
       <div class="callout warn" style="margin-top: 12px;">{w}</div>

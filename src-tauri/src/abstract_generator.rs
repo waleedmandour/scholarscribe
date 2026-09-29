@@ -1,4 +1,4 @@
-//! Abstract Generator — uses a locally-installed LLM (via Ollama) to produce
+//! Abstract Generator, uses a locally-installed LLM (via Ollama) to produce
 //! a structured abstract (Background/Methods/Results/Conclusions) from the
 //! manuscript body. Also generates section-by-section commentary.
 

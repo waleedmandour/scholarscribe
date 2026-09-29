@@ -1,4 +1,4 @@
-//! .docx file reading — extracts plain text from Word documents.
+//! .docx file reading, extracts plain text from Word documents.
 //!
 //! A .docx file is a ZIP archive containing `word/document.xml` (an OOXML
 //! document). We unzip in memory and walk the XML to pull text out of `<w:t>`
@@ -6,14 +6,14 @@
 //!
 //! This is more robust than depending on a third-party docx parser crate
 //! because the OOXML spec is stable and our needs are simple (plain text
-//! extraction — not formatting, styles, or revision tracking).
+//! extraction, not formatting, styles, or revision tracking).
 //!
 //! Uses the `zip` crate for unzip (pure Rust, no system deps).
 //!
-//! v2.1.0 — Writing Provenance: also extracts Word's real Track Changes
+//! v2.1.0. Writing Provenance: also extracts Word's real Track Changes
 //! history (`w:ins` / `w:del` elements) as `RawRevision`s for the hash
 //! chain. See `provenance.rs` and docs/PROVENANCE_SPEC.md. ETHICAL NOTE:
-//! this reads the revision history the document *actually carries* — we
+//! this reads the revision history the document *actually carries*, we
 //! never fabricate or synthesize history (docs/ETHICS.md §2.3).
 
 use std::io::Read;
@@ -56,7 +56,7 @@ fn read_document_xml(path: &Path) -> Result<(Vec<u8>, String), ProvenanceError> 
     }
     let raw = raw.ok_or_else(|| {
         ProvenanceError::CorruptOoxml(
-            "word/document.xml not found in .docx — file may be corrupt or not a real .docx"
+            "word/document.xml not found in .docx, file may be corrupt or not a real .docx"
                 .to_string(),
         )
     })?;
@@ -114,7 +114,7 @@ fn extract_text_from_ooxml(xml: &str) -> String {
                     in_text = false;
                 }
             } else if tag == "w:p" && closing {
-                // End of paragraph — add blank line
+                // End of paragraph, add blank line
                 if !out.is_empty() {
                     out.push_str("\n\n");
                 }
@@ -140,7 +140,7 @@ fn extract_text_from_ooxml(xml: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Writing Provenance — Track Changes extraction (v2.1.0)
+// Writing Provenance. Track Changes extraction (v2.1.0)
 // ---------------------------------------------------------------------------
 
 /// Result of extracting Track Changes from a document.
@@ -152,7 +152,7 @@ pub struct TrackChangesExtraction {
     pub skipped_unparsable_dates: usize,
     /// Whether ANY `w:ins`/`w:del` markup was present (even empty).
     pub has_track_changes_markup: bool,
-    /// SHA-256 of the raw `word/document.xml` bytes — the manifest's
+    /// SHA-256 of the raw `word/document.xml` bytes, the manifest's
     /// `document_hash`. Lets a verifier bind the manifest to the exact
     /// document file it was produced from.
     pub document_xml_sha256: String,
@@ -234,7 +234,7 @@ fn parse_track_changes_ooxml(
                             // Marked as skipped; still count the markup.
                             skipped_dates += 1;
                         }
-                        _ => { /* no author recorded — ignore this element */ }
+                        _ => { /* no author recorded, ignore this element */ }
                     }
                 }
                 b"w:t" | b"w:delText" => collecting = true,
@@ -283,9 +283,9 @@ fn parse_track_changes_ooxml(
     }
 
     if !stack.is_empty() {
-        // Unclosed tracked-change element — malformed document.
+        // Unclosed tracked-change element, malformed document.
         return Err(ProvenanceError::CorruptOoxml(
-            "unclosed tracked-change element (w:ins/w:del) — document.xml is malformed".into(),
+            "unclosed tracked-change element (w:ins/w:del), document.xml is malformed".into(),
         ));
     }
 
@@ -335,7 +335,7 @@ fn parse_ooxml_date(s: &str) -> Option<i64> {
 }
 
 // ---------------------------------------------------------------------------
-// Tests — build real .docx files in memory and parse them back
+// Tests, build real .docx files in memory and parse them back
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
@@ -425,7 +425,7 @@ mod provenance_tests {
 
     #[test]
     fn corrupt_ooxml_errors() {
-        // Mismatched end tag — a real XML syntax error quick-xml reports.
+        // Mismatched end tag, a real XML syntax error quick-xml reports.
         let path = write_temp("<w:document><w:p></w:document>");
         let err = extract_track_changes_sessions(&path).unwrap_err();
         std::fs::remove_file(&path).ok();

@@ -1,10 +1,10 @@
-//! AI Text Cleaner — rule-based cleaning of text artifacts commonly introduced
+//! AI Text Cleaner, rule-based cleaning of text artifacts commonly introduced
 //! by copy-pasting from PDFs, web pages, OCR, and word processors.
 //!
 //! All transformations are pure-Rust, run locally, and are deterministic.
 //! No LLM is involved in the cleaning step itself. The user can optionally
 //! send the cleaned text to a locally-installed LLM for further refinement
-//! via the existing Chat command — but that's a separate, explicit action.
+//! via the existing Chat command, but that's a separate, explicit action.
 //!
 //! The cleaning operations are grouped so the UI can show which were applied.
 
@@ -62,7 +62,7 @@ pub struct CleanOptions {
     pub fix_mojibake: bool,
     pub join_broken_urls: bool,
     pub fix_broken_citations: bool,
-    // v0.1.7 — strict-cleaning operations
+    // v0.1.7, strict-cleaning operations
     pub convert_ellipsis: bool,
     pub remove_asterisks: bool,
     pub remove_markdown_headings: bool,
@@ -79,9 +79,9 @@ pub struct CleanOptions {
 
 impl Default for CleanOptions {
     fn default() -> Self {
-        // Sensible defaults — turn on everything except quote normalization
+        // Sensible defaults, turn on everything except quote normalization
         // (some users prefer curly quotes preserved in academic writing).
-        // The v0.1.7 strict-cleaning operations are OFF by default — they're
+        // The v0.1.7 strict-cleaning operations are OFF by default, they're
         // opinionated (e.g. removing asterisks) and the user should opt in
         // via the "Strict" preset button in the UI.
         Self {
@@ -97,7 +97,7 @@ impl Default for CleanOptions {
             fix_mojibake: true,
             join_broken_urls: true,
             fix_broken_citations: true,
-            // v0.1.7 strict-cleaning ops — OFF in default preset
+            // v0.1.7 strict-cleaning ops. OFF in default preset
             convert_ellipsis: false,
             remove_asterisks: false,
             remove_markdown_headings: false,
@@ -114,7 +114,7 @@ impl Default for CleanOptions {
     }
 }
 
-/// The "Strict" preset — turns on every operation including the v0.1.7 ones.
+/// The "Strict" preset, turns on every operation including the v0.1.7 ones.
 /// Use this when you want a maximally-clean plain-text version of the input.
 pub fn strict_options() -> CleanOptions {
     CleanOptions {
@@ -130,7 +130,7 @@ pub fn strict_options() -> CleanOptions {
         fix_mojibake: true,
         join_broken_urls: true,
         fix_broken_citations: true,
-        // v0.1.7 strict ops — all ON
+        // v0.1.7 strict ops, all ON
         convert_ellipsis: true,
         remove_asterisks: true,
         remove_markdown_headings: true,
@@ -181,7 +181,9 @@ pub fn clean(text: &str, opts: &CleanOptions) -> CleanResult {
         let before = stats.dashes_normalized;
         current = normalize_dashes(&current, &mut stats);
         if stats.dashes_normalized > before {
-            transformations_applied.push("Normalized dashes (-- → —, – → -)".into());
+            transformations_applied.push(
+                "Normalized dashes to plain hyphens (-- and em dash and en dash to -)".into(),
+            );
         }
     }
 
@@ -303,7 +305,7 @@ pub fn clean(text: &str, opts: &CleanOptions) -> CleanResult {
         current = strip_variation_selectors(&current, &mut stats);
         if current.len() < before_len || stats.variation_selectors_stripped > 0 {
             transformations_applied
-                .push("Stripped variation selectors (U+FE00–FE0F, U+E0100–E01EF)".into());
+                .push("Stripped variation selectors (U+FE00-FE0F, U+E0100-E01EF)".into());
         }
     }
 
@@ -375,7 +377,7 @@ impl CleanResult {
 ///
 /// Only operations that make sense on a single text run are applied.
 /// Cross-paragraph operations (join_broken_lines, join_broken_urls,
-/// fix_broken_citations, remove_page_numbers) are skipped — they would
+/// fix_broken_citations, remove_page_numbers) are skipped, they would
 /// require restructuring the document, which would defeat the purpose
 /// of preserving formatting.
 pub fn clean_text_run(text: &str, opts: &CleanOptions, stats: &mut CleanStats) -> String {
@@ -405,7 +407,7 @@ pub fn clean_text_run(text: &str, opts: &CleanOptions, stats: &mut CleanStats) -
     }
     if opts.collapse_whitespace {
         // Collapse multiple spaces within the run (don't touch newlines
-        // — those might be meaningful inside a single run).
+        //, those might be meaningful inside a single run).
         let before = current.len();
         let re = regex::Regex::new(r"[ \t]{2,}").unwrap();
         current = re.replace_all(&current, " ").into_owned();
@@ -469,8 +471,8 @@ fn fix_mojibake(text: &str, stats: &mut CleanStats) -> String {
         ("â€˜", "'"),       // left single quote
         ("â€œ", "\""),      // left double quote
         ("â€\u{9d}", "\""), // right double quote (U+009D)
-        ("â€“", "–"),       // en dash
-        ("â€”", "—"),       // em dash
+        ("â€“", "-"),       // en dash mojibake, now plain hyphen per project copy rule
+        ("â€”", "-"),       // em dash mojibake, now plain hyphen per project copy rule
         ("â€¦", "…"),       // ellipsis
         ("Â ", " "),        // non-breaking space → space
         ("Ã©", "é"),
@@ -541,14 +543,27 @@ fn normalize_quotes(text: &str, stats: &mut CleanStats) -> String {
 }
 
 fn normalize_dashes(text: &str, stats: &mut CleanStats) -> String {
-    // Replace "--" with em-dash, en-dash with hyphen (configurable choice).
-    let mut out = text.replace("--", "—");
-    // Count replacements
-    let en_dash_count = out.matches('\u{2013}').count();
-    out = out.replace('\u{2013}', "-");
-    // Approximate count of "--" → "—"
-    let em_count = text.matches("--").count();
-    stats.dashes_normalized += em_count + en_dash_count;
+    // Convert "--", em dash (U+2014), and en dash (U+2013) all to a single
+    // plain hyphen-minus (U+002D). This is the recommended setting per the
+    // project's "no em or en dashes" copy rule. See CONTRIBUTING.md
+    // "Copy style" section.
+    let mut count = 0;
+    let mut out = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\u{2014}' || c == '\u{2013}' {
+            count += 1;
+            out.push('-');
+        } else if c == '-' && chars.peek() == Some(&'-') {
+            // "--" -> "-"
+            chars.next(); // consume the second '-'
+            count += 1;
+            out.push('-');
+        } else {
+            out.push(c);
+        }
+    }
+    stats.dashes_normalized += count;
     out
 }
 
@@ -600,10 +615,10 @@ fn join_hyphenated_words(text: &str, stats: &mut CleanStats) -> String {
 fn join_broken_lines(text: &str, stats: &mut CleanStats) -> String {
     // Pattern: line ends with a word char (no period/!?/colon), single newline,
     // next line starts with lowercase letter. Crucially, we require the newline
-    // to be a single one (not a paragraph break) — checked via negative lookahead.
+    // to be a single one (not a paragraph break), checked via negative lookahead.
     let re = regex::Regex::new(r"([a-zA-Z0-9;,])\n([a-z])").unwrap();
     let out = re.replace_all(text, |caps: &regex::Captures| {
-        // Check the surrounding context — don't join if there's a blank line
+        // Check the surrounding context, don't join if there's a blank line
         // before or after (paragraph break). We do this by inspecting the
         // original text around the match position. Since regex::Captures
         // doesn't give us position easily here, we do a simpler check:
@@ -779,7 +794,7 @@ fn convert_nbsp(text: &str, stats: &mut CleanStats) -> String {
 fn normalize_unicode_whitespace(text: &str, stats: &mut CleanStats) -> String {
     let mut out = String::with_capacity(text.len());
     for ch in text.chars() {
-        // U+2000–U+200A (en/em/thin/hair/punct/figure spaces), U+205F (medium math),
+        // U+2000 - U+200A (en/em/thin/hair/punct/figure spaces), U+205F (medium math),
         // U+3000 (ideographic space), U+1680 (ogham space)
         let code = ch as u32;
         let is_unicode_ws =
@@ -794,7 +809,7 @@ fn normalize_unicode_whitespace(text: &str, stats: &mut CleanStats) -> String {
     out
 }
 
-/// Strip soft hyphens (U+00AD) — invisible chars that indicate optional
+/// Strip soft hyphens (U+00AD), invisible chars that indicate optional
 /// hyphenation points but cause search/replace misses.
 fn strip_soft_hyphens(text: &str, stats: &mut CleanStats) -> String {
     let mut out = String::with_capacity(text.len());
@@ -808,7 +823,7 @@ fn strip_soft_hyphens(text: &str, stats: &mut CleanStats) -> String {
     out
 }
 
-/// Strip variation selectors (U+FE00–FE0F, U+E0100–E01EF) — emoji/symbol
+/// Strip variation selectors (U+FE00-FE0F, U+E0100-E01EF), emoji/symbol
 /// modifiers that show as garbage in plain text.
 fn strip_variation_selectors(text: &str, stats: &mut CleanStats) -> String {
     let mut out = String::with_capacity(text.len());
@@ -849,7 +864,7 @@ fn remove_asterisks(text: &str, stats: &mut CleanStats) -> String {
 }
 
 /// Remove markdown heading markers (#, ##, ###, etc.) at the start of lines.
-/// Preserves the heading text — just strips the leading #'s and any space
+/// Preserves the heading text, just strips the leading #'s and any space
 /// immediately after them.
 fn remove_markdown_headings(text: &str, stats: &mut CleanStats) -> String {
     let re = regex::Regex::new(r"(?m)^#{1,6}\s+").unwrap();

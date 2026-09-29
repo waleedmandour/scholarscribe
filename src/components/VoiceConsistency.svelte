@@ -40,7 +40,7 @@
 <div class="card">
   <div class="row" style="margin-bottom: 8px;">
     <button class="shrink" on:click={pickFile}>Open file…</button>
-    {#if inputPath}<span class="dim" style="font-size: 11px;">{inputPath}</span>{/if}
+    {#if inputPath}<span class="dim" style="font-size: var(--font-sm);">{inputPath}</span>{/if}
   </div>
   <textarea bind:value={inputText} rows="8" placeholder="Paste your draft here…"></textarea>
   <div class="row" style="margin-top: 12px;">
@@ -53,10 +53,10 @@
 {#if report}
   <h2>Overall consistency: {(report.overall_consistency_score * 100).toFixed(0)}%</h2>
   <div class="card">
-    <p class="muted" style="font-size: 13px;">{report.explanation}</p>
+    <p class="muted" style="font-size: var(--font-sm);">{report.explanation}</p>
     <strong>Recommendations:</strong>
     <ul style="margin: 6px 0 0 16px;">
-      {#each report.recommendations as r}<li style="font-size: 13px;">{r}</li>{/each}
+      {#each report.recommendations as r}<li style="font-size: var(--font-sm);">{r}</li>{/each}
     </ul>
   </div>
 
@@ -68,13 +68,13 @@
         <tbody>
           {#each report.inconsistencies as inc}
             <tr>
-              <td style="font-size: 12px;">{inc.passage_label}</td>
+              <td style="font-size: var(--font-sm);">{inc.passage_label}</td>
               <td><code>{inc.metric}</code></td>
               <td>{inc.value.toFixed(2)}</td>
               <td class="muted">{inc.document_average.toFixed(2)}</td>
               <td style="color: {inc.severity === 'high' ? 'var(--danger)' : 'var(--warning)'};">{inc.deviation_pct}%</td>
               <td><span class="tag" style="background: {inc.severity === 'high' ? 'rgba(192,57,43,0.1)' : 'rgba(183,110,0,0.1)'}; color: {inc.severity === 'high' ? 'var(--danger)' : 'var(--warning)'};">{inc.severity}</span></td>
-              <td class="muted" style="font-size: 12px; max-width: 300px;">{inc.note}</td>
+              <td class="muted" style="font-size: var(--font-sm); max-width: 300px;">{inc.note}</td>
             </tr>
           {/each}
         </tbody>
@@ -91,7 +91,7 @@
       <tbody>
         {#each report.passages as p}
           <tr>
-            <td style="font-size: 12px;">{p.label}</td>
+            <td style="font-size: var(--font-sm);">{p.label}</td>
             <td>{p.word_count}</td>
             <td>{p.avg_sentence_length.toFixed(1)}</td>
             <td>{p.type_token_ratio.toFixed(3)}</td>

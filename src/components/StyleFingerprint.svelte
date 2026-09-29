@@ -170,7 +170,7 @@
       <button class="shrink" on:click={copyJson}>{copied ? "Copied!" : "Copy JSON"}</button>
     </div>
     <details style="margin-top: 12px;">
-      <summary style="cursor: pointer; font-size: 13px; color: var(--text-muted);">Preview JSON export</summary>
+      <summary style="cursor: pointer; font-size: var(--font-sm); color: var(--text-muted);">Preview JSON export</summary>
       <pre style="margin-top: 8px; max-height: 300px; overflow-y: auto;">{fingerprint.export_json}</pre>
     </details>
   </div>

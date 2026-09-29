@@ -126,7 +126,7 @@ pub fn generate(input: &DisclosureInput) -> Result<DisclosureOutput, String> {
 
     if let Some(author) = &input.author_name {
         if !author.is_empty() {
-            statement = format!("{}\n\n— {}", statement, author);
+            statement = format!("{}\n\n,  {}", statement, author);
         }
     }
 

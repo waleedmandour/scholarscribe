@@ -1,5 +1,6 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
+  import VerifiedStat from "./VerifiedStat.svelte";
   import { api, type DocStats } from "../lib/api";
 
   let inputText = "";
@@ -42,14 +43,14 @@
   }
 
   function fmt(n: number, digits = 1): string {
-    return Number.isFinite(n) ? n.toFixed(digits) : "—";
+    return Number.isFinite(n) ? n.toFixed(digits) : "n/a";
   }
 
   function fleschLabel(score: number): string {
     if (score >= 90) return "very easy (5th grade)";
     if (score >= 70) return "easy (7th grade)";
-    if (score >= 60) return "standard (8th–9th grade)";
-    if (score >= 50) return "fairly hard (10th–12th grade)";
+    if (score >= 60) return "standard (8th to 9th grade)";
+    if (score >= 50) return "fairly hard (10th to 12th grade)";
     if (score >= 30) return "difficult (college)";
     return "very difficult (college graduate)";
   }
@@ -77,10 +78,10 @@
   <div class="card-subtitle">Paste text or open a file (.txt, .md, .tex, .docx).</div>
   <div class="row" style="margin-bottom: 8px;">
     <button class="shrink" on:click={pickFile}>Open file…</button>
-    {#if inputPath}<span class="dim" style="font-size: 11px; word-break: break-all;">{inputPath}</span>{/if}
+    {#if inputPath}<span class="dim" style="font-size: var(--font-sm); word-break: break-all;">{inputPath}</span>{/if}
   </div>
   <textarea bind:value={inputText} rows="8" placeholder="Paste your draft here, or use Open file…"></textarea>
-  <div class="dim" style="font-size: 11px; margin-top: 4px;">{inputText.length.toLocaleString()} characters</div>
+  <div class="dim" style="font-size: var(--font-sm); margin-top: 4px;">{inputText.length.toLocaleString()} characters</div>
   <div class="row" style="margin-top: 12px;">
     <button class="primary" on:click={analyze} disabled={busy || !inputText.trim()}>
       {busy ? "Analyzing…" : "Analyze"}
@@ -93,36 +94,36 @@
   <div class="card">
     <div class="row" style="text-align: center; flex-wrap: wrap; gap: 20px;">
       <div>
-        <div class="dim" style="font-size: 11px;">WORDS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.word_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">WORDS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.word_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">SENTENCES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.sentence_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">SENTENCES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.sentence_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">PARAGRAPHS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.paragraph_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">PARAGRAPHS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.paragraph_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">SECTIONS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.section_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">SECTIONS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.section_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">CITATIONS</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.citation_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">CITATIONS</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.citation_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">FIGURES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.figure_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">FIGURES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.figure_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">TABLES</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.table_count.toLocaleString()}</div>
+        <div class="dim" style="font-size: var(--font-sm);">TABLES</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.table_count.toLocaleString()}</div>
       </div>
       <div>
-        <div class="dim" style="font-size: 11px;">READING TIME</div>
-        <div style="font-size: 26px; font-weight: 600;">{stats.estimated_reading_time_minutes}m</div>
+        <div class="dim" style="font-size: var(--font-sm);">READING TIME</div>
+        <div style="font-size: var(--font-stat); font-weight: 600;">{stats.estimated_reading_time_minutes}m</div>
       </div>
     </div>
   </div>
@@ -164,22 +165,28 @@
         </tr>
       </tbody>
     </table>
-    <p class="muted" style="font-size: 12px; margin-top: 12px;">
-      Most academic journals target a Flesch-Kincaid grade level of 12–16 (upper-high-school to college).
-      A Flesch Reading Ease of 30–50 is typical for academic prose; above 60 is accessible to a general audience.
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 12px;">
+      Most academic journals target a Flesch-Kincaid grade level of 12 to 16 (upper-high-school to college).
+      A Flesch Reading Ease of 30 to 50 is typical for academic prose; above 60 is accessible to a general audience.
     </p>
   </div>
 
   <h2>Journal target comparison</h2>
   <div class="card">
-    <div class="card-subtitle">How your word count compares to typical limits at major venues. "Near" = within 10% of the target.</div>
+    <div class="card-subtitle">How your word count compares to typical limits at major venues. "Near" means within the range or within 10% of the target for single-limit venues.</div>
     <table>
-      <thead><tr><th>Venue</th><th>Typical word count</th><th>Your draft</th><th>Difference</th><th>Status</th></tr></thead>
+      <thead><tr><th>Venue</th><th>Typical range</th><th>Your draft</th><th>Difference</th><th>Status</th><th>Source</th></tr></thead>
       <tbody>
         {#each stats.journal_comparison as c}
           <tr>
             <td>{c.venue}</td>
-            <td>{c.typical_word_count.toLocaleString()}</td>
+            <td>
+              {#if c.min_word_count === c.max_word_count}
+                {c.min_word_count.toLocaleString()}
+              {:else}
+                {c.min_word_count.toLocaleString()} to {c.max_word_count.toLocaleString()}
+              {/if}
+            </td>
             <td>{stats.word_count.toLocaleString()}</td>
             <td class="muted">
               {c.delta > 0 ? "+" : ""}{c.delta.toLocaleString()}
@@ -189,13 +196,30 @@
                 {statusLabel(c.status)}
               </span>
             </td>
+            <td>
+              {#if c.source_url}
+                <a href={c.source_url} target="_blank" rel="noopener noreferrer" title="Last verified: {c.last_verified}">{c.source_label}</a>
+              {:else}
+                <span class="dim">-</span>
+              {/if}
+            </td>
           </tr>
         {/each}
       </tbody>
     </table>
-    <p class="muted" style="font-size: 12px; margin-top: 12px;">
-      These are approximate typical limits; always check your specific journal's author guide for current limits.
-      Many venues also have separate limits for abstracts (~250 words), letters, and supplementary materials.
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 12px;">
+      These are approximate typical limits. Always check your specific journal's author guide for current limits.
+      Many venues also have separate limits for abstracts (about 250 words), letters, and supplementary materials.
     </p>
+    {#each stats.journal_comparison as c}
+      {#if c.source_url}
+        <VerifiedStat
+          figure={`${c.venue}: ${c.min_word_count === c.max_word_count ? c.min_word_count.toLocaleString() : `${c.min_word_count.toLocaleString()} to ${c.max_word_count.toLocaleString()}`} words typical.`}
+          sourceUrl={c.source_url}
+          sourceLabel={c.source_label}
+          lastVerified={c.last_verified}
+        />
+      {/if}
+    {/each}
   </div>
 {/if}

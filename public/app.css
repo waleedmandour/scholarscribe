@@ -1,6 +1,19 @@
-/* ScholarScribe — global styles. Minimal, light + dark, no external fonts. */
+/* ScholarScribe, global styles. Minimal, light + dark, no external fonts. */
 
 :root {
+  /* Scalable font system. --font-scale is set on documentElement by
+     index.html (pre-paint) and the A-/A/A+ control. All sizes derive
+     from this single multiplier. Body text meets the WCAG 16px floor at
+     scale 1.0; labels and tabs meet the 14px floor at scale 1.0. */
+  --font-scale: 1;
+  --font-sm: calc(14px * var(--font-scale));
+  --font-md: calc(16px * var(--font-scale));
+  --font-lg: calc(20px * var(--font-scale));
+  --font-xl: calc(24px * var(--font-scale));
+  --font-stat: calc(28px * var(--font-scale));
+  --font-stat-xl: calc(34px * var(--font-scale));
+  --line-body: 1.5;
+
   --bg: #f7f7f8;
   --bg-elev: #ffffff;
   --bg-elev-2: #f0f1f3;
@@ -20,12 +33,12 @@
   --radius: 8px;
   --radius-sm: 5px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--font-md);
+  line-height: var(--line-body);
   color-scheme: light;
 }
 
-/* Dark theme — applied via [data-theme="dark"] on <html> or auto via prefers-color-scheme. */
+/* Dark theme, applied via [data-theme="dark"] on <html> or auto via prefers-color-scheme. */
 [data-theme="dark"] {
   --bg: #1a1c20;
   --bg-elev: #23262c;
@@ -89,7 +102,7 @@ html, body {
 
 button {
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--font-sm);
   padding: 7px 14px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
@@ -126,7 +139,7 @@ button.danger:hover:not(:disabled) {
 
 input[type="text"], textarea, select {
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--font-sm);
   padding: 8px 11px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
@@ -163,7 +176,7 @@ input:focus, textarea:focus, select:focus {
 
 .sidebar .brand {
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--font-md);
   margin-bottom: 4px;
   padding: 4px 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -188,12 +201,79 @@ input:focus, textarea:focus, select:focus {
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-sm);
   font-weight: 500;
   user-select: none;
 }
 .nav-item:hover { background: var(--bg-elev-2); color: var(--text); }
 .nav-item.active { background: var(--accent-soft); color: var(--accent); }
+
+.nav-group-label {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 14px 11px 4px;
+  user-select: none;
+}
+.nav-group-label:first-child { padding-top: 4px; }
+
+/* Density toggle (Comfortable / Compact) in sidebar footer. Compact reduces
+   padding only; never changes font size. */
+.density-toggle {
+  display: inline-flex;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.density-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0;
+}
+.density-btn:hover { background: var(--bg-elev-2); color: var(--text); }
+.density-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Font scale toggle (A-, A, A+) in sidebar footer. Sets --font-scale on
+   documentElement via JS. */
+.font-scale-toggle {
+  display: inline-flex;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.font-scale-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0;
+}
+.font-scale-btn:hover { background: var(--bg-elev-2); color: var(--text); }
+.font-scale-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Compact density: only sidebar and nav-item padding shrink. Font sizes never
+   change in compact mode. */
+[data-density="compact"] .sidebar { padding: 12px 10px; }
+[data-density="compact"] .nav-item { padding: 6px 8px; gap: 8px; }
+[data-density="compact"] .nav-group-label { padding: 9px 8px 2px; }
 
 .main {
   padding: 28px 36px;
@@ -202,12 +282,12 @@ input:focus, textarea:focus, select:focus {
 }
 
 .main h1 {
-  font-size: 22px;
+  font-size: var(--font-xl);
   margin: 0 0 6px;
   font-weight: 600;
 }
 .main h2 {
-  font-size: 17px;
+  font-size: var(--font-lg);
   margin: 26px 0 10px;
   font-weight: 600;
   color: var(--text);
@@ -215,7 +295,7 @@ input:focus, textarea:focus, select:focus {
 .main .lead {
   color: var(--text-muted);
   margin: 0 0 22px;
-  font-size: 14.5px;
+  font-size: var(--font-md);
   max-width: 680px;
 }
 
@@ -230,11 +310,11 @@ input:focus, textarea:focus, select:focus {
 .card .card-title {
   font-weight: 600;
   margin: 0 0 4px;
-  font-size: 15px;
+  font-size: var(--font-md);
 }
 .card .card-subtitle {
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--font-sm);
   margin: 0 0 12px;
 }
 
@@ -246,7 +326,7 @@ input:focus, textarea:focus, select:focus {
   display: inline-block;
   padding: 2px 9px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: var(--font-sm);
   background: var(--bg-elev-2);
   color: var(--text-muted);
   margin-right: 4px;
@@ -260,7 +340,7 @@ input:focus, textarea:focus, select:focus {
   gap: 6px;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--font-sm);
   font-weight: 500;
 }
 .status-pill .pulse {
@@ -273,9 +353,9 @@ input:focus, textarea:focus, select:focus {
 .status-pill.bad { background: rgba(192, 57, 43, 0.12); color: var(--danger); }
 .status-pill.bad .pulse { background: var(--danger); }
 
-table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table { border-collapse: collapse; width: 100%; font-size: var(--font-sm); }
 th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); }
-th { font-weight: 600; color: var(--text-muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+th { font-weight: 600; color: var(--text-muted); font-size: var(--font-sm); text-transform: uppercase; letter-spacing: 0.04em; }
 
 .progress {
   height: 6px;
@@ -294,7 +374,7 @@ th { font-weight: 600; color: var(--text-muted); font-size: 12.5px; text-transfo
   background: var(--accent-soft);
   padding: 12px 16px;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: 14px;
+  font-size: var(--font-sm);
   margin: 12px 0;
 }
 .callout.warn {
@@ -311,7 +391,7 @@ pre {
   padding: 13px 16px;
   border-radius: var(--radius-sm);
   overflow-x: auto;
-  font-size: 12.5px;
+  font-size: var(--font-sm);
   line-height: 1.6;
   margin: 0;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;

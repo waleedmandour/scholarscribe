@@ -154,11 +154,11 @@
 {#if showEnableDialog}
   <div class="card" style="border-color: var(--accent);">
     <div class="card-title">Before you enable persistence</div>
-    <p style="font-size: 13px;">
+    <p style="font-size: var(--font-sm);">
       Enabling persistence means ScholarScribe will write plain JSON files to your device's
       app-data folder. Please read and acknowledge:
     </p>
-    <ul style="font-size: 13px; line-height: 1.7; padding-left: 20px;">
+    <ul style="font-size: var(--font-sm); line-height: 1.7; padding-left: 20px;">
       <li><strong>What gets saved:</strong> drafts you explicitly save, chat transcripts you explicitly save, disclosure statements you explicitly save. Nothing is autosaved.</li>
       <li><strong>What doesn't get saved:</strong> the Privacy Audit log (always in-memory, cleared on app close), model files (managed by Ollama), app logs.</li>
       <li><strong>Where:</strong> <code>{dataDir}</code>, a folder only your user account can read.</li>
@@ -214,7 +214,7 @@
   {#if selectedDraft}
     <h2>Viewing: {selectedDraft.title}</h2>
     <div class="card">
-      <div class="row" style="margin-bottom: 12px; font-size: 13px;">
+      <div class="row" style="margin-bottom: 12px; font-size: var(--font-sm);">
         <div><span class="dim">Type:</span> {kindLabels[selectedDraft.kind] || selectedDraft.kind}</div>
         <div><span class="dim">Created:</span> {fmtTime(selectedDraft.created_at)}</div>
         <div><span class="dim">Updated:</span> {fmtTime(selectedDraft.updated_at)}</div>

@@ -1,6 +1,6 @@
 [package]
 name = "scholarscribe"
-version = "2.1.0"
+version = "2.2.0"
 description = "Privacy-first local LLM writing companion for researchers"
 authors = ["Waleed Mandour"]
 license = "MIT"
@@ -34,7 +34,7 @@ sysinfo = "0.32"
 url = "2"
 zip = "2"
 
-# Writing Provenance (v2.1.0) — hash chain + Ed25519 signing + OOXML revisions
+# Writing Provenance (v2.1.0), hash chain + Ed25519 signing + OOXML revisions
 sha2 = "0.10"
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 quick-xml = "0.31"
