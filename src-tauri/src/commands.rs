@@ -914,6 +914,88 @@ pub async fn validate_citations(
     Ok(result)
 }
 
+// ---------------- v2.2.1: paste-references mode ----------------
+
+#[derive(Debug, Deserialize)]
+pub struct ConvertPlainToBibArgs {
+    /// The pasted plain-text reference list. One reference per line, or
+    /// one reference per numbered entry ("1.", "[1]", "(1)").
+    pub content: String,
+    /// Style hint: "apa", "mla", "chicago", "vancouver", "plain".
+    /// The parser is heuristic and tolerates mixed formats; this hint
+    /// helps disambiguate field boundaries.
+    pub style: String,
+}
+
+#[tauri::command]
+pub async fn convert_plain_to_bib(
+    args: ConvertPlainToBibArgs,
+) -> Result<crate::plain_ref_parser::ConvertResult, String> {
+    use crate::plain_ref_parser::{convert_plain_to_bib as convert, PlainRefStyle};
+    let style = PlainRefStyle::from_str(&args.style).ok_or_else(|| {
+        format!(
+            "Unknown style '{}'. Use apa, mla, chicago, vancouver, or plain.",
+            args.style
+        )
+    })?;
+    let result = tokio::task::spawn_blocking(move || convert(&args.content, style))
+        .await
+        .map_err(|e| format!("plain-ref conversion task failed: {}", e))?;
+    Ok(result)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ValidateCitationsInlineArgs {
+    /// Path to the draft document (.txt, .md, .tex, .rst, .docx).
+    pub draft_path: String,
+    /// Inline BibTeX content (as produced by convert_plain_to_bib or
+    /// pasted directly by the user). Used in lieu of a .bib file path.
+    pub bib_content: String,
+}
+
+#[tauri::command]
+pub async fn validate_citations_inline(
+    args: ValidateCitationsInlineArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<crate::citation_manager::CitationReport, String> {
+    use crate::citation_manager;
+    let draft_path = PathBuf::from(&args.draft_path);
+    if !draft_path.exists() {
+        return Err(format!("Draft file not found: {}", args.draft_path));
+    }
+    audit.record(
+        "file_read",
+        &args.draft_path,
+        "citation validation (inline)",
+        0,
+        0,
+    );
+    let draft_path_for_task = draft_path.clone();
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<crate::citation_manager::CitationReport, String> {
+            let draft_text = if draft_path_for_task
+                .extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                == Some("docx".into())
+            {
+                crate::docx_reading::extract_text_from_docx(&draft_path_for_task)?
+            } else {
+                std::fs::read_to_string(&draft_path_for_task)
+                    .map_err(|e| format!("read draft: {}", e))?
+            };
+            let mut report = citation_manager::validate(&draft_text, &args.bib_content);
+            report.draft_path = Some(draft_path_for_task.to_string_lossy().into_owned());
+            // bib_path is None because the BibTeX came from inline content,
+            // not a file.
+            report.bib_path = None;
+            Ok(report)
+        },
+    )
+    .await
+    .map_err(|e| format!("inline citation validation task failed: {}", e))??;
+    Ok(result)
+}
+
 #[tauri::command]
 pub async fn document_stats(text: String) -> Result<crate::document_stats::DocStats, String> {
     let result = tokio::task::spawn_blocking(move || crate::document_stats::analyze(&text))

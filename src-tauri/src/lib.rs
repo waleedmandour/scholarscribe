@@ -20,6 +20,7 @@ mod google_docs_commands;
 mod google_docs_net;
 mod ollama;
 mod persistence;
+mod plain_ref_parser;
 mod provenance;
 mod provenance_commands;
 mod risk_profiler;
@@ -72,6 +73,8 @@ pub fn run() {
             commands::clean_docx_file,
             commands::clean_docx_preserve_format,
             commands::validate_citations,
+            commands::convert_plain_to_bib,
+            commands::validate_citations_inline,
             commands::document_stats,
             commands::analyze_structure,
             commands::analyze_structure_text,

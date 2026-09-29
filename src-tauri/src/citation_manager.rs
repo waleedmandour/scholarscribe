@@ -21,6 +21,25 @@ pub struct BibEntry {
     pub title: String,
     pub author: String,
     pub year: String,
+    /// Journal name (for @article entries). Empty for other entry types.
+    pub journal: String,
+    /// Volume number as a string (e.g. "12").
+    pub volume: String,
+    /// Issue / number as a string (e.g. "3").
+    pub number: String,
+    /// Page range in BibTeX format (e.g. "12--34").
+    pub pages: String,
+    /// DOI (e.g. "10.1234/abcd").
+    pub doi: String,
+    /// Publisher name (for @book / @inproceedings entries).
+    pub publisher: String,
+    /// Book title (for @inbook / @inproceedings entries).
+    pub booktitle: String,
+    /// The original raw text the entry was parsed from. For .bib parsing,
+    /// this is the full entry body. For plain-text parsing, this is the
+    /// original plain-text reference string. Useful for debugging and
+    /// for showing the user the source when fields are missing.
+    pub raw: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -146,6 +165,13 @@ pub fn parse_bib(content: &str) -> (Vec<BibEntry>, Vec<String>) {
         title = extract_field(body, "title").unwrap_or_default();
         author = extract_field(body, "author").unwrap_or_default();
         year = extract_field(body, "year").unwrap_or_default();
+        let journal = extract_field(body, "journal").unwrap_or_default();
+        let volume = extract_field(body, "volume").unwrap_or_default();
+        let number = extract_field(body, "number").unwrap_or_default();
+        let pages = extract_field(body, "pages").unwrap_or_default();
+        let doi = extract_field(body, "doi").unwrap_or_default();
+        let publisher = extract_field(body, "publisher").unwrap_or_default();
+        let booktitle = extract_field(body, "booktitle").unwrap_or_default();
 
         entries.push(BibEntry {
             key,
@@ -153,6 +179,14 @@ pub fn parse_bib(content: &str) -> (Vec<BibEntry>, Vec<String>) {
             title: clean_latex(&title),
             author: clean_latex(&author),
             year,
+            journal: clean_latex(&journal),
+            volume,
+            number,
+            pages: normalize_pages(&pages),
+            doi,
+            publisher: clean_latex(&publisher),
+            booktitle: clean_latex(&booktitle),
+            raw: body.trim().to_string(),
         });
 
         pos = i + 1;
@@ -239,6 +273,42 @@ fn clean_latex(s: &str) -> String {
     out = out.replace("\\#", "#");
     out = out.replace("\\_", "_");
     out.trim().to_string()
+}
+
+/// Normalize a page range string to BibTeX format. BibTeX expects a
+/// double dash (`--`) between the start and end pages. Accepts:
+///   - "12-34"        -> "12--34"
+///   - "12--34"       -> "12--34" (unchanged)
+///   - "12\u{2013}34" -> "12--34" (en dash)
+///   - "12\u{2014}34" -> "12--34" (em dash, defensive)
+///   - "12"           -> "12"     (single page, unchanged)
+///   - "pp. 12-34"    -> "12--34" (prefix stripped)
+///   - "12-34."       -> "12--34" (trailing period stripped)
+fn normalize_pages(s: &str) -> String {
+    let s = s.trim();
+    if s.is_empty() {
+        return String::new();
+    }
+    // Strip "pp." / "p." prefix
+    let s = Regex::new(r"(?i)^pp?\.?\s*")
+        .unwrap()
+        .replace(s, "")
+        .into_owned();
+    // Strip trailing period
+    let s = s.trim_end_matches('.').trim().to_string();
+    // Replace single dash or en/em dash with double dash
+    let s = s.replace('\u{2013}', "--").replace('\u{2014}', "--");
+    // If a single dash is between two numbers, expand to double dash.
+    let s = Regex::new(r"(\d)-(\d)")
+        .unwrap()
+        .replace_all(&s, "${1}--${2}")
+        .into_owned();
+    // Collapse any triple-or-more dashes to double dash (defensive)
+    let s = Regex::new(r"-{3,}")
+        .unwrap()
+        .replace_all(&s, "--")
+        .into_owned();
+    s
 }
 
 /// Extract in-text citations from a draft.
