@@ -556,8 +556,16 @@ export interface RiskProfile {
     word_count: number;
     perplexity_proxy: number;
     burstiness_proxy: number;
+    vocabulary_uniformity_proxy: number;
+    sentence_length_variance_proxy: number;
     risk_level: string;
     risk_color: string;
+    /** First ~15 words of the passage, sliced from the original text via
+     * start_char..end_char. Empty if the text was edited after profiling. */
+    excerpt: string;
+    /** Plain-language cause, one or two sentences. Never asserts AI
+     * authorship. Contains no em or en dashes. */
+    reason: string;
   }[];
   explanation: string;
   recommendations: string[];
