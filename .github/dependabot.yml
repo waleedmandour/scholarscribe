@@ -1,0 +1,81 @@
+# Dependabot configuration for ScholarScribe.
+# Weekly checks across three ecosystems: npm (frontend), cargo (Rust),
+# and github-actions (workflow versions). Pull requests are limited to
+# 10 per ecosystem to avoid noise; security updates bypass the limit.
+# Pull requests from Dependabot are subject to the same CI workflow
+# and branch protection rules as any other PR.
+
+version: 2
+updates:
+  # Frontend (Svelte + TypeScript + Vite + Tauri JS plugins).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    groups:
+      svelte:
+        patterns:
+          - "svelte"
+          - "@sveltejs/*"
+          - "svelte-check"
+      tauri-js:
+        patterns:
+          - "@tauri-apps/*"
+      build-tooling:
+        patterns:
+          - "vite"
+          - "typescript"
+          - "tslib"
+
+  # Rust backend (Tauri + serde + reqwest + ed25519-dalek + etc).
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps(cargo)"
+      include: "scope"
+    groups:
+      tauri:
+        patterns:
+          - "tauri"
+          - "tauri-build"
+          - "tauri-plugin-*"
+      crypto:
+        patterns:
+          - "sha2"
+          - "ed25519-dalek"
+          - "getrandom"
+      http:
+        patterns:
+          - "reqwest"
+          - "tokio"
+          - "futures-util"
+
+  # GitHub Actions workflow versions (checkout, setup-node, rust-toolchain,
+  # cache, tauri-action).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "deps(ci)"
+      include: "scope"
