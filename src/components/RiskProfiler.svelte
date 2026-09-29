@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type RiskProfile } from "../lib/api";
+  import VerifiedStat from "./VerifiedStat.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -107,6 +108,13 @@
   (2023), non-native English writers often score in the high-risk zone despite writing entirely original
   work. Use this to understand your stylistic fingerprint, not to evade detection.
 </div>
+
+<VerifiedStat
+  figure="Testing seven widely used GPT detectors on 91 TOEFL essays written by non-native English speakers, more than half of the essays were incorrectly labeled AI-generated, with an average false-positive rate of 61.3%. Native-speaker essays were misclassified at near-zero rates, and some detectors flagged up to 97.8% of TOEFL essays."
+  sourceUrl="https://doi.org/10.1016/j.patter.2023.100779"
+  sourceLabel="Liang et al. (2023), Patterns"
+  lastVerified="2026-09-29"
+/>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 

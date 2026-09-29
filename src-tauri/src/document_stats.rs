@@ -1,4 +1,4 @@
-//! Document Statistics — quick health-check panel for a draft.
+//! Document Statistics. Quick health-check panel for a draft.
 //!
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
 //! Reports word count, sentence count, paragraph count, section count
@@ -31,9 +31,23 @@ pub struct DocStats {
 #[derive(Debug, Serialize, Clone)]
 pub struct JournalComparison {
     pub venue: String,
-    pub typical_word_count: usize,
+    /// Lower bound of the typical word-count range. Equals max_word_count
+    /// for venues that publish a single hard limit rather than a range.
+    pub min_word_count: usize,
+    /// Upper bound of the typical word-count range. Equals min_word_count
+    /// for venues that publish a single hard limit rather than a range.
+    pub max_word_count: usize,
+    /// Source URL for the venue's author guide. Empty string when no
+    /// authoritative public source is available.
+    pub source_url: String,
+    /// Human-readable label for the source (e.g. "Nature author formatting
+    /// guide"). Empty string when source_url is empty.
+    pub source_label: String,
+    /// ISO date (YYYY-MM-DD) when the figure was last verified against the
+    /// source. Empty string when source_url is empty.
+    pub last_verified: String,
     pub status: String, // "under", "near", "over"
-    pub delta: i64,     // difference from typical
+    pub delta: i64,     // difference from nearest endpoint of the range
 }
 
 pub fn analyze(text: &str) -> DocStats {
@@ -123,38 +137,94 @@ fn count_matches(text: &str, prefixes: &[&str]) -> usize {
 }
 
 fn compare_to_journals(word_count: usize) -> Vec<JournalComparison> {
-    let targets = [
-        ("Nature (articles)", 5000),
-        ("Science (research articles)", 2500),
-        ("ICMJE medical journals (JAMA, NEJM, Lancet)", 3500),
-        ("IEEE conference papers", 6000),
-        ("IEEE transactions (full paper)", 8000),
-        ("ACM SIGCHI (long papers)", 7000),
-        ("ACL/EMNLP (long papers)", 8000),
-        ("PLOS ONE", 8000),
-        ("Most university theses (per chapter)", 6000),
+    // (venue, min, max, source_url, source_label, last_verified)
+    // For venues that publish a single hard limit, min == max.
+    // Source URL and Last verified date are populated for venues whose
+    // author guidance is publicly documented and stable enough to verify.
+    let targets: &[(&str, usize, usize, &str, &str, &str)] = &[
+        // Nature: range, per author formatting guide. Typical 6-page article
+        // with 4 display items is roughly 2,500 words; typical 8-page
+        // article with 5-6 display items is roughly 4,300 words.
+        (
+            "Nature (articles)",
+            2500,
+            4300,
+            "https://www.nature.com/nature/for-authors/final-submission",
+            "Nature author formatting guide",
+            "2026-09-29",
+        ),
+        ("Science (research articles)", 2500, 2500, "", "", ""),
+        // ICMJE does not set word limits; journals following ICMJE set their
+        // own caps. Real-world examples range from ~3,000 to ~6,000 words.
+        (
+            "ICMJE medical journals (JAMA, NEJM, Lancet)",
+            3000,
+            6000,
+            "https://www.icmje.org/recommendations/",
+            "ICMJE Recommendations",
+            "2026-09-29",
+        ),
+        ("IEEE conference papers", 6000, 6000, "", "", ""),
+        ("IEEE transactions (full paper)", 8000, 8000, "", "", ""),
+        ("ACM SIGCHI (long papers)", 7000, 7000, "", "", ""),
+        ("ACL/EMNLP (long papers)", 8000, 8000, "", "", ""),
+        ("PLOS ONE", 8000, 8000, "", "", ""),
+        (
+            "Most university theses (per chapter)",
+            6000,
+            6000,
+            "",
+            "",
+            "",
+        ),
     ];
 
     targets
         .iter()
-        .map(|(venue, target)| {
-            let target = *target as i64;
-            let actual = word_count as i64;
-            let delta = actual - target;
-            let status = if delta.abs() < target / 10 {
-                "near".to_string()
-            } else if delta < 0 {
-                "under".to_string()
-            } else {
-                "over".to_string()
-            };
-            JournalComparison {
-                venue: venue.to_string(),
-                typical_word_count: target as usize,
-                status,
-                delta,
-            }
-        })
+        .map(
+            |(venue, min, max, source_url, source_label, last_verified)| {
+                let min = *min as i64;
+                let max = *max as i64;
+                let actual = word_count as i64;
+                // Delta from the nearest endpoint of the range. 0 means within
+                // the range.
+                let delta = if actual < min {
+                    actual - min
+                } else if actual > max {
+                    actual - max
+                } else {
+                    0
+                };
+                // Status. For single-number venues (min == max), keep the
+                // original "within 10%" tolerance rule. For ranged venues,
+                // being inside the range is "near".
+                let status = if min == max {
+                    if delta.abs() < min / 10 {
+                        "near"
+                    } else if delta < 0 {
+                        "under"
+                    } else {
+                        "over"
+                    }
+                } else if delta < 0 {
+                    "under"
+                } else if delta > 0 {
+                    "over"
+                } else {
+                    "near"
+                };
+                JournalComparison {
+                    venue: venue.to_string(),
+                    min_word_count: min as usize,
+                    max_word_count: max as usize,
+                    source_url: source_url.to_string(),
+                    source_label: source_label.to_string(),
+                    last_verified: last_verified.to_string(),
+                    status: status.to_string(),
+                    delta,
+                }
+            },
+        )
         .collect()
 }
 
@@ -183,7 +253,7 @@ pub fn analyze_by_sections(text: &str) -> SectionReadabilityReport {
     let structure = crate::structure_analyzer::analyze_text(text);
 
     let sections: Vec<(String, String)> = if structure.headings.is_empty() {
-        // No headings — split by paragraphs into ~300-word chunks
+        // No headings. Split by paragraphs into ~300-word chunks.
         let words: Vec<&str> = text.split_whitespace().collect();
         let mut out = Vec::new();
         for (i, chunk) in words.chunks(300).enumerate() {
@@ -273,7 +343,7 @@ pub fn analyze_by_sections(text: &str) -> SectionReadabilityReport {
     };
 
     let explanation = format!(
-        "Readability varies naturally across sections: Methods sections typically score harder on Flesch (which is appropriate — they describe technical procedures), while introductions and discussions should be more accessible. This section-aware view helps you calibrate your writing appropriately for each part of the manuscript."
+        "Readability varies naturally across sections: Methods sections typically score harder on Flesch (which is appropriate, they describe technical procedures), while introductions and discussions should be more accessible. This section-aware view helps you calibrate your writing appropriately for each part of the manuscript."
     );
 
     SectionReadabilityReport {

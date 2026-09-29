@@ -315,9 +315,23 @@ export interface CitationReport {
 
 export interface JournalComparison {
   venue: string;
-  typical_word_count: number;
+  /** Lower bound of the typical word-count range. Equals max_word_count
+   * for venues that publish a single hard limit. */
+  min_word_count: number;
+  /** Upper bound of the typical word-count range. Equals min_word_count
+   * for venues that publish a single hard limit. */
+  max_word_count: number;
+  /** Source URL for the venue's author guide. Empty string when no
+   * authoritative public source is available. */
+  source_url: string;
+  /** Human-readable label for the source. Empty string when source_url
+   * is empty. */
+  source_label: string;
+  /** ISO date (YYYY-MM-DD) when the figure was last verified. Empty string
+   * when source_url is empty. */
+  last_verified: string;
   status: string; // "under" | "near" | "over"
-  delta: number;
+  delta: number;  // difference from nearest endpoint of the range
 }
 
 export interface DocStats {

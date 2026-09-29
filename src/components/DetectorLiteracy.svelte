@@ -1,4 +1,5 @@
 <script lang="ts">
+  import VerifiedStat from "./VerifiedStat.svelte";
   // Static educational content. No backend calls.
 </script>
 
@@ -41,7 +42,7 @@
       when entirely human-written. This is a documented equity problem, not a marginal one.
     </li>
     <li>
-      <strong>High false-positive rate on short passages.</strong> Detectors are unreliable below ~300 words. A single
+      <strong>High false-positive rate on short passages.</strong> Detectors are unreliable below roughly 300 words. A single
       suspicious sentence is not evidence of anything.
     </li>
     <li>
@@ -55,6 +56,20 @@
       enough to defend.
     </li>
   </ul>
+
+  <VerifiedStat
+    figure="Testing seven widely used GPT detectors on 91 TOEFL essays written by non-native English speakers, more than half of the essays were incorrectly labeled AI-generated, with an average false-positive rate of 61.3%. Native-speaker essays were misclassified at near-zero rates, and some detectors flagged up to 97.8% of TOEFL essays."
+    sourceUrl="https://doi.org/10.1016/j.patter.2023.100779"
+    sourceLabel="Liang et al. (2023), Patterns"
+    lastVerified="2026-09-29"
+  />
+
+  <VerifiedStat
+    figure="The study tested 14 detectors (12 public tools plus Turnitin and PlagiarismCheck). No tool exceeded 80% accuracy; only five exceeded 70%; tools were systematically biased toward classifying AI output as human-written. Six of 14 tools produced false positives and 13 of 14 produced false negatives. Accuracy degraded further on paraphrased and machine-translated text."
+    sourceUrl="https://doi.org/10.1016/j.patter.2023.100846"
+    sourceLabel="Weber-Wulff et al. (2023), Patterns"
+    lastVerified="2026-09-29"
+  />
 </div>
 
 <div class="card">
@@ -81,7 +96,7 @@
   <div class="card-title">Further reading</div>
   <ul style="line-height: 1.7;">
     <li>Liang, W., et al. <em>GPT detectors are biased against non-native English writers.</em> Patterns, 2023. <a href="https://doi.org/10.1016/j.patter.2023.100779" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100779</a></li>
-    <li>Weber-Wulff, D., et al. <em>Testing of detection signals for AI-generated text.</em> Patterns, 2023.</li>
+    <li>Weber-Wulff, D., et al. <em>Testing of detection signals for AI-generated text.</em> Patterns, 2023. <a href="https://doi.org/10.1016/j.patter.2023.100846" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100846</a></li>
     <li>Laban, P., et al. <em>Determining the believability and harm of AI-generated outputs.</em> ACL 2024.</li>
     <li>University guidance: Vanderbilt, Pitt, Texas-Austin statements on AI-detector reliability (searchable online).</li>
   </ul>
