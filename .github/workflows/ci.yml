@@ -1,7 +1,7 @@
-# ScholarScribe — continuous integration.
+# ScholarScribe. continuous integration.
 # Runs on every push to main and on every pull request.
 # Verifies the frontend type-checks and the Rust code compiles.
-# Does NOT build installers — that's release.yml's job.
+# Does NOT build installers. that's release.yml's job.
 
 name: CI
 
@@ -47,7 +47,6 @@ jobs:
       - name: cargo clippy
         working-directory: src-tauri
         run: cargo clippy -- -D warnings
-        continue-on-error: true   # don't block PRs on clippy yet during pre-release
       - name: cargo check
         working-directory: src-tauri
         run: cargo check

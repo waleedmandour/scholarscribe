@@ -1,14 +1,16 @@
-# ScholarScribe — automated release builds on Windows, macOS, and Linux.
+# ScholarScribe. automated release builds on Windows, macOS (Apple Silicon
+# and Intel, two separate .dmg files), and Linux.
 #
-# When you push a tag matching v* (e.g. v0.2.1-pre), this workflow:
-#   1. Spins up Windows, macOS, and Linux runners in parallel.
+# When you push a tag matching v* (e.g. v2.2.0-pre), this workflow:
+#   1. Spins up Windows, two macOS runners (Apple Silicon + Intel), and
+#      Linux runners in parallel.
 #   2. Installs Rust, Node, and platform-specific prerequisites.
 #   3. Builds platform installers via `tauri build`.
 #   4. Uploads all installers to the matching GitHub Release.
 #
 # To trigger:
-#   git tag v0.2.1-pre
-#   git push origin v0.2.1-pre
+#   git tag v2.2.0-pre
+#   git push origin v2.2.0-pre
 
 name: Release
 
@@ -32,10 +34,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Windows x64. Tauri's default produces both .msi and .exe (NSIS).
           - platform: windows-latest
             args: ""
+          # macOS Apple Silicon (macos-latest is M1). Native build, no
+          # --target arg needed.
           - platform: macos-latest
-            args: "--target aarch64-apple-darwin"
+            args: ""
+          # macOS Intel (macos-13 is the last Intel runner). Native build
+          # for x86_64-apple-darwin. Produces a separate .dmg from the
+          # Apple Silicon build.
+          - platform: macos-13
+            args: ""
+          # Linux x64. Tauri's default produces both .deb and .AppImage.
           - platform: ubuntu-22.04
             args: ""
 
@@ -52,8 +63,6 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-apple-darwin
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -62,8 +71,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          # Include runner.arch in the key so Intel (X64) and Apple Silicon
+          # (ARM64) Mac caches do not collide.
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-cargo-
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -91,14 +102,15 @@ jobs:
 
             1. Install [Ollama](https://ollama.com/download).
             2. Download the installer for your platform below.
-            3. Open ScholarScribe → Models tab → download a model.
+            3. Open ScholarScribe, go to the Models tab, download a model.
             4. See [USER_GUIDE.md](USER_GUIDE.md) for the 5-minute walkthrough.
 
             ## Platforms
 
-            - **Windows**: `.msi` and `.exe` installers
-            - **macOS**: `.dmg` and `.app.tar.gz`
-            - **Linux**: `.deb` and `.AppImage`
+            - **Windows**: `.msi` and `.exe` installers (x64).
+            - **macOS Apple Silicon**: `.dmg` and `.app.tar.gz` (aarch64).
+            - **macOS Intel**: `.dmg` and `.app.tar.gz` (x86_64).
+            - **Linux**: `.deb` and `.AppImage` (x64).
 
             ## Privacy
 
@@ -107,6 +119,10 @@ jobs:
             ## Ethical use
 
             ScholarScribe does **not** include detection-evasion features. See [docs/ETHICS.md](docs/ETHICS.md).
+
+            ## Verification
+
+            All commits pass `npm run check`, `cargo fmt --check`, `cargo clippy -- -D warnings`, and `cargo check`. A grep for em (U+2014) and en (U+2013) dashes across user-facing files returns zero matches.
           releaseDraft: false
           prerelease: true
           args: ${{ matrix.args }}

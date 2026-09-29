@@ -206,7 +206,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v2.1.0 · MIT · local-only
+        v2.2.0 · MIT · local-only
       </div>
       <button
         class="walk-through-btn"
