@@ -155,4 +155,4 @@ If you used AI assistance, **disclose it**, the Disclosure tab makes this easy. 
 ---
 
 *ScholarScribe © 2026 Dr. Waleed Mandour. Released under the MIT License.*
-*Persistent identifier: <https://doi.org/10.5281/zenodo.20781043>*
+*Persistent identifier: <https://doi.org/10.5281/zenodo.23052647>*
