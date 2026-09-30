@@ -63,14 +63,14 @@ def build_styles():
         textColor=C_DIM, alignment=1, spaceAfter=2)
     s["h2"] = ParagraphStyle("h2", fontName=FONT_SANS, fontSize=13, leading=17,
         textColor=C_ACCENT, spaceBefore=10, spaceAfter=4)
-    s["body"] = ParagraphStyle("body", fontName=FONT_SERIF, fontSize=9.5, leading=13,
-        textColor=C_TEXT, spaceAfter=4)
+    s["body"] = ParagraphStyle("body", fontName=FONT_SERIF, fontSize=9, leading=12,
+        textColor=C_TEXT, spaceAfter=3)
     s["body_sm"] = ParagraphStyle("body_sm", fontName=FONT_SERIF, fontSize=8.5, leading=12,
         textColor=C_TEXT, spaceAfter=2)
-    s["feature_h"] = ParagraphStyle("feature_h", fontName=FONT_SANS, fontSize=8.5, leading=11,
-        textColor=C_ACCENT_DARK, spaceAfter=1)
-    s["feature_d"] = ParagraphStyle("feature_d", fontName=FONT_SERIF, fontSize=8, leading=11,
-        textColor=C_MUTED, spaceAfter=2)
+    s["feature_h"] = ParagraphStyle("feature_h", fontName=FONT_SANS, fontSize=8, leading=10,
+        textColor=C_ACCENT_DARK, spaceAfter=0)
+    s["feature_d"] = ParagraphStyle("feature_d", fontName=FONT_SERIF, fontSize=7.5, leading=10,
+        textColor=C_MUTED, spaceAfter=0)
     s["step"] = ParagraphStyle("step", fontName=FONT_SERIF, fontSize=9, leading=12,
         textColor=C_TEXT, spaceAfter=3)
     s["cite"] = ParagraphStyle("cite", fontName=FONT_SERIF, fontSize=8.5, leading=12,
@@ -149,55 +149,84 @@ def build_page1(styles, logo_path):
         "The sidebar organizes 20 tools into 7 workflow phases, from getting started to "
         "privacy and app management.",
         styles["body"]))
-    flow.append(Spacer(1, 3*mm))
+    flow.append(Spacer(1, 2*mm))
 
-    # 20 tools in a 3-column table: Group | Tool | Brief explanation
+    # 20 tools with group headers appearing once, simpler descriptions
     flow.append(Paragraph("The 20 tools at a glance (7 workflow phases)", styles["h2"]))
 
-    tools = [
-        ("Get started", "Models", "Install, import, and manage local LLMs (8-64 GB RAM)."),
-        ("Prepare the draft", "Text Cleaner", "Fix 24 PDF/OCR/web artifacts in .txt, .md, or .docx."),
-        ("Prepare the draft", "Citations", "Validate in-text citations against .bib or pasted references."),
-        ("Understand the draft", "Stats", "Word count, readability, journal-target comparison."),
-        ("Understand the draft", "Structure", "Heading tree, missing-section suggestions, per-section excerpts."),
-        ("AI writing help", "Abstract", "LLM-generated Background/Methods/Results/Conclusions abstract."),
-        ("AI writing help", "Writing Coach", "Socratic coaching on a paragraph or argument (never rewrites)."),
-        ("AI writing help", "Chat", "Local-only chat with file picker to attach manuscript for context."),
-        ("Authenticity and style", "Detector Literacy", "How AI detectors work and where they fail, with cited stats."),
-        ("Authenticity and style", "Risk Profile", "4 proxy signals per passage, click-to-expand detail panel."),
-        ("Authenticity and style", "Style Analysis", "Compare a draft to your own prior writing (12 metrics)."),
-        ("Authenticity and style", "Fingerprint", "Multi-paper stylistic fingerprint of your writing baseline."),
-        ("Authenticity and style", "Voice Check", "Flag within-document stylistic shifts with excerpts."),
-        ("Evidence and compliance", "Journal", "Auto-saved timestamped snapshots of your draft."),
-        ("Evidence and compliance", "Provenance", "Export signed, hash-chained evidence of your revision history."),
-        ("Evidence and compliance", "Appeal Letter", "Generate an evidence-based appeal if falsely flagged."),
-        ("Evidence and compliance", "Disclosure", "Generate venue-compliant AI-use disclosure statements."),
-        ("Privacy and app", "Privacy Audit", "Live log of every file read and outbound HTTP call."),
-        ("Privacy and app", "Saved Work", "Opt-in local JSON persistence (off by default)."),
-        ("Privacy and app", "About", "Version, environment, developer credits."),
+    # Build table rows: group-header rows span both columns with a
+    # background tint; tool rows have the tool name + a plain-language
+    # description (no jargon, short example where helpful).
+    tools_layout = [
+        # (type, text1, text2)  type="group" = header row; type="tool" = tool row
+        ("group", "Get started", ""),
+        ("tool", "Models", "Download and manage AI models that run on your computer. E.g., Gemma 3 4B for 8 GB RAM."),
+        ("group", "Prepare the draft", ""),
+        ("tool", "Text Cleaner", "Fix common text problems from copying out of PDFs or web pages. E.g., join broken lines, fix garbled characters."),
+        ("tool", "Citations", "Check that every citation in your draft matches a real reference. Paste your reference list or load a .bib file."),
+        ("group", "Understand the draft", ""),
+        ("tool", "Stats", "See word count, reading time, and how your draft compares to journal limits."),
+        ("tool", "Structure", "View your heading tree and find missing sections. Each section shows a short preview."),
+        ("group", "AI writing help", ""),
+        ("tool", "Abstract", "Generate a structured abstract (Background, Methods, Results, Conclusions) from your draft."),
+        ("tool", "Writing Coach", "Ask questions about your writing to help you improve it. Never rewrites your text."),
+        ("tool", "Chat", "Talk with a local AI about your manuscript. Attach a file to discuss specific sections."),
+        ("group", "Authenticity and style", ""),
+        ("tool", "Detector Literacy", "Learn how AI detectors work and why they often misfire, with published statistics."),
+        ("tool", "Risk Profile", "See if your writing shares surface features with AI text. Click any passage for details."),
+        ("tool", "Style Analysis", "Compare your draft's style to your own past writing to spot drifts."),
+        ("tool", "Fingerprint", "Build a profile of your writing style from multiple papers, then compare a draft to it."),
+        ("tool", "Voice Check", "Find places where your writing style suddenly shifts within the same document."),
+        ("group", "Evidence and compliance", ""),
+        ("tool", "Journal", "Automatically save timestamped snapshots of your draft as you work."),
+        ("tool", "Provenance", "Export a signed, tamper-proof record of how your document was revised."),
+        ("tool", "Appeal Letter", "Generate a professional letter citing the research literature if you are falsely accused."),
+        ("tool", "Disclosure", "Create an AI-use disclosure statement that matches your journal's policy."),
+        ("group", "Privacy and app", ""),
+        ("tool", "Privacy Audit", "Watch a live log of every file the app reads and every network call it makes."),
+        ("tool", "Saved Work", "Optionally save your drafts as plain text files on your device. Off by default."),
+        ("tool", "About", "Version, system info, and credits."),
     ]
 
     rows = []
-    for group, tool, desc in tools:
-        rows.append([
-            Paragraph(f"<b>{group}</b>", styles["feature_h"]),
-            Paragraph(f"<b>{tool}</b>", styles["feature_h"]),
-            Paragraph(desc, styles["feature_d"]),
-        ])
+    group_style_cmds = []
+    row_idx = 0
+    for entry_type, text1, text2 in tools_layout:
+        if entry_type == "group":
+            # Group header: single cell spanning both columns, with
+            # background tint and bold text.
+            rows.append([
+                Paragraph(f"<b>{text1}</b>", styles["feature_h"]),
+                "",
+            ])
+            # Span the first cell across both columns for this row
+            group_style_cmds.append(("SPAN", (0, row_idx), (1, row_idx)))
+            group_style_cmds.append(("BACKGROUND", (0, row_idx), (1, row_idx), C_TABLE_HDR))
+            group_style_cmds.append(("TOPPADDING", (0, row_idx), (1, row_idx), 4))
+            group_style_cmds.append(("BOTTOMPADDING", (0, row_idx), (1, row_idx), 4))
+            # No bottom border on group header rows (the tools below
+            # provide visual separation)
+            group_style_cmds.append(("LINEBELOW", (0, row_idx), (1, row_idx), 0, colors.white))
+        else:
+            rows.append([
+                Paragraph(f"<b>{text1}</b>", styles["feature_h"]),
+                Paragraph(text2, styles["feature_d"]),
+            ])
+        row_idx += 1
 
     content_w = A4[0] - 2 * 18 * mm
-    col_widths = [content_w * 0.22, content_w * 0.20, content_w * 0.58]
+    col_widths = [content_w * 0.22, content_w * 0.78]
     t = Table(rows, colWidths=col_widths, hAlign="LEFT")
     t.setStyle(TableStyle([
         ("VALIGN", (0,0), (-1,-1), "TOP"),
-        ("LEFTPADDING", (0,0), (-1,-1), 0),
+        ("LEFTPADDING", (0,0), (-1,-1), 4),
         ("RIGHTPADDING", (0,0), (-1,-1), 4),
-        ("TOPPADDING", (0,0), (-1,-1), 3),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 3),
-        ("LINEBELOW", (0,0), (-1,-2), 0.3, C_BORDER),
-    ]))
+        ("TOPPADDING", (0,0), (-1,-1), 1),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 1),
+        ("LINEBELOW", (0,0), (-1,-1), 0.3, C_BORDER),
+    ] + group_style_cmds))
     flow.append(t)
-    flow.append(Spacer(1, 3*mm))
+    flow.append(Spacer(1, 2*mm))
 
     # Privacy guarantee callout
     flow.append(Paragraph(
