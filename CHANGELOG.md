@@ -10,7 +10,24 @@ in a real submission. See [README.md](README.md) "Statistics and citations".
 
 ## [2.2.1] - 2026-09-30
 
-Four feature improvements based on user review of v2.2.0-pre.
+Four feature improvements based on user review of v2.2.0-pre, plus two
+critical hotfixes from the v2.2.1 release review.
+
+### Critical hotfixes
+- **Voice Check now shows excerpts for flagged passages.** The Voice
+  Consistency Checker previously flagged passages with stylistic
+  deviations but did not show the actual text, making it hard to
+  locate the issue in the draft. The `PassageMetrics` and
+  `Inconsistency` structs now carry `start_char`, `end_char`, and
+  `excerpt` fields (first ~15 words of the passage). Both tables now
+  display the excerpt.
+- **Chat is now a Socratic coach, never a ghostwriter.** The system
+  prompt absolutely prohibits rewriting, paraphrasing, or generating
+  any part of the manuscript. The model must respond with Socratic
+  questions (one to three per turn). Embedded techniques: active
+  recall, metacognition prompts, scaffolding, modeling thinking,
+  self-assessment, and specific actionable feedback phrased as
+  questions.
 
 ### Added
 - **User Guide PDF: app logo on cover + symmetric margins.** The cover

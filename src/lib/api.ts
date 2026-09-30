@@ -641,6 +641,14 @@ export interface ConsistencyReport {
     hedge_density: number;
     passive_ratio: number;
     flesch_reading_ease: number;
+    /** Character offset of the passage's first word in the original
+     * text. Lets the UI highlight the passage in the user's editor. */
+    start_char: number;
+    /** Character offset one past the passage's last word. */
+    end_char: number;
+    /** First ~15 words of the passage. Ends with "..." when the
+     * passage is longer than 15 words. */
+    excerpt: string;
   }[];
   inconsistencies: {
     passage_index: number;
@@ -651,6 +659,13 @@ export interface ConsistencyReport {
     deviation_pct: number;
     severity: string;
     note: string;
+    /** First ~15 words of the flagged passage. Lets the user see the
+     * problematic text directly in the inconsistency table. */
+    excerpt: string;
+    /** Character offset of the flagged passage's first word. */
+    start_char: number;
+    /** Character offset one past the flagged passage's last word. */
+    end_char: number;
   }[];
   overall_consistency_score: number;
   explanation: string;

@@ -63,12 +63,14 @@
   {#if report.inconsistencies.length > 0}
     <h2>Inconsistencies ({report.inconsistencies.length})</h2>
     <div class="card">
+      <div class="card-subtitle">Each row shows the flagged passage's metric, deviation, severity, and a short excerpt of the problematic text. Use the excerpt to locate the passage in your draft.</div>
       <table>
-        <thead><tr><th>Passage</th><th>Metric</th><th>Value</th><th>Average</th><th>Deviation</th><th>Severity</th><th>Note</th></tr></thead>
+        <thead><tr><th>Passage</th><th>Excerpt</th><th>Metric</th><th>Value</th><th>Average</th><th>Deviation</th><th>Severity</th><th>Note</th></tr></thead>
         <tbody>
           {#each report.inconsistencies as inc}
             <tr>
               <td style="font-size: var(--font-sm);">{inc.passage_label}</td>
+              <td style="font-size: var(--font-sm); max-width: 280px; font-style: italic; color: var(--text-muted);">{inc.excerpt}</td>
               <td><code>{inc.metric}</code></td>
               <td>{inc.value.toFixed(2)}</td>
               <td class="muted">{inc.document_average.toFixed(2)}</td>
@@ -86,12 +88,14 @@
 
   <h2>Passage metrics</h2>
   <div class="card">
+    <div class="card-subtitle">Each passage's stylistic metrics. The excerpt column shows the first ~15 words of each passage so you can identify it without scrolling back to your draft.</div>
     <table>
-      <thead><tr><th>Passage</th><th>Words</th><th>Avg sentence len</th><th>TTR</th><th>Hedge density</th><th>Passive ratio</th><th>Flesch</th></tr></thead>
+      <thead><tr><th>Passage</th><th>Excerpt</th><th>Words</th><th>Avg sentence len</th><th>TTR</th><th>Hedge density</th><th>Passive ratio</th><th>Flesch</th></tr></thead>
       <tbody>
         {#each report.passages as p}
           <tr>
             <td style="font-size: var(--font-sm);">{p.label}</td>
+            <td style="font-size: var(--font-sm); max-width: 280px; font-style: italic; color: var(--text-muted);">{p.excerpt}</td>
             <td>{p.word_count}</td>
             <td>{p.avg_sentence_length.toFixed(1)}</td>
             <td>{p.type_token_ratio.toFixed(3)}</td>

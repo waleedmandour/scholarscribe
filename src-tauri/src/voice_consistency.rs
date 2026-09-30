@@ -27,6 +27,17 @@ pub struct PassageMetrics {
     pub hedge_density: f64,
     pub passive_ratio: f64,
     pub flesch_reading_ease: f64,
+    /// Character offset of the passage's first word in the original
+    /// text. Lets the UI highlight the passage in the user's editor.
+    pub start_char: usize,
+    /// Character offset one past the passage's last word in the
+    /// original text.
+    pub end_char: usize,
+    /// First ~15 words of the passage, sliced from the original text
+    /// via start_char..end_char. Lets the user preview the flagged
+    /// passage without scrolling. Ends with "..." when the passage is
+    /// longer than 15 words.
+    pub excerpt: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -39,6 +50,15 @@ pub struct Inconsistency {
     pub deviation_pct: f64,
     pub severity: String,
     pub note: String,
+    /// First ~15 words of the flagged passage. Lets the user see the
+    /// problematic text directly in the inconsistency table without
+    /// cross-referencing the passage index.
+    pub excerpt: String,
+    /// Character offset of the flagged passage's first word in the
+    /// original text. For a future "Jump to passage" feature.
+    pub start_char: usize,
+    /// Character offset one past the flagged passage's last word.
+    pub end_char: usize,
 }
 
 pub fn check(text: &str) -> ConsistencyReport {
@@ -47,7 +67,8 @@ pub fn check(text: &str) -> ConsistencyReport {
     let mut inconsistencies = Vec::new();
 
     for (i, passage) in passages.iter().enumerate() {
-        let profile = style::analyze(passage);
+        let profile = style::analyze(&passage.text);
+        let excerpt = compute_excerpt(text, passage.start_char, passage.end_char);
         passage_metrics.push(PassageMetrics {
             label: format!("Section {} ({} words)", i + 1, profile.word_count),
             word_count: profile.word_count,
@@ -56,6 +77,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             hedge_density: profile.hedge_density,
             passive_ratio: profile.passive_ratio,
             flesch_reading_ease: profile.flesch_reading_ease,
+            start_char: passage.start_char,
+            end_char: passage.end_char,
+            excerpt,
         });
     }
 
@@ -100,6 +124,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             "avg_sentence_length",
             p.avg_sentence_length,
             avg_sentence_length,
+            &p.excerpt,
+            p.start_char,
+            p.end_char,
         );
         check_deviation(
             &mut inconsistencies,
@@ -108,6 +135,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             "type_token_ratio",
             p.type_token_ratio,
             avg_ttr,
+            &p.excerpt,
+            p.start_char,
+            p.end_char,
         );
         check_deviation(
             &mut inconsistencies,
@@ -116,6 +146,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             "hedge_density",
             p.hedge_density,
             avg_hedge,
+            &p.excerpt,
+            p.start_char,
+            p.end_char,
         );
         check_deviation(
             &mut inconsistencies,
@@ -124,6 +157,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             "passive_ratio",
             p.passive_ratio,
             avg_passive,
+            &p.excerpt,
+            p.start_char,
+            p.end_char,
         );
         check_deviation(
             &mut inconsistencies,
@@ -132,6 +168,9 @@ pub fn check(text: &str) -> ConsistencyReport {
             "flesch_reading_ease",
             p.flesch_reading_ease,
             avg_flesch,
+            &p.excerpt,
+            p.start_char,
+            p.end_char,
         );
     }
 
@@ -181,6 +220,9 @@ fn check_deviation(
     metric: &str,
     value: f64,
     average: f64,
+    excerpt: &str,
+    start_char: usize,
+    end_char: usize,
 ) {
     if average == 0.0 || !average.is_finite() {
         return;
@@ -225,24 +267,84 @@ fn check_deviation(
             deviation_pct: (deviation * 10.0).round() / 10.0,
             severity: severity.to_string(),
             note,
+            excerpt: excerpt.to_string(),
+            start_char,
+            end_char,
         });
     }
 }
 
-fn split_into_sections(text: &str, target_words: usize) -> Vec<String> {
-    let words: Vec<&str> = text.split_whitespace().collect();
+/// Build a short excerpt (first ~15 words) of the passage, sliced from
+/// the original text via start_char..end_char. Returns an empty string
+/// if the slice is out of bounds or not on a char boundary (e.g. the
+/// user edited the text after profiling).
+fn compute_excerpt(text: &str, start_char: usize, end_char: usize) -> String {
+    let slice = match text.get(start_char..end_char) {
+        Some(s) => s,
+        None => return String::new(),
+    };
+    let words: Vec<&str> = slice.split_whitespace().collect();
     if words.is_empty() {
-        return vec![text.to_string()];
+        return String::new();
     }
+    let head: Vec<&str> = words.iter().take(15).copied().collect();
+    let mut out = head.join(" ");
+    if words.len() > 15 {
+        out.push_str("...");
+    }
+    out
+}
+
+struct Passage {
+    text: String,
+    start_char: usize,
+    end_char: usize,
+}
+
+/// Split text into ~target_words word passages, tracking real
+/// character offsets in the original text so excerpts and future
+/// "Jump to passage" features work. Mirrors the pattern in
+/// risk_profiler.rs.
+fn split_into_sections(text: &str, target_words: usize) -> Vec<Passage> {
+    // Walk the text by whitespace runs, tracking both word boundaries
+    // and character offsets in the original text.
+    let mut words: Vec<(usize, usize)> = Vec::new(); // (start_byte, end_byte)
+    let mut in_word = false;
+    let mut word_start = 0;
+    for (i, c) in text.char_indices() {
+        if c.is_whitespace() {
+            if in_word {
+                words.push((word_start, i));
+                in_word = false;
+            }
+        } else if !in_word {
+            word_start = i;
+            in_word = true;
+        }
+    }
+    if in_word {
+        words.push((word_start, text.len()));
+    }
+
     let mut sections = Vec::new();
+    if words.is_empty() {
+        return sections;
+    }
+
     let mut start = 0;
     while start < words.len() {
         let end = (start + target_words).min(words.len());
-        sections.push(words[start..end].join(" "));
+        let passage_start_byte = words[start].0;
+        let passage_end_byte = words[end - 1].1;
+        // Safe slice: both offsets come from char_indices and are on
+        // char boundaries.
+        let passage_text = text[passage_start_byte..passage_end_byte].to_string();
+        sections.push(Passage {
+            text: passage_text,
+            start_char: passage_start_byte,
+            end_char: passage_end_byte,
+        });
         start = end;
-    }
-    if sections.is_empty() {
-        sections.push(text.to_string());
     }
     sections
 }
