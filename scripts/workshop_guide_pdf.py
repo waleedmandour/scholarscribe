@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a 2-page Workshop Quick Start Guide for ScholarScribe.
+"""Generate a 2-page Quick Start Guide for ScholarScribe.
 
 Designed for distribution at academic writing workshops. Two A4 pages:
   Page 1: Logo + title + what-is-ScholarScribe + 7 feature groups + privacy guarantee
@@ -98,7 +98,7 @@ def page1_decor(canvas, doc):
     # Footer text
     canvas.setFillColor(C_DIM)
     canvas.setFont(FONT_SANS, 7)
-    canvas.drawString(18*mm, 8*mm, "ScholarScribe v2.2.1 - Workshop Quick Start Guide")
+    canvas.drawString(18*mm, 8*mm, "ScholarScribe v2.2.1 - Quick Start Guide")
     canvas.drawRightString(A4[0]-18*mm, 8*mm, "Page 1 of 2")
     canvas.restoreState()
 
@@ -111,7 +111,7 @@ def page2_decor(canvas, doc):
     canvas.line(18*mm, 12*mm, A4[0]-18*mm, 12*mm)
     canvas.setFillColor(C_DIM)
     canvas.setFont(FONT_SANS, 7)
-    canvas.drawString(18*mm, 8*mm, "ScholarScribe v2.2.1 - Workshop Quick Start Guide")
+    canvas.drawString(18*mm, 8*mm, "ScholarScribe v2.2.1 - Quick Start Guide")
     canvas.drawRightString(A4[0]-18*mm, 8*mm, "Page 2 of 2")
     canvas.restoreState()
 
@@ -134,7 +134,7 @@ def build_page1(styles, logo_path):
         spaceBefore=0, spaceAfter=6, hAlign="CENTER"))
 
     flow.append(Paragraph("ScholarScribe", styles["title"]))
-    flow.append(Paragraph("Workshop Quick Start Guide", styles["subtitle"]))
+    flow.append(Paragraph("Quick Start Guide", styles["subtitle"]))
     flow.append(Paragraph("Designed and directed by Dr. Waleed Mandour", styles["author"]))
     flow.append(Paragraph("v2.2.1 - Windows - macOS - Linux - MIT License", styles["author"]))
     flow.append(Spacer(1, 4*mm))
@@ -151,28 +151,42 @@ def build_page1(styles, logo_path):
         styles["body"]))
     flow.append(Spacer(1, 3*mm))
 
-    # 7 feature groups in a 2-column table
+    # 20 tools in a 3-column table: Group | Tool | Brief explanation
     flow.append(Paragraph("The 20 tools at a glance (7 workflow phases)", styles["h2"]))
 
-    groups = [
-        ("Get started", "Models: install and manage local LLMs (8-64 GB RAM)."),
-        ("Prepare the draft", "Text Cleaner (24 rules for PDF/OCR artifacts). Citations (validate against BibTeX or pasted references)."),
-        ("Understand the draft", "Stats (word count, readability, journal targets). Structure (heading tree, missing sections, excerpts)."),
-        ("AI writing help", "Abstract Generator. Writing Coach (Socratic, never rewrites). Chat (attach manuscript, discuss with local LLM)."),
-        ("Authenticity and style", "Detector Literacy (how detectors fail, with cited stats). Risk Profile (4 proxy signals, click-to-expand panel). Style Analysis + Fingerprint + Voice Check (with excerpts of flagged passages)."),
-        ("Evidence and compliance", "Writing Journal (timestamped snapshots). Provenance (signed, hash-chained evidence). Appeal Letter. Disclosure (venue-compliant AI-use statements)."),
-        ("Privacy and app", "Privacy Audit (live log of every file read + HTTP call). Saved Work (opt-in local JSON). About. Font scale (A-/A/A+) and density toggle in sidebar footer."),
+    tools = [
+        ("Get started", "Models", "Install, import, and manage local LLMs (8-64 GB RAM)."),
+        ("Prepare the draft", "Text Cleaner", "Fix 24 PDF/OCR/web artifacts in .txt, .md, or .docx."),
+        ("Prepare the draft", "Citations", "Validate in-text citations against .bib or pasted references."),
+        ("Understand the draft", "Stats", "Word count, readability, journal-target comparison."),
+        ("Understand the draft", "Structure", "Heading tree, missing-section suggestions, per-section excerpts."),
+        ("AI writing help", "Abstract", "LLM-generated Background/Methods/Results/Conclusions abstract."),
+        ("AI writing help", "Writing Coach", "Socratic coaching on a paragraph or argument (never rewrites)."),
+        ("AI writing help", "Chat", "Local-only chat with file picker to attach manuscript for context."),
+        ("Authenticity and style", "Detector Literacy", "How AI detectors work and where they fail, with cited stats."),
+        ("Authenticity and style", "Risk Profile", "4 proxy signals per passage, click-to-expand detail panel."),
+        ("Authenticity and style", "Style Analysis", "Compare a draft to your own prior writing (12 metrics)."),
+        ("Authenticity and style", "Fingerprint", "Multi-paper stylistic fingerprint of your writing baseline."),
+        ("Authenticity and style", "Voice Check", "Flag within-document stylistic shifts with excerpts."),
+        ("Evidence and compliance", "Journal", "Auto-saved timestamped snapshots of your draft."),
+        ("Evidence and compliance", "Provenance", "Export signed, hash-chained evidence of your revision history."),
+        ("Evidence and compliance", "Appeal Letter", "Generate an evidence-based appeal if falsely flagged."),
+        ("Evidence and compliance", "Disclosure", "Generate venue-compliant AI-use disclosure statements."),
+        ("Privacy and app", "Privacy Audit", "Live log of every file read and outbound HTTP call."),
+        ("Privacy and app", "Saved Work", "Opt-in local JSON persistence (off by default)."),
+        ("Privacy and app", "About", "Version, environment, developer credits."),
     ]
 
     rows = []
-    for group_name, group_desc in groups:
+    for group, tool, desc in tools:
         rows.append([
-            Paragraph(f"<b>{group_name}</b>", styles["feature_h"]),
-            Paragraph(group_desc, styles["feature_d"]),
+            Paragraph(f"<b>{group}</b>", styles["feature_h"]),
+            Paragraph(f"<b>{tool}</b>", styles["feature_h"]),
+            Paragraph(desc, styles["feature_d"]),
         ])
 
     content_w = A4[0] - 2 * 18 * mm
-    col_widths = [content_w * 0.28, content_w * 0.72]
+    col_widths = [content_w * 0.22, content_w * 0.20, content_w * 0.58]
     t = Table(rows, colWidths=col_widths, hAlign="LEFT")
     t.setStyle(TableStyle([
         ("VALIGN", (0,0), (-1,-1), "TOP"),
@@ -209,7 +223,7 @@ def build_page2(styles):
          "Download from ollama.com/download (~150 MB). Run the installer. Look for the llama "
          "icon in your system tray."),
         ("Install ScholarScribe",
-         "Download the installer for your platform from the GitHub Releases page: .msi or .exe "
+         "Download the installer for your platform from waleedmandour.org/projects/scholarscribe: .msi or .exe "
          "(Windows), .dmg (macOS), .deb or .AppImage (Linux). The sidebar should show a green "
          "\"Ollama backend: running\" pill."),
         ("Download a model",
@@ -254,7 +268,7 @@ def build_page2(styles):
         '&nbsp;&nbsp;title = {ScholarScribe},<br/>'
         '&nbsp;&nbsp;version = {2.2.1},<br/>'
         '&nbsp;&nbsp;year = {2026},<br/>'
-        '&nbsp;&nbsp;url = {https://github.com/waleedmandour/scholarscribe},<br/>'
+        '&nbsp;&nbsp;url = {https://waleedmandour.org/projects/scholarscribe},<br/>'
         '&nbsp;&nbsp;doi = {10.5281/zenodo.20781043}<br/>'
         '}',
         styles["cite_bib"]))
@@ -272,13 +286,41 @@ def build_page2(styles):
         "docs/ETHICS.md for the full policy.",
         styles["body"]))
 
+    flow.append(Spacer(1, 3*mm))
+
+    # Contact and identifiers
+    flow.append(Paragraph("Contact and identifiers", styles["h2"]))
+    contact_rows = [
+        [Paragraph("<b>Author</b>", styles["feature_h"]),
+         Paragraph("Dr. Waleed Mandour", styles["feature_d"])],
+        [Paragraph("<b>Email</b>", styles["feature_h"]),
+         Paragraph('<link href="mailto:w.abumandour@squ.edu.om"><font color="#2a5bd7">w.abumandour@squ.edu.om</font></link>', styles["feature_d"])],
+        [Paragraph("<b>ORCID</b>", styles["feature_h"]),
+         Paragraph('<link href="https://orcid.org/0000-0002-9262-5993"><font color="#2a5bd7">0000-0002-9262-5993</font></link>', styles["feature_d"])],
+        [Paragraph("<b>DOI</b>", styles["feature_h"]),
+         Paragraph('<link href="https://doi.org/10.5281/zenodo.20781043"><font color="#2a5bd7">10.5281/zenodo.20781043</font></link>', styles["feature_d"])],
+        [Paragraph("<b>Website</b>", styles["feature_h"]),
+         Paragraph('<link href="https://waleedmandour.org/projects/scholarscribe"><font color="#2a5bd7">waleedmandour.org/projects/scholarscribe</font></link>', styles["feature_d"])],
+    ]
+    content_w = A4[0] - 2 * 18 * mm
+    ct = Table(contact_rows, colWidths=[content_w * 0.20, content_w * 0.80], hAlign="LEFT")
+    ct.setStyle(TableStyle([
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("LEFTPADDING", (0,0), (-1,-1), 0),
+        ("RIGHTPADDING", (0,0), (-1,-1), 4),
+        ("TOPPADDING", (0,0), (-1,-1), 2),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 2),
+        ("LINEBELOW", (0,0), (-1,-2), 0.3, C_BORDER),
+    ]))
+    flow.append(ct)
+
     flow.append(Spacer(1, 4*mm))
 
     # Footer
     flow.append(HRFlowable(width="100%", thickness=0.5, color=C_BORDER, spaceAfter=4))
     flow.append(Paragraph(
         "ScholarScribe v2.2.1 - (c) 2026 Dr. Waleed Mandour - MIT License - "
-        "github.com/waleedmandour/scholarscribe - DOI: 10.5281/zenodo.20781043",
+        "waleedmandour.org/projects/scholarscribe - DOI: 10.5281/zenodo.20781043",
         styles["footer"]))
 
     return flow
@@ -294,7 +336,7 @@ def main():
     ]
     logo_path = next((p for p in logo_candidates if p.exists()), None)
 
-    output = Path("/home/z/my-project/download/ScholarScribe-Workshop-Guide.pdf")
+    output = Path("/home/z/my-project/download/ScholarScribe-Quick-Guide.pdf")
     output.parent.mkdir(parents=True, exist_ok=True)
 
     styles = build_styles()
@@ -304,9 +346,9 @@ def main():
         pagesize=A4,
         leftMargin=18*mm, rightMargin=18*mm,
         topMargin=14*mm, bottomMargin=14*mm,
-        title="ScholarScribe Workshop Quick Start Guide",
+        title="ScholarScribe Quick Start Guide",
         author="Dr. Waleed Mandour",
-        subject="ScholarScribe v2.2.1 Workshop Guide",
+        subject="ScholarScribe v2.2.1 Quick Guide",
         creator="ScholarScribe build pipeline",
     )
 
