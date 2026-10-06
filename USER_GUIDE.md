@@ -13,7 +13,7 @@ ScholarScribe helps you draft, clean, validate, and disclose your manuscript usi
 2. **Install ScholarScribe**, download the installer for your platform from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases): `.msi`/`.exe` (Windows), `.dmg` (macOS), or `.deb`/`.rpm`/`.AppImage` (Linux), and run it. ScholarScribe appears in your Start menu, Applications folder, or app launcher.
 3. **Launch ScholarScribe.** The sidebar should show a green **Ollama backend: running** pill. If it's red, start the Ollama service from your tray.
 
-> **Build from source** (optional): `git clone … && npm install && npm run tauri build`. Requires Rust 1.77+, Node 18+, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+> **Build from source** (optional): `git clone … && npm install && npm run tauri build`. Requires Rust 1.85+, Node 18+, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ## 2. Download a model (1 minute)
 
@@ -28,7 +28,7 @@ Open the **Models** tab. The top card shows your CPU and RAM. Pick a model that 
 
 Click **Download** and wait 2-15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…**: ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
 
-## 3. The 20 tabs at a glance
+## 3. The 21 tabs at a glance
 
 The sidebar is organized into 7 workflow phases that follow the order you'd typically use while writing a manuscript:
 

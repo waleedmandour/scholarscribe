@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Models from "./components/Models.svelte";
   import AITextCleaner from "./components/AITextCleaner.svelte";
+  import Proofread from "./components/Proofread.svelte";
   import CitationManager from "./components/CitationManager.svelte";
   import DocumentStats from "./components/DocumentStats.svelte";
   import StructureAnalyzer from "./components/StructureAnalyzer.svelte";
@@ -24,7 +25,7 @@
   import { api } from "./lib/api";
   import { openTour } from "./lib/onboarding";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "proofread" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -85,6 +86,7 @@
     { id: "models", label: "Models", icon: "M", group: "Get started" },
     // Prepare the draft
     { id: "cleaner", label: "Text Cleaner", icon: "T", group: "Prepare the draft" },
+    { id: "proofread", label: "Proofread", icon: "P", group: "Prepare the draft" },
     { id: "citations", label: "Citations", icon: "C", group: "Prepare the draft" },
     // Understand the draft
     { id: "stats", label: "Stats", icon: "#", group: "Understand the draft" },
@@ -262,6 +264,8 @@
       <Models {ollamaOk} on:changed={refreshStatus} />
     {:else if active === "cleaner"}
       <AITextCleaner />
+    {:else if active === "proofread"}
+      <Proofread />
     {:else if active === "citations"}
       <CitationManager />
     {:else if active === "stats"}

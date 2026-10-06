@@ -146,13 +146,13 @@ def build_page1(styles, logo_path):
         "It runs entirely on your device with zero telemetry, no cloud calls, and no paid APIs. "
         "It helps you draft, clean, validate, and disclose your manuscript using open LLMs "
         "(Gemma 3, Qwen 3, Phi-4, DeepSeek R1, Llama 3.3) that run locally via Ollama. "
-        "The sidebar organizes 20 tools into 7 workflow phases, from getting started to "
+        "The sidebar organizes 21 tools into 7 workflow phases, from getting started to "
         "privacy and app management.",
         styles["body"]))
     flow.append(Spacer(1, 2*mm))
 
-    # 20 tools with group headers appearing once, simpler descriptions
-    flow.append(Paragraph("The 20 tools at a glance (7 workflow phases)", styles["h2"]))
+    # 21 tools with group headers appearing once, simpler descriptions
+    flow.append(Paragraph("The 21 tools at a glance (7 workflow phases)", styles["h2"]))
 
     # Build table rows: group-header rows span both columns with a
     # background tint; tool rows have the tool name + a plain-language

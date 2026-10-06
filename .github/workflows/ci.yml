@@ -58,3 +58,15 @@ jobs:
       - name: cargo check
         working-directory: src-tauri
         run: cargo check
+      - name: cargo test
+        working-directory: src-tauri
+        run: cargo test --lib
+      - name: Proofread invariant checks
+        run: bash scripts/check-proofread-invariants.sh
+      - name: MSRV check (Rust 1.85)
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: rustfmt, clippy
+      - name: cargo check on MSRV (1.85)
+        working-directory: src-tauri
+        run: cargo +1.85.0 check

@@ -140,6 +140,156 @@ fn extract_text_from_ooxml(xml: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 2a + 2b (v2.3.0): text extraction WITH paragraph boundaries AND
+// run-span offset map. ParagraphMap: char -> paragraph index (2a).
+// RunSpan: char -> <w:t> byte range in document.xml (2b).
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone)]
+pub struct ParagraphMap {
+    pub paragraph_starts: Vec<usize>,
+}
+
+impl ParagraphMap {
+    pub fn paragraph_for_char(&self, char_offset: usize) -> Option<usize> {
+        let starts = &self.paragraph_starts;
+        if starts.is_empty() || char_offset < starts[0] {
+            return None;
+        }
+        let mut lo = 0usize;
+        let mut hi = starts.len();
+        while lo + 1 < hi {
+            let mid = (lo + hi) / 2;
+            if starts[mid] <= char_offset {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        Some(lo)
+    }
+    pub fn paragraph_count(&self) -> usize {
+        self.paragraph_starts.len()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RunSpan {
+    pub char_start: usize,
+    pub char_end: usize,
+    pub xml_text_start: usize,
+    pub xml_text_end: usize,
+}
+
+pub fn extract_text_with_runs(path: &Path) -> Result<(String, ParagraphMap, Vec<RunSpan>), String> {
+    let (_, document_xml) = read_document_xml(path).map_err(|e| e.to_string())?;
+    Ok(extract_text_and_runs_from_ooxml(&document_xml))
+}
+
+pub fn extract_text_with_paragraphs(path: &Path) -> Result<(String, ParagraphMap), String> {
+    let (text, map, _) = extract_text_with_runs(path)?;
+    Ok((text, map))
+}
+
+fn extract_text_and_runs_from_ooxml(xml: &str) -> (String, ParagraphMap, Vec<RunSpan>) {
+    let mut out = String::with_capacity(xml.len() / 4);
+    let mut paragraph_starts: Vec<usize> = Vec::new();
+    let mut run_spans: Vec<RunSpan> = Vec::new();
+    let mut in_text = false;
+    let mut current_text = String::new();
+    let mut chars = xml.chars().peekable();
+    let mut current_paragraph_started = false;
+    let mut current_run_xml_text_start: usize = 0;
+    let mut current_run_char_start: usize = 0;
+    let mut byte_pos: usize = 0;
+
+    while let Some(c) = chars.next() {
+        if c == '<' {
+            let tag_start_byte = byte_pos;
+            byte_pos += 1;
+            let mut tag = String::new();
+            let mut closing = false;
+            if chars.peek() == Some(&'/') {
+                chars.next();
+                byte_pos += 1;
+                closing = true;
+            }
+            while let Some(&ch) = chars.peek() {
+                if ch == '>' || ch == ' ' || ch == '/' {
+                    break;
+                }
+                tag.push(ch);
+                chars.next();
+                byte_pos += ch.len_utf8();
+            }
+            while let Some(&ch) = chars.peek() {
+                chars.next();
+                byte_pos += ch.len_utf8();
+                if ch == '>' {
+                    break;
+                }
+            }
+            if tag == "w:t" {
+                if !closing {
+                    in_text = true;
+                    current_text.clear();
+                    current_run_xml_text_start = byte_pos;
+                    current_run_char_start = out.chars().count();
+                    if !current_paragraph_started {
+                        if paragraph_starts.is_empty() {
+                            paragraph_starts.push(0);
+                        } else if paragraph_starts.last() != Some(&out.chars().count()) {
+                            paragraph_starts.push(out.chars().count());
+                        }
+                        current_paragraph_started = true;
+                    }
+                } else {
+                    if in_text {
+                        let xml_text_end = tag_start_byte;
+                        let char_start = current_run_char_start;
+                        let char_end_after = char_start + current_text.chars().count();
+                        run_spans.push(RunSpan {
+                            char_start,
+                            char_end: char_end_after,
+                            xml_text_start: current_run_xml_text_start,
+                            xml_text_end,
+                        });
+                        out.push_str(&current_text);
+                        current_text.clear();
+                    }
+                    in_text = false;
+                }
+            } else if tag == "w:p" && closing {
+                if !out.is_empty() {
+                    out.push_str("\n\n");
+                }
+                current_paragraph_started = false;
+            } else if tag == "w:tab" {
+                if !in_text {
+                    out.push('\t');
+                }
+            } else if tag == "w:br" {
+                if !in_text {
+                    out.push('\n');
+                }
+            }
+        } else if in_text {
+            current_text.push(c);
+            byte_pos += c.len_utf8();
+        } else {
+            byte_pos += c.len_utf8();
+        }
+    }
+    while out.ends_with('\n') {
+        out.pop();
+    }
+    if paragraph_starts.is_empty() {
+        paragraph_starts.push(0);
+    }
+    (out, ParagraphMap { paragraph_starts }, run_spans)
+}
+
+// ---------------------------------------------------------------------------
 // Writing Provenance. Track Changes extraction (v2.1.0)
 // ---------------------------------------------------------------------------
 

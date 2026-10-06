@@ -21,7 +21,7 @@
 
 <div class="callout info" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
   <div>
-    <strong>New here?</strong> Take the 5-step interactive tour to learn the essentials in about a minute.
+    <strong>New here?</strong> Take the 6-step interactive tour to learn the essentials in about a minute.
   </div>
   <button on:click={openTour} style="flex: 0 0 auto;">
     ✦ Walk me through the app
@@ -55,7 +55,7 @@
 <div class="card">
   <p style="margin: 0 0 12px;">
     ScholarScribe helps researchers who are writing their own manuscripts to work with AI assistance
-    transparently and on their own device. Five modules:
+    transparently and on their own device. Six modules:
   </p>
   <ul style="margin: 0; padding-left: 20px; line-height: 1.7;">
     <li><strong>Models</strong>, Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
@@ -108,6 +108,7 @@
     <li><a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>: the local LLM runtime that does the heavy lifting of model management.</li>
     <li><a href="https://svelte.dev" target="_blank" rel="noopener">Svelte</a>: the frontend framework.</li>
     <li>The open LLM authors: Google (Gemma), Alibaba (Qwen), Meta (Llama), Microsoft (Phi).</li>
+    <li><a href="https://github.com/Automattic/harper" target="_blank" rel="noopener">Harper</a>: the offline, rule-based grammar engine used by the Proofread tab (Apache-2.0).</li>
     <li>The detector-evaluation research community, especially Liang et al. (2023) and Weber-Wulff et al. (2023), whose work the Detector Literacy module is built on.</li>
   </ul>
 </div>

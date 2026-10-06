@@ -600,6 +600,22 @@ export const api = {
       outputPath,
       baselineText: baselineText ?? null,
     }),
+  grammarCheck: (text: string, format?: TextFormat, dialect?: DialectName, ignoredRules?: number[], personalWords?: string[]) =>
+    invoke<CheckResult>("grammar_check", { args: { text, format: format ?? "plain", dialect: dialect ?? "american", ignored_rules: ignoredRules ?? [], personal_words: personalWords ?? [] } }),
+  grammarCheckDocx: (path: string, dialect?: DialectName, ignoredRules?: number[], personalWords?: string[]) =>
+    invoke<DocxCheckResult>("grammar_check_docx", { args: { path, dialect: dialect ?? "american", ignored_rules: ignoredRules ?? [], personal_words: personalWords ?? [] } }),
+  grammarApplyDocxFix: (inputPath: string, outputPath: string, finding: LintFinding, replacement: string) =>
+    invoke<DocxApplyResult>("grammar_apply_docx_fix", { args: { input_path: inputPath, output_path: outputPath, finding, replacement } }),
+  grammarRecordDecision: (action: DecisionAction, tier: Tier, ruleKind: RuleKind, ruleId: number, charsChanged?: number) =>
+    invoke<void>("grammar_record_decision", { args: { action, tier, rule_kind: ruleKind, rule_id: ruleId, chars_changed: charsChanged ?? 0 } }),
+  grammarLedgerExport: () => invoke<LedgerSummary>("grammar_ledger_export"),
+  grammarEngineInfo: () => invoke<EngineInfo>("grammar_engine_info"),
+  grammarSessionReset: () => invoke<void>("grammar_session_reset"),
+  grammarTier2Enable: () => invoke<void>("grammar_tier2_enable"),
+  grammarTier2Disable: () => invoke<void>("grammar_tier2_disable"),
+  grammarTier2Status: () => invoke<boolean>("grammar_tier2_status"),
+  grammarTier2Suggest: (sentence: string, dialect: DialectName, model: string) =>
+    invoke<Tier2Result>("grammar_tier2_suggest", { args: { sentence, dialect, model } }),
 
 };
 
@@ -872,4 +888,65 @@ export interface GoogleImportAnalysis {
   total_chars_added: number;
   total_chars_removed: number;
   note: string;
+}
+
+// v2.3.0+ — Proofread tab (Tier 1 + Phase 2a/2b + Phase 3)
+
+export type Tier = "harper" | "local_llm";
+export type RuleKind = "spelling" | "grammar" | "punctuation" | "style" | "consistency" | "typo" | "misc";
+export type DecisionAction = "accepted" | "rejected" | "ignored" | "deferred";
+export type DialectName = "american" | "british" | "australian" | "canadian" | "indian";
+export type TextFormat = "plain" | "markdown";
+
+export interface MaskSpan { start: number; end: number; }
+export interface Suggestion { replacement: string; label: string; }
+export interface LintFinding {
+  start_char: number; end_char: number;
+  start_utf16: number; end_utf16: number;
+  tier: Tier; rule_kind: RuleKind; rule_id: number;
+  explanation: string; original_text: string;
+  suggestions: Suggestion[];
+}
+export interface EngineInfo { name: string; version: string; tier: Tier; }
+export interface CheckResult {
+  engine: EngineInfo; dialect: DialectName;
+  lints: LintFinding[]; masked_spans: MaskSpan[]; total_chars: number;
+}
+export interface LedgerFinding {
+  sentence_index: number; tier: Tier; rule_kind: RuleKind;
+  rule_id: number; suggestion_count: number;
+}
+export interface LedgerDecision {
+  action: DecisionAction; tier: Tier; rule_kind: RuleKind;
+  rule_id: number; chars_changed: number;
+}
+export interface LedgerSummary {
+  session_id: number; generated_at: number; generator: string;
+  engine_name: string; engine_version: string; dialect: DialectName;
+  tier1_enabled: boolean; tier2_enabled: boolean;
+  sentences_scanned: number; chars_scanned: number;
+  findings: LedgerFinding[]; decisions: LedgerDecision[];
+  accepted_count: number; rejected_count: number;
+  ignored_count: number; deferred_count: number;
+  total_chars_changed: number; mask_count: number;
+}
+export interface DocxFinding extends LintFinding {
+  paragraph_index: number; paragraph_count: number;
+  can_apply_in_place: boolean; apply_blocker: string;
+}
+export interface DocxCheckResult {
+  engine: EngineInfo; dialect: DialectName;
+  findings: DocxFinding[]; masked_spans: MaskSpan[];
+  total_chars: number; paragraph_count: number; source_path: string;
+}
+export interface DocxApplyResult {
+  output_path: string; applied_count: number;
+  skipped_count: number; skipped_summary: { reason: string; count: number }[];
+}
+export interface Tier2Fix {
+  kind: "spelling" | "grammar" | "punctuation";
+  description: string;
+}
+export interface Tier2Result {
+  fixes: Tier2Fix[]; model: string; was_clean: boolean;
 }

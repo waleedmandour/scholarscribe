@@ -18,6 +18,8 @@ mod docx_reading;
 mod google_docs;
 mod google_docs_commands;
 mod google_docs_net;
+mod grammar;
+mod grammar_commands;
 mod ollama;
 mod persistence;
 mod plain_ref_parser;
@@ -28,6 +30,8 @@ mod structure_analyzer;
 mod style;
 mod style_fingerprint;
 mod text_cleaner;
+mod text_masking;
+mod tier2;
 mod voice_consistency;
 mod writing_journal;
 
@@ -43,6 +47,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(ollama::OllamaState::default())
         .manage(audit::AuditLog::default())
+        .manage(grammar_commands::ProofreadSession::default())
         .setup(|app| {
             log::info!(
                 "ScholarScribe v{} starting up. All processing is local.",
@@ -123,6 +128,20 @@ pub fn run() {
             google_docs_commands::google_disconnect,
             google_docs_commands::google_import_doc,
             google_docs_commands::google_export_zip,
+            // Proofread (v2.3.0). Tier 1 rule-based grammar checking via harper-core.
+            // Phase 1: text/.md. Phase 2a: .docx lint-only. Phase 2b: .docx apply-fixes.
+            // Phase 3 (gated): Tier 2 local-LLM minimal-edit suggestions.
+            grammar_commands::grammar_check,
+            grammar_commands::grammar_check_docx,
+            grammar_commands::grammar_apply_docx_fix,
+            grammar_commands::grammar_record_decision,
+            grammar_commands::grammar_ledger_export,
+            grammar_commands::grammar_engine_info,
+            grammar_commands::grammar_session_reset,
+            grammar_commands::grammar_tier2_enable,
+            grammar_commands::grammar_tier2_disable,
+            grammar_commands::grammar_tier2_status,
+            grammar_commands::grammar_tier2_suggest,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");

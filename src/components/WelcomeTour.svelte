@@ -3,7 +3,7 @@
   import { showTour, completeTour, closeTour } from "../lib/onboarding";
 
   type TabId =
-    | "models" | "cleaner" | "citations" | "stats" | "structure"
+    | "models" | "cleaner" | "proofread" | "citations" | "stats" | "structure"
     | "abstract" | "risk" | "consistency" | "journal" | "appeal"
     | "fingerprint" | "coach" | "style" | "provenance" | "chat"
     | "disclosure" | "literacy" | "audit" | "saved" | "about";
@@ -27,7 +27,7 @@
       icon: "📋",
     },
     {
-      title: "20 tools at your service",
+      title: "21 tools at your service",
       icon: "▦",
     },
     {
@@ -47,6 +47,7 @@
       category: "Writing",
       items: [
         { id: "cleaner", name: "Text Cleaner", desc: "Fix 24 PDF/OCR/web artifacts" },
+        { id: "proofread", name: "Proofread", desc: "Rule-based grammar, on-device" },
         { id: "coach",   name: "Writing Coach", desc: "Local-LLM paragraph coaching" },
         { id: "chat",    name: "Chat",          desc: "Local-only chat with guardrails" },
         { id: "abstract",name: "Abstract",      desc: "Generate a structured abstract" },
@@ -196,7 +197,7 @@
             About tab.
           </p>
           <div class="tour-meta">
-            <span class="tag">v2.1.0</span>
+            <span class="tag">v2.2.1</span>
             <span class="tag">MIT License</span>
             <span class="tag green">Local-only</span>
           </div>
@@ -264,7 +265,7 @@
           <div class="tour-icon-big">▦</div>
           <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
-            The sidebar organizes 20 tools into 4 categories. <strong>Click any cell
+            The sidebar organizes 21 tools into 4 categories. <strong>Click any cell
             below to jump straight to that tab.</strong>
           </p>
           <div class="tour-grid">
