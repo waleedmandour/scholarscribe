@@ -9,11 +9,12 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 20 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 21 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)*, turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts, never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner, 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
+- **Proofread**: Rule-based spelling, grammar, and punctuation checking via Harper (Tier 1, on-device, no AI model). Phase 2b: apply fixes to .docx in place (single-run only). Phase 3 (gated, off by default): optional local-LLM minimal-edit suggestions via Ollama. Every change is the author's decision.
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file, lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
@@ -110,7 +111,7 @@ sudo dnf install ./ScholarScribe-2.2.1-1.x86_64.rpm
 
 **Option B, build from source**
 
-Requires Rust 1.77+, Node.js 18+, and the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform (Microsoft Visual Studio C++ Build Tools + WebView2 on Windows; Xcode Command Line Tools on macOS; `libwebkit2gtk-4.1-dev` and friends on Linux).
+Requires Rust 1.85+, Node.js 18+, and the [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform (Microsoft Visual Studio C++ Build Tools + WebView2 on Windows; Xcode Command Line Tools on macOS; `libwebkit2gtk-4.1-dev` and friends on Linux).
 
 ```bash
 git clone https://github.com/waleedmandour/scholarscribe.git
@@ -131,7 +132,7 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 20 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 21 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 

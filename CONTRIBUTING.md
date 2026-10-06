@@ -26,7 +26,7 @@ Thanks for your interest in contributing. ScholarScribe is a small project with 
 
 ## Development setup
 
-Prerequisites: Rust 1.77+, Node.js 18+, Tauri 2 prerequisites (see <https://v2.tauri.app/start/prerequisites/>).
+Prerequisites: Rust 1.85+, Node.js 18+, Tauri 2 prerequisites (see <https://v2.tauri.app/start/prerequisites/>).
 
 ```powershell
 git clone https://github.com/waleedmandour/scholarscribe.git

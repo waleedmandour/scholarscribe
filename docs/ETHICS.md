@@ -33,6 +33,7 @@ The following are in scope and welcome as contributions:
 
 - Local LLM running (any open model Ollama supports).
 - Writing aids: paraphrasing the author's own sentences, suggesting alternative phrasings, critique, outlining.
+- **Proofread (v2.3.0):** rule-based spelling, grammar, and punctuation checking via the Harper engine (Tier 1, on-device, no AI model). Phase 2b: in-place .docx apply-fixes for single-run edits; cross-run edits flagged for manual review. Phase 3 (gated, off by default): optional local-LLM minimal-edit suggestions via Ollama — one sentence at a time, temperature 0, dedicated system prompt that forbids rewriting (NOT inherited from Chat/WritingCoach). Every change is the author's decision — nothing is applied automatically. No detector-score feedback loop, no style-distance metric, no coupling with Risk/Style/Fingerprint/Voice modules. The correction ledger contains counts and enumerated rule IDs only — no user text, not even hashes.
 - Style analysis comparing a draft to the author's own prior writing.
 - Disclosure-statement generation for any venue with a public AI-use policy.
 - Educational content about AI detectors and their limitations.
