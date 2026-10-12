@@ -337,6 +337,7 @@ pub fn provenance_export_zip(
     path: String,
     output_path: String,
     baseline_text: Option<String>,
+    include_style_analysis: Option<bool>,
 ) -> Result<ProvenanceExportResult, String> {
     require_provenance_enabled(&app)?;
     let p = std::path::PathBuf::from(&path);
@@ -373,6 +374,7 @@ pub fn provenance_export_zip(
         baseline_text,
         &output_path,
         "word_docx",
+        include_style_analysis.unwrap_or(false),
     )
     .map(|mut r| {
         r.anomalies.extend(grouping.anomalies);
@@ -393,6 +395,7 @@ pub(crate) fn finalize_export(
     baseline_text: Option<String>,
     output_path: &str,
     source: &str,
+    include_style_analysis: bool,
 ) -> Result<ProvenanceExportResult, String> {
     // 2. Style consistency + citation inventory (aggregate metrics only).
     let (baseline, baseline_source): (String, String) = match baseline_text {
@@ -477,11 +480,20 @@ pub(crate) fn finalize_export(
     .map_err(|e| e.to_string())?;
     let citation_json =
         serde_json::to_string_pretty(&citation_validation).map_err(|e| e.to_string())?;
-    let readme = build_readme(&fingerprint, manifest.sessions.len(), source);
+    let readme = build_readme(
+        &fingerprint,
+        manifest.sessions.len(),
+        source,
+        include_style_analysis,
+    );
     let zip_bytes = build_export_zip(
         &manifest_json,
         provenance::DISCLOSURE_TXT,
-        &style_json,
+        if include_style_analysis {
+            Some(style_json.as_str())
+        } else {
+            None
+        },
         &citation_json,
         &readme,
     )
@@ -509,11 +521,21 @@ pub(crate) fn finalize_export(
     })
 }
 
-fn build_readme(fingerprint: &str, session_count: usize, source: &str) -> String {
+fn build_readme(
+    fingerprint: &str,
+    session_count: usize,
+    source: &str,
+    include_style_analysis: bool,
+) -> String {
     let source_line = match source {
         "word_docx" => "Source: Microsoft Word Track Changes history (.docx).",
         "google_docs" => "Source: Google Drive revision history (read-only import).",
         other => return format!("Source: {other}"),
+    };
+    let style_file_line: String = if include_style_analysis {
+        "\nstyle_analysis.json       Aggregate style-consistency metrics (descriptive, informational; NOT evidence, opt-in).".to_string()
+    } else {
+        String::new()
     };
     format!(
         "\
@@ -525,9 +547,8 @@ Files in this package
 manifest.json             Signed record of the document's tracked-change
                           sessions (hashes + counts, no document text).
 disclosure.txt            What this package is and is not. Read first.
-style_analysis.json       Aggregate style-consistency metrics (descriptive).
 citation_validation.json  Inventory of citation-like patterns (descriptive).
-README.txt                This file.
+README.txt                This file.{style_file_line}
 
 {source_line}
 

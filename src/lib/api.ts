@@ -579,11 +579,12 @@ export const api = {
     invoke<PublicKeyExport>("provenance_export_public_key", { outputPath }),
   provenanceAnalyzeDocx: (path: string) =>
     invoke<ProvenanceAnalysis>("provenance_analyze_docx", { path }),
-  provenanceExportZip: (path: string, outputPath: string, baselineText?: string | null) =>
+  provenanceExportZip: (path: string, outputPath: string, baselineText?: string | null, includeStyleAnalysis?: boolean) =>
     invoke<ProvenanceExportResult>("provenance_export_zip", {
       path,
       outputPath,
       baselineText: baselineText ?? null,
+      includeStyleAnalysis: includeStyleAnalysis ?? false,
     }),
   provenanceInterpretScore: (score: number) =>
     invoke<string>("provenance_interpret_score", { score }),
@@ -593,11 +594,12 @@ export const api = {
   googleDisconnect: () => invoke<void>("google_disconnect"),
   googleImportDoc: (clientId: string, docRef: string) =>
     invoke<GoogleImportAnalysis>("google_import_doc", { clientId, docRef }),
-  googleExportZip: (clientId: string, docRef: string, outputPath: string, baselineText?: string | null) =>
+  googleExportZip: (clientId: string, docRef: string, outputPath: string, baselineText?: string | null, includeStyleAnalysis?: boolean) =>
     invoke<ProvenanceExportResult>("google_export_zip", {
       clientId,
       docRef,
       outputPath,
+      includeStyleAnalysis: includeStyleAnalysis ?? false,
       baselineText: baselineText ?? null,
     }),
 

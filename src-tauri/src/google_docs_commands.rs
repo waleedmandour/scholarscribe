@@ -461,6 +461,7 @@ pub async fn google_export_zip(
     doc_ref: String,
     output_path: String,
     baseline_text: Option<String>,
+    include_style_analysis: Option<bool>,
 ) -> Result<ProvenanceExportResult, String> {
     require_provenance_enabled(&app)?;
     let file_id = google_docs::parse_google_doc_id(&doc_ref)
@@ -483,5 +484,6 @@ pub async fn google_export_zip(
         baseline_text,
         &output_path,
         "google_docs",
+        include_style_analysis.unwrap_or(false),
     )
 }
