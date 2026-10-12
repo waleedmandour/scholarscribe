@@ -216,7 +216,7 @@ fn compute_passage_metrics(text: &str) -> PassageMetrics {
 
     // Sentence splitting and length measurement.
     let sentences: Vec<&str> = text
-        .split(|c: char| c == '.' || c == '!' || c == '?')
+        .split(['.', '!', '?'])
         .filter(|s| !s.trim().is_empty())
         .collect();
     let sentence_lengths: Vec<usize> = sentences
