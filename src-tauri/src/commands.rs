@@ -120,7 +120,7 @@ pub async fn read_text_file(
         "txt" | "md" | "markdown" | "tex" | "rst" | "csv" | "json" => {
             tokio::fs::read_to_string(&path)
                 .await
-                .map(|content| {
+                .inspect(|content| {
                     audit.record(
                         "file_read",
                         &args.path,
@@ -128,7 +128,6 @@ pub async fn read_text_file(
                         content.len() as u64,
                         0,
                     );
-                    content
                 })
                 .map_err(|e| format!("Failed to read {}: {}", path.display(), e))
         }
@@ -844,9 +843,9 @@ fn is_valid_entity(s: &str) -> bool {
 }
 
 fn utf8_char_len(first_byte: u8) -> usize {
-    if first_byte < 0x80 {
-        1
-    } else if first_byte < 0xC0 {
+    // Bytes 0x00-0xBF count as length 1 (ASCII plus stray continuation bytes),
+    // then the standard 2/3/4-byte lead ranges.
+    if first_byte < 0xC0 {
         1
     } else if first_byte < 0xE0 {
         2

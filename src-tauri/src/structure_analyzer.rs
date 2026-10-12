@@ -111,8 +111,6 @@ fn extract_docx_headings(xml: &str) -> Vec<Heading> {
         let level = if style.starts_with("heading") {
             let digits: String = style.chars().filter(|c| c.is_ascii_digit()).collect();
             digits.parse::<u8>().unwrap_or(0)
-        } else if style == "title" {
-            0
         } else {
             0
         };

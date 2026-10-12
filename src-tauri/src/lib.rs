@@ -21,7 +21,10 @@ mod google_docs_net;
 mod ollama;
 mod persistence;
 mod plain_ref_parser;
-mod provenance;
+/// Public so the cross-language verifier fixture (examples/gen_fixture.rs
+/// and tests/cross_language.rs, mirrored by scripts/cross-verify-fixture.mjs)
+/// can build and verify manifests. Not used by the frontend directly.
+pub mod provenance;
 mod provenance_commands;
 mod risk_profiler;
 mod structure_analyzer;

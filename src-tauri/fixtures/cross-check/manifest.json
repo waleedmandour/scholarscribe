@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "document_hash": "sha256:fixturedocumenthash000000000000000000000000000000000000000000000000",
+  "author_key_fingerprint": "ed25519:c4354ac51c984d50070633d2cbde14c478a0888b23f1205d2dd8cbfd0463958c",
+  "sessions": [
+    {
+      "session_id": "ac0293fc-4d5d-44e2-a850-cdc3f8d6e38b",
+      "author": "Fixture Author",
+      "start_time": 1758000000,
+      "end_time": 1758100000,
+      "snapshot_hash": "sha256:f2a1ddacfabb4588a797f63ea4391bb45e303b0a6e9375484a21babb7a3f0fba",
+      "chars_added": 271,
+      "chars_removed": 53,
+      "largest_insertion": 165,
+      "prev_record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "record_hash": "sha256:3906b31801505ab7dacc9de93dae5c88acc6eceb643e1ed8cf20c8df1e4ee2be"
+    }
+  ],
+  "style_consistency": {
+    "distance_score": 0.1234,
+    "baseline_source": "user_reference_text",
+    "metrics_compared": [
+      "avg_sentence_length",
+      "hedge_density"
+    ],
+    "interpretation": "Fixture interpretation text."
+  },
+  "signature": "ed25519:f72bceb1ee7a8282961ba2bd595f42b7a73e1080a2b713dd712aa936be7d8b9e35782402948e47d8f3eae8ddeb8c71030d85fde382ebebb4522f8b129dbd350f",
+  "generated_at": 1758200000,
+  "generator": "scholarscribe-fixture-1.0",
+  "revision_count": 3
+}

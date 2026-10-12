@@ -1,0 +1,8 @@
+{
+  "generated_at": 1758200000,
+  "generator": "cargo run --example gen_fixture (src-tauri/examples/gen_fixture.rs)",
+  "key": "fixed 32-byte seed compiled into the example; fixture data is public by construction",
+  "manifest_payload_label": "SCHOLARSCRIBE-MANIFEST-v1",
+  "purpose": "Deterministic Rust-vs-JS verifier cross-check fixture (work order T1.7, D8)",
+  "sessions": 1
+}
