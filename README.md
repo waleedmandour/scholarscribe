@@ -1,9 +1,9 @@
 # ScholarScribe
 
-> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no cloud calls, no paid APIs.
+> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.1](https://img.shields.io/badge/Status-v2.2.1-brightgreen.svg)](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.2.1)
+[![Status: v2.2.1 r2 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r2_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -22,7 +22,7 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Assess authenticity risk**, surface whether your draft's perplexity/burstiness proxies overlap with typical AI-text profiles (based on Liang et al. 2023; Weber-Wulff et al. 2023). Not an evasion tool, helps you understand your writing's stylistic fingerprint.
 - **Check voice consistency**, flag within-document stylistic inconsistencies where sentence length, hedging, or vocabulary abruptly shifts.
 - **Build a multi-paper stylistic fingerprint**, analyze several of your prior papers together to characterize your baseline writing style, then compare a draft against that fingerprint.
-- **Maintain a writing process journal**, auto-saves timestamped snapshots of your draft, creating a verifiable process record for authentic authorship evidence.
+- **Maintain a writing process journal**, auto-saves timestamped snapshots of your draft as a local, plain-JSON process record (not signed; see the Writing Journal section). The signed, verifiable evidence path is the Provenance export packet.
 - **Generate a false-positive appeal letter**, if falsely flagged by an AI detector, generate a professional, evidence-based appeal letter citing the peer-reviewed literature.
 - **Get local-LLM coaching on a paragraph or argument**, the Writing Coach tab gives you focused, in-context feedback without leaving the app.
 - **Analyze whether a draft sounds like *your own* prior writing**, descriptive statistics including sentence length, hedging, passive voice, plus readability metrics (Flesch, Flesch-Kincaid, Gunning Fog).
@@ -47,7 +47,7 @@ ScholarScribe is designed for researchers who have genuinely written or substant
 - Educates you about how AI-detection tools work and what their known limitations are.
 - Validates your citations against your `.bib` file, reducing the risk of fabricated references in your manuscript.
 - Assesses whether your writing shares surface features with AI-generated text (not an evasion tool, an awareness tool).
-- Maintains a timestamped draft history as verifiable evidence of authentic authorship.
+- Maintains a timestamped draft history as a local writing journal. Snapshots are plain JSON on your device; they are not cryptographically signed or verifiable. The signed, verifiable evidence path is the Provenance export packet.
 - Generates evidence-based appeal letters for researchers falsely flagged by AI detectors.
 - Cleans text artifacts from copy-pasted content without rewriting it.
 
@@ -55,7 +55,7 @@ ScholarScribe is designed for researchers who have genuinely written or substant
 
 - **Does not target or attempt to lower AI-detection scores.** No "marker-targeting" engine. No Turnitin/GPTZero/Originality score-reduction pipeline. No stealth modes.
 - **Does not help misrepresent AI-generated text as original human work.** The chat module's system prompt explicitly refuses requests to evade detectors or submit AI output as one's own.
-- **Does not contact any third-party API.** The only network call is to `registry.ollama.ai` when you choose to download a model, and that call carries no text, no prompts, no usage data.
+- **Does not contact any cloud LLM API.** No OpenAI, Anthropic, Google AI, or any other hosted inference provider. Model inference happens only through your local Ollama daemon. ScholarScribe's own process talks to `127.0.0.1:11434` always, and to Google's Drive/OAuth endpoints only if you opt in to the Google Docs import in the Provenance tab. Model downloads are fetched by the Ollama daemon itself (from `registry.ollama.ai` or `hf.co` for Hugging Face GGUFs), at your request, and carry no text. The full host list is machine-readable in `docs/NETWORK_SURFACE.json`.
 - **Does not collect telemetry, analytics, or crash reports.**
 - **Does not read any file you didn't explicitly pick in a file dialog.**
 - **Does not fabricate citations.** The Chat tab's system prompt forbids this. The Citation Manager tab exists precisely to catch accidental fabrication by listing every in-text citation that doesn't match a real `.bib` entry.
@@ -90,11 +90,11 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 (new) |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r2 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r2 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r2 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r2 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r2 |
 
 Install with your platform's package manager:
 
@@ -257,11 +257,11 @@ Reports per-paragraph metrics (sentence length, hedge density, vocabulary divers
 
 ### Writing Journal tab
 
-Auto-saves timestamped snapshots of your draft as you work, creating a verifiable process record for authentic authorship evidence. Each snapshot records:
+Auto-saves timestamped snapshots of your draft as you work, as a local process record of your writing sessions. Snapshots are plain JSON on your device: they are **not signed and not verifiable**, and they are not connected to the signed provenance chain. They are also not proof of authorship; the signed, verifiable evidence path is the Provenance export packet. Each snapshot records:
 
 - Timestamp (local time + UTC)
 - Word count at time of snapshot
-- Full text of the draft
+- Full text of the draft. **Note:** the journal stores your complete draft text in plain local JSON files. That is convenient for recall but means a full copy of your writing lives in the journal folder; delete the journal or disable Saved Work persistence if you do not want that copy kept.
 
 Snapshots are stored locally as plain JSON files. You can export the entire journal as a single archive for evidence purposes (e.g. to demonstrate an authentic writing process if falsely accused of AI use).
 
@@ -269,7 +269,7 @@ Snapshots are stored locally as plain JSON files. You can export the entire jour
 
 If you're falsely flagged by an AI detector, generate a professional, evidence-based appeal letter citing the peer-reviewed literature. Fill in your details (name, institution, manuscript title, venue, detector used, detector score) and your writing process, the local LLM produces a formal letter you can edit and send to your editor or institutional integrity office.
 
-The letter template draws on Liang et al. (2023), Weber-Wulff et al. (2023), and Laban et al. (2024), the same research that informs the Detector Literacy tab.
+The letter template draws on Liang et al. (2023) and Weber-Wulff et al. (2023), the same research that informs the Detector Literacy tab.
 
 ### Style Fingerprint tab
 
@@ -328,7 +328,7 @@ Plain-English explainer of how AI-detection tools (Turnitin AI, GPTZero, Origina
 - **Perplexity and burstiness**, the two main signals most detectors use
 - **Where detectors fail**, false-positive bias against non-native English writers, unreliability on short passages, sensitivity to editing, adversarial fragility
 - **What this means for you**, practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer
-- **Further reading**. Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024)
+- **Further reading**. Liang et al. (2023), Weber-Wulff et al. (2023)
 
 Educational only, does not help you evade detection.
 
@@ -338,7 +338,7 @@ In-session log of every file read + outbound HTTP call. The summary card shows:
 
 - Total events, file reads, HTTP calls, Ollama commands
 - Bytes in / out
-- **Unique outbound hosts contacted**, should only ever show `registry.ollama.ai` (model downloads). Any other host is a red flag.
+- **Unique outbound hosts contacted by ScholarScribe's own process**: `127.0.0.1:11434` (your local Ollama) always, plus the Google Drive/OAuth endpoints only if you connect a Google Doc. Model downloads are fetched by the Ollama daemon (not by ScholarScribe) from `registry.ollama.ai` or `hf.co`. Anything else from the app process is a red flag.
 
 Filterable event table with timestamps. The audit log is **in-memory only**, cleared on app close. This is intentional: persisting it would create a record of every file you read, which is the opposite of privacy.
 
@@ -374,17 +374,17 @@ These figures come from peer-reviewed literature and author guidelines that are 
 | Property | Status |
 |---|---|
 | Telemetry | **None.** No analytics, no crash reporting, no usage tracking. |
-| Network calls | One outbound call, to `registry.ollama.ai`, only when you click "Download" on a model. Carries no text or usage data. GGUF imports make zero outbound calls. |
-| User text | **Never leaves your device.** Drafts, reference samples, chat messages, .bib files, all stay in memory or local files. |
+| Network calls | ScholarScribe's own process: `127.0.0.1:11434` (your local Ollama) always; the Google Drive/OAuth endpoints only when you explicitly connect a Google Doc in the Provenance tab. The Ollama daemon itself contacts `registry.ollama.ai` or `hf.co` when you pull a model, at your request. No manuscript text is ever sent to any registry host. |
+| User text | **Stays on your device** with one designed exception: drafts, reference samples, chat messages, and .bib files stay in memory or local files, and inference runs locally; if you explicitly connect a Google Doc, its revision text is fetched from Google and processed locally (inherent to that opt-in feature, logged in the Privacy Audit tab). |
 | Third-party APIs | **None.** No OpenAI, Anthropic, Google AI, or any other cloud LLM API. |
-| Crash reports | None collected. Errors are written to a local log file only. |
+| Crash reports | None collected. Errors go to the console output (stderr) and are not persisted to a log file. |
 | Saved drafts | Opt-in only. Plain JSON files on your device: `%APPDATA%\com.scholarscribe.app\data\` (Windows), `~/Library/Application Support/com.scholarscribe.app/data/` (macOS), `~/.local/share/com.scholarscribe.app/data/` (Linux). Never synced. |
 | Audit log | In-memory only. Cleared on app close. Never persisted. |
 
-The CSP in `tauri.conf.json` explicitly restricts outbound connections from the UI to `127.0.0.1:11434` (your local Ollama). The Rust backend contacts `ollama.com`/`registry.ollama.ai` for model downloads and, **only when you explicitly click "Connect Google Doc" in the Provenance tab**. Google's OAuth and Docs API endpoints. Every outbound call, file read, and keyring operation is logged live in the Privacy Audit tab.
+The CSP in `tauri.conf.json` explicitly restricts the UI's own connections to `127.0.0.1:11434` (your local Ollama). The Rust backend calls the same loopback Ollama daemon for all model operations; the Ollama daemon, not ScholarScribe, fetches models from `registry.ollama.ai` or `hf.co` when you pull. The only other outbound HTTPS in the app is the opt-in Google Docs bridge in the Provenance tab (Google's OAuth and Drive endpoints). Every outbound call, file read, and keyring operation is logged live in the Privacy Audit tab. The complete, machine-readable host list is `docs/NETWORK_SURFACE.json`, cross-checked against SECURITY.md in CI.
 
 If you want to verify this yourself:
-1. Audit `src-tauri/src/ollama.rs`, every outbound HTTP call is in that file.
+1. Audit `src-tauri/src/ollama.rs` and `src-tauri/src/abstract_generator.rs` (the loopback Ollama client) and `src-tauri/src/google_docs_net.rs` (the opt-in Google bridge), those three files contain every outbound HTTP call the app can make.
 2. Watch the Privacy Audit tab while interacting with the app.
 3. Run ScholarScribe behind a network monitor (GlassWire, Wireshark) and cross-reference outbound hosts.
 
@@ -473,7 +473,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.1, © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.1 r2 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 
@@ -505,7 +505,7 @@ Built on top of outstanding open-source work, including:
 The Detector Literacy and Authenticity Risk Profiler modules are built upon the work of researchers who have rigorously evaluated the limitations of AI-generated text detectors, particularly:
 
 - Liang et al. (2023), documented false-positive bias against non-native English writers
-- Weber-Wulff et al. (2023), evaluated 14 detection tools and found all exhibited high false-positive rates
+- Weber-Wulff et al. (2023), evaluated twelve publicly available detection tools plus Turnitin and PlagiarismCheck and concluded they are neither accurate nor reliable, with a main bias towards classifying AI-generated text as human-written
 
 Their findings inform the application's ethical stance and its refusal to facilitate detection evasion.
 

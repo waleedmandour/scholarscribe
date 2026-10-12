@@ -24,7 +24,7 @@ The following features are out of scope and will not be added to ScholarScribe, 
 The author of this project began from a repo whose stated purpose included evading AI-plagiarism detectors. After reflection, that direction was rejected for three reasons:
 
 1. **Net harm to research integrity.** Evasion tools undermine the social contract that makes peer review work. Even when used by honest researchers, they make the whole detection ecosystem less trustworthy, which hurts honest researchers most.
-2. **Disproportionate impact on non-native English writers.** Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023) show AI detectors have high false-positive rates on writing by non-native English authors. An arms race between evaders and detectors makes this worse, not better. The right response is institutional, push back on detector use, not build better evasion.
+2. **Disproportionate impact on non-native English writers.** Independent evaluations show AI-text detectors are neither accurate nor reliable and have a main bias towards classifying output as human-written (Weber-Wulff et al., 2023), and can systematically misclassify writing by non-native English authors as AI-generated (Liang et al., 2023). An arms race between evaders and detectors makes this worse, not better. The right response is institutional, push back on detector use, not build better evasion.
 3. **Doesn't actually solve the user's problem.** If a researcher's real concern is "I used AI and I'm worried about being accused", the answer is *disclosure*, not evasion. Disclosure sidesteps the detector entirely and is required by every major venue's policy. ScholarScribe makes disclosure easy.
 
 ## 4. Features that fit
@@ -61,6 +61,6 @@ This policy may evolve, but the core commitments (no evasion, no telemetry, loca
 ## 7. Further reading
 
 - Liang, W., et al. *GPT detectors are biased against non-native English writers.* Patterns, 2023. <https://doi.org/10.1016/j.patter.2023.100779>
-- Weber-Wulff, D., et al. *Testing of detection signals for AI-generated text.* Patterns, 2023.
+- Weber-Wulff, D., et al. *Testing of detection tools for AI-generated text.* International Journal for Educational Integrity, 19(1), 26, 2023. https://doi.org/10.1007/s40979-023-00146-z
 - ICMJE Recommendations, section on AI-assisted technology. <https://www.icmje.org/recommendations/>
 - Nature Editorial Policy on AI. <https://www.nature.com/editorial-policies/ai>

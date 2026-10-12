@@ -73,7 +73,7 @@ I respectfully draw your attention to the following:
 
 - Liang et al. (2023) demonstrated that GPT detectors are biased against non-native English writers, frequently misclassifying genuine human writing as AI-generated. This finding has been replicated across multiple detector platforms and raises serious fairness concerns, particularly for researchers writing in English as a second or additional language (Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). GPT detectors are biased against non-native English writers. Patterns, 4(7), 100779. https://doi.org/10.1016/j.patter.2023.100779).
 
-- Weber-Wulff et al. (2023) evaluated 14 publicly available AI-generated text detection tools and found that all of them exhibited high false-positive rates on human-written text, particularly on texts with simpler vocabulary and shorter sentences, features common in academic writing by non-native English speakers and in technical/methods sections (Weber-Wulff, D., et al. (2023). Testing of detection tools for AI-generated text. International Journal for Educational Integrity, 19, 26. https://doi.org/10.1007/s40979-023-00146-z).
+- Weber-Wulff et al. (2023) evaluated twelve publicly available AI-generated text detection tools plus two commercial systems (Turnitin and PlagiarismCheck) and concluded that the available detection tools are neither accurate nor reliable, with a main bias towards classifying the output as human-written rather than detecting AI-generated text. Content obfuscation techniques significantly worsened tool performance (Weber-Wulff, D., et al. (2023). Testing of detection tools for AI-generated text. International Journal for Educational Integrity, 19, 26. https://doi.org/10.1007/s40979-023-00146-z).
 
 - Several universities, including Vanderbilt University, University of Pittsburgh, and University of Texas at Austin, have discontinued or significantly restricted the use of Turnitin's AI-detection feature due to reliability concerns.
 
@@ -143,4 +143,61 @@ fn chrono_date_string() -> String {
     let month = (day_of_year / 30 + 1).min(12);
     let day = (day_of_year % 30 + 1).min(28);
     format!("{:04}-{:02}-{:02}", year, month, day)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// T1.3: every reference the Appeal Letter template uses must exist in
+    /// src/lib/references.json, the single source of references, and the
+    /// DOI strings must match exactly. Guards against a repeat of the
+    /// unverified 2024 citation removed in v2.2.1 r2 (see references.json,
+    /// removed_references).
+    #[test]
+    fn template_references_exist_in_references_json() {
+        const REFERENCES_JSON: &str = include_str!("../../src/lib/references.json");
+        let parsed: serde_json::Value =
+            serde_json::from_str(REFERENCES_JSON).expect("references.json must be valid JSON");
+
+        let template = generate(&AppealLetterInput {
+            researcher_title: "Dr.".into(),
+            researcher_name: "Test".into(),
+            institution: "Test".into(),
+            manuscript_title: "Test".into(),
+            venue: "Test".into(),
+            editor_name: String::new(),
+            detector_used: "Test".into(),
+            detector_score: "0".into(),
+            process_description: "Test".into(),
+            additional_evidence: String::new(),
+        })
+        .expect("template must render");
+
+        for (key, expected_doi, expected_title) in [
+            (
+                "liang-2023",
+                "10.1016/j.patter.2023.100779",
+                "GPT detectors are biased against non-native English writers",
+            ),
+            (
+                "weber-wulff-2023",
+                "10.1007/s40979-023-00146-z",
+                "Testing of detection tools for AI-generated text",
+            ),
+        ] {
+            let entry = parsed["references"][key]
+                .as_object()
+                .unwrap_or_else(|| panic!("references.json must contain key {key}"));
+            assert_eq!(entry["doi"].as_str().unwrap(), expected_doi);
+            assert!(
+                template.letter.contains(expected_doi)
+                    || template.references.iter().any(|r| r.contains(expected_doi)),
+                "template letter or reference list must cite the {key} DOI {expected_doi}"
+            );
+            // The verified full citation must carry the verified title, not
+            // any of the historic misattributions.
+            assert_eq!(entry["title"].as_str().unwrap(), expected_title);
+        }
+    }
 }
