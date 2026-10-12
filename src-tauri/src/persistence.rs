@@ -281,7 +281,7 @@ pub fn draft_list(app: AppHandle) -> Result<Vec<DraftMeta>, String> {
         });
     }
     // Sort by updated_at descending (most recent first)
-    out.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    out.sort_by_key(|s| std::cmp::Reverse(s.updated_at));
     Ok(out)
 }
 
@@ -307,10 +307,10 @@ pub fn draft_delete_all(app: AppHandle) -> Result<usize, String> {
         .flatten()
     {
         let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) == Some("json") {
-            if std::fs::remove_file(&path).is_ok() {
-                count += 1;
-            }
+        if path.extension().and_then(|e| e.to_str()) == Some("json")
+            && std::fs::remove_file(&path).is_ok()
+        {
+            count += 1;
         }
     }
     Ok(count)

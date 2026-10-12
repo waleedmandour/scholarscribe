@@ -178,9 +178,7 @@ pub fn check(text: &str) -> ConsistencyReport {
     let total_checks = passage_metrics.len() * 5;
     let consistency = 1.0 - (inconsistencies.len() as f64 / total_checks as f64).min(1.0);
 
-    let explanation = format!(
-        "This checker compares stylistic metrics across sections of your document. Abrupt shifts in sentence length, vocabulary diversity, or hedging density can indicate a change in voice, whether from co-authorship, AI assistance, or simply a shift in writing mode. Addressing inconsistencies improves cohesion and is good editorial practice regardless of how the text was produced."
-    );
+    let explanation = "This checker compares stylistic metrics across sections of your document. Abrupt shifts in sentence length, vocabulary diversity, or hedging density can indicate a change in voice, whether from co-authorship, AI assistance, or simply a shift in writing mode. Addressing inconsistencies improves cohesion and is good editorial practice regardless of how the text was produced.".to_string();
 
     let mut recommendations = Vec::new();
     if inconsistencies.is_empty() {
@@ -213,6 +211,10 @@ pub fn check(text: &str) -> ConsistencyReport {
     }
 }
 
+// The nine inputs are each a distinct measured signal; grouping them into a
+// struct would obscure the call sites without reducing coupling. (clippy
+// threshold is 7.)
+#[allow(clippy::too_many_arguments)]
 fn check_deviation(
     inconsistencies: &mut Vec<Inconsistency>,
     idx: usize,

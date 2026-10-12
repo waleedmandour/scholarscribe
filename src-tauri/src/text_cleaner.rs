@@ -744,11 +744,12 @@ fn collapse_whitespace(text: &str, stats: &mut CleanStats) -> String {
 
 /// Strip the Byte Order Mark (U+FEFF) if it appears at the start of the text.
 fn strip_bom(text: &str, stats: &mut CleanStats) -> String {
-    if text.starts_with('\u{FEFF}') {
-        stats.bom_stripped += 1;
-        text[3..].to_string() // U+FEFF is 3 bytes in UTF-8
-    } else {
-        text.to_string()
+    match text.strip_prefix('\u{FEFF}') {
+        Some(rest) => {
+            stats.bom_stripped += 1;
+            rest.to_string()
+        }
+        None => text.to_string(),
     }
 }
 
@@ -859,8 +860,8 @@ fn remove_asterisks(text: &str, stats: &mut CleanStats) -> String {
     stats.asterisks_removed += count;
     let out = text.replace('*', "");
     // Collapse the double-space that markdown bold (**text**) leaves behind
-    let out = out.replace("  ", " ");
-    out
+
+    out.replace("  ", " ")
 }
 
 /// Remove markdown heading markers (#, ##, ###, etc.) at the start of lines.

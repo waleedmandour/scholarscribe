@@ -53,6 +53,9 @@ impl PlainRefStyle {
         }
     }
 
+    /// Human-readable style label. Currently unused by callers; kept because
+    /// it documents the enum for future UI work. (clippy is satisfied below.)
+    #[allow(dead_code)]
     pub fn label(self) -> &'static str {
         match self {
             Self::Apa => "APA 7th",
@@ -219,7 +222,7 @@ fn parse_single(raw: &str, style: PlainRefStyle) -> (BibEntry, Vec<String>) {
     // Find the first volume-like pattern that isn't the year or a page number.
     'vol_search: for caps in vol_issue_re.captures_iter(raw) {
         let vol_str = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-        if vol_str.len() < 1 {
+        if vol_str.is_empty() {
             continue;
         }
         // Skip if this is the year.
@@ -246,10 +249,8 @@ fn parse_single(raw: &str, style: PlainRefStyle) -> (BibEntry, Vec<String>) {
     if !entry.year.is_empty() {
         // Find the year position in the raw string (first occurrence).
         if let Some(year_pos) = raw.find(&entry.year) {
-            let before = raw[..year_pos]
-                .trim_end_matches(|c: char| c == ' ' || c == ',' || c == '.' || c == '(');
-            let after = raw[year_pos + entry.year.len()..]
-                .trim_start_matches(|c: char| c == ' ' || c == ')' || c == '.');
+            let before = raw[..year_pos].trim_end_matches([' ', ',', '.', '(']);
+            let after = raw[year_pos + entry.year.len()..].trim_start_matches([' ', ')', '.']);
             entry.author = clean_authors(before, style);
             // Title = text up to the next period that ends a sentence
             // (followed by a space and a capital letter, or end of string).
@@ -262,8 +263,7 @@ fn parse_single(raw: &str, style: PlainRefStyle) -> (BibEntry, Vec<String>) {
             let title_raw = after[..title_end].trim_end_matches('.').trim();
             entry.title = clean_title(title_raw, style);
             // Journal = text after the title, up to the volume pattern or end.
-            let after_title = after[title_end.min(after.len())..]
-                .trim_start_matches(|c: char| c == ' ' || c == '.');
+            let after_title = after[title_end.min(after.len())..].trim_start_matches([' ', '.']);
             let journal_end = after_title
                 .find(',')
                 .or_else(|| after_title.find('.'))
@@ -274,7 +274,7 @@ fn parse_single(raw: &str, style: PlainRefStyle) -> (BibEntry, Vec<String>) {
     } else {
         // No year found. Try to split on the first period + space.
         let parts: Vec<&str> = raw.splitn(3, ". ").collect();
-        if parts.len() >= 1 {
+        if !parts.is_empty() {
             entry.author = clean_authors(parts[0], style);
         }
         if parts.len() >= 2 {
@@ -317,10 +317,7 @@ fn clean_authors(s: &str, _style: PlainRefStyle) -> String {
     // Normalize "&" and " and " to BibTeX " and "
     s = s.replace(" & ", " and ").replace(" & ", " and ");
     // Strip trailing punctuation
-    s = s
-        .trim_end_matches(|c: char| c == ',' || c == '.' || c == ';')
-        .trim()
-        .to_string();
+    s = s.trim_end_matches([',', '.', ';']).trim().to_string();
     s
 }
 
@@ -334,10 +331,7 @@ fn clean_title(s: &str, _style: PlainRefStyle) -> String {
         s = s[1..s.len() - 1].to_string();
     }
     // Strip trailing punctuation
-    s = s
-        .trim_end_matches(|c: char| c == ',' || c == '.' || c == ';')
-        .trim()
-        .to_string();
+    s = s.trim_end_matches([',', '.', ';']).trim().to_string();
     s
 }
 
@@ -345,7 +339,7 @@ fn clean_title(s: &str, _style: PlainRefStyle) -> String {
 /// - Strips trailing punctuation
 fn clean_journal(s: &str, _style: PlainRefStyle) -> String {
     s.trim()
-        .trim_end_matches(|c: char| c == ',' || c == '.' || c == ';')
+        .trim_end_matches([',', '.', ';'])
         .trim()
         .to_string()
 }
@@ -466,10 +460,11 @@ fn entries_to_bibtex_string(entries: &[BibEntry]) -> String {
 }
 
 /// Escape characters that have special meaning in BibTeX values:
-///   - '&' -> '\&'
-///   - '%' -> '\%'
-///   - '_' -> '\_'
-///   - '#' -> '\#'
+///   - `&` becomes `\&`
+///   - `%` becomes `\%`
+///   - `_` becomes `\_`
+///   - `#` becomes `\#`
+///
 /// Braces are left alone because BibTeX uses them for nesting.
 fn escape_bibtex(s: &str) -> String {
     s.replace('&', "\\&")
