@@ -45,19 +45,17 @@ The app opens in dev mode with hot reload on the frontend. Rust changes trigger 
 
 ## Copy style
 
-- User-facing copy (UI labels, tooltips, hints, callouts, error messages, empty states, README, CHANGELOG, USER_GUIDE, USER_MANUAL, and source doc comments that surface in IDE hovers) must not contain em dashes (U+2014) or en dashes (U+2013). Use a period, comma, colon, or parentheses instead.
+- Punctuation in user-facing copy must serve the sentence. Do not run punctuation sweeps that mangle grammar; the v2.2.0 em-dash sweep produced broken sentences (e.g. "...in the Provenance tab. Google's Docs API."), which v2.2.1 r2 fixed. Em and en dashes in prose are acceptable when used deliberately.
 - Number ranges in prose use a plain hyphen (e.g. "12-16") or spell out "12 to 16" for clarity.
 - Unicode codepoint ranges in source (e.g. "U+FE00-FE0F") use a plain hyphen, never an en dash.
-- The AI Text Cleaner's "Normalize dashes to plain hyphens" option enforces this for imported text. It is off by default; users opt in.
-- This rule is enforced by review, not by lint. A future CI grep check is planned.
+- The AI Text Cleaner offers an opt-in "Normalize dashes to plain hyphens" option for imported text; it is a user preference, not a policy.
 
 ## PR checklist
 
 - [ ] PR description explains what changed and why.
-- [ ] If the change touches `ollama.rs`, the privacy claims in the README still hold (no new outbound hosts).
+- [ ] If the change touches `ollama.rs`, `abstract_generator.rs`, or `google_docs_net.rs`, the privacy claims still hold (update `docs/NETWORK_SURFACE.json` and SECURITY.md; CI enforces this).
 - [ ] If the change adds a feature, it's consistent with `docs/ETHICS.md`.
-- [ ] User-facing copy contains no em dashes (U+2014) or en dashes (U+2013).
-- [ ] `cargo fmt`, `cargo clippy -- -D warnings`, and `npm run check` all pass.
+- [ ] `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test`, and `npm run check` all pass.
 
 ## Reporting issues
 
