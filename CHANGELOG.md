@@ -8,6 +8,88 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1-r2] - 2026-10-13 (pre-release, agent milestone M1)
+
+A truthful-claims, safe-defaults and CI milestone. No new user-facing
+features; the release makes every public claim match the code and hardens CI.
+M0 (the audit feeding this release) is documented in `docs/AUDIT.md`.
+
+### Fixed (truthful claims)
+
+- **Network claims.** "Does not contact any third-party API" and "Single
+  outbound host (registry.ollama.ai)" removed everywhere (README, SECURITY,
+  release notes). The documented surface is now: loopback Ollama always;
+  opt-in Google Drive/OAuth endpoints; model downloads fetched by the Ollama
+  daemon from `registry.ollama.ai` or `hf.co`. `docs/NETWORK_SURFACE.json` is
+  the machine-readable source of truth; a CI test fails if source and
+  SECURITY.md drift from it.
+- **SECURITY.md.** "TBD" contact removed; private vulnerability reporting via
+  the GitHub Security tab is the channel; scope lists every host; "all
+  outbound HTTP is in ollama.rs" corrected (the opt-in Google bridge lives in
+  `google_docs_net.rs`).
+- **Citations (T1.3).** Weber-Wulff et al. (2023) corrected to its real
+  identity, "Testing of detection tools for AI-generated text",
+  International Journal for Educational Integrity 19(1), 26, DOI
+  10.1007/s40979-023-00146-z, verified against Crossref; summaries rewritten
+  from the abstract (the tools are "neither accurate nor reliable", biased
+  toward labelling output as human-written; not "high false-positive rates
+  in all 14 tools"). The unverifiable "Laban et al. (2024)" citation was
+  removed everywhere; the incorrect DOI 10.1016/j.patter.2023.100846 (an
+  unrelated polymer-degradation paper) is gone.
+  `src/lib/references.json` is now the single source of references, enforced
+  by a CI test and a Rust test.
+- **Writing Journal wording (T1.4).** Described as local plain-JSON
+  snapshots: not signed, not verifiable, not connected to the signed
+  provenance chain; explicit warning that it stores full draft text locally.
+- **Broken sentences (T1.6).** The "...in the Provenance tab. Google's Docs
+  API." fragments (README, USER_GUIDE, USER_MANUAL) fixed; no punctuation
+  was mass-replaced.
+
+### Changed (safe defaults)
+
+- **Packet defaults (T1.5).** `style_analysis.json` is now opt-in at export
+  (default off), labelled "informational, not evidence". Risk Profile output
+  remains excluded from every export. Older packets containing the file
+  still verify with the offline verifier; PROVENANCE_SPEC documents the
+  compatibility rule.
+
+### Removed
+
+- **Dash gate (T1.6).** The em/en-dash grep claim is gone from release notes
+  and CONTRIBUTING; the copy-style rule now bans grammar-mangling sweeps
+  instead.
+
+### Added
+
+- **CI (T1.7).** `cargo test` (blocking), `cargo clippy -- -D warnings`
+  (blocking; the ~26 informational warnings were fixed), the Rust-vs-JS
+  verifier cross-check (deterministic fixture in
+  `src-tauri/fixtures/cross-check/`, verified by `tests/cross_language.rs`
+  and `scripts/cross-verify-fixture.mjs`; closes the false claim in
+  PROVENANCE_SPEC), the network-surface test, the references test,
+  `cargo audit` (report-only; open advisories map to pending dependabot
+  bumps), `npm audit --omit=dev` (blocking, currently clean), and CycloneDX
+  SBOM artifacts for npm and cargo.
+- **CHECKSUMS signing (T1.7).** The release workflow signs `CHECKSUMS.txt`
+  with minisign when `MINISIGN_SECRET_KEY` is configured, and skips with a
+  visible notice otherwise.
+- **Release notes (T1.8).** Template at `.github/RELEASE_NOTES_TEMPLATE.md`
+  ("What changed" filled from this file); honest backfilled notes for
+  v2.2.0-pre and v2.2.1 published from `git log`
+  (`docs/release-notes/`).
+- **T1.9.** `CITATION.cff` (Zenodo DOIs), `docs/FOR_EDITORS.md`,
+  `THIRD_PARTY_LICENSES.md` (458 packages inventoried, zero flags;
+  regenerable via `scripts/generate-third-party-licenses.mjs`).
+
+### Verification
+
+Reproduced 2026-10-13 in the M1 sandbox: `npm ci`, `npm run check` (0 errors),
+`npm run build`, `cargo fmt --check`, `cargo check`, `cargo test` (46 tests:
+44 lib + 2 cross-language), `cargo clippy -- -D warnings` (clean), `npm test`
+(references + network-surface + cross-verify), `npm audit --omit=dev` (0
+vulnerabilities), `cargo audit` (4 unique advisories + 7 unmaintained-crate
+warnings, all addressed by pending dependabot PRs; report-only in CI).
+
 ## [2.2.1] - 2026-09-30
 
 Four feature improvements based on user review of v2.2.0-pre, plus two
