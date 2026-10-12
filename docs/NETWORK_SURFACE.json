@@ -1,0 +1,167 @@
+{
+  "$comment": "Single source of truth for ScholarScribe's network surface (milestone T1.2). scripts/check-network-surface.mjs fails CI if a host appears in app source but not here, or if an entry marked enforced_in_security_md is missing from SECURITY.md. Classes: runtime-app (the ScholarScribe process opens the connection), runtime-daemon (the local Ollama daemon connects at the user's request; the app only talks to loopback), runtime-inbound (loopback listener), verifier-fallback (standalone verifier page, not the installed app), display-link (text shown to the user, opened only in the system browser on click), parse-only (string parsed or constructed, never fetched), namespace (XML namespace, never fetched), dev-only (build tooling and editor schemas).",
+  "generated": "2026-10-13",
+  "version": "1.0",
+  "hosts": [
+    {
+      "host": "127.0.0.1:11434",
+      "class": "runtime-app",
+      "process": "scholarscribe",
+      "trigger": "All local LLM features: status, model list, pull, delete, chat, GGUF import, abstract, section commentary, writing coach",
+      "opt_in": "status poll is automatic; all other calls are user actions",
+      "sends_user_text": "to the local daemon only, for inference",
+      "code": ["src-tauri/src/ollama.rs", "src-tauri/src/abstract_generator.rs", "src-tauri/src/commands.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "localhost:11434",
+      "class": "runtime-app",
+      "process": "scholarscribe",
+      "trigger": "CSP connect-src allowance only (equivalent to 127.0.0.1:11434)",
+      "opt_in": "n/a",
+      "code": ["src-tauri/tauri.conf.json"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "127.0.0.1:{random-port}",
+      "class": "runtime-inbound",
+      "process": "scholarscribe",
+      "trigger": "Loopback receiver for the Google OAuth redirect (binds 127.0.0.1:0)",
+      "opt_in": "only during the opt-in Google Docs connect flow",
+      "code": ["src-tauri/src/google_docs_commands.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "registry.ollama.ai",
+      "class": "runtime-daemon",
+      "process": "ollama-daemon",
+      "trigger": "Model library download, only when the user pulls a library model",
+      "opt_in": "yes (user-initiated pull)",
+      "sends_user_text": "never; the app sends manuscript text to no host except the local daemon",
+      "code": ["src/components/Models.svelte (UI text)", "src/components/PrivacyAudit.svelte (UI text)", "src/components/WelcomeTour.svelte (UI text)"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "hf.co",
+      "class": "runtime-daemon",
+      "process": "ollama-daemon",
+      "trigger": "Hugging Face GGUF pull, only when the user pulls an hf.co/{user}/{repo} reference (the shipped catalog contains hf.co/sciver/sciver-6b:Q4_K_M)",
+      "opt_in": "yes (user-initiated pull)",
+      "sends_user_text": "never",
+      "code": ["src-tauri/src/ollama.rs (catalog entry passed to /api/pull)", "src/components/Models.svelte"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "accounts.google.com",
+      "class": "runtime-app",
+      "process": "system-browser (opened by scholarscribe)",
+      "trigger": "Google OAuth consent page, opened in the system browser, never in the webview",
+      "opt_in": "yes (provenance mode + user-supplied OAuth client id)",
+      "code": ["src-tauri/src/google_docs_net.rs", "src-tauri/src/google_docs_commands.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "oauth2.googleapis.com",
+      "class": "runtime-app",
+      "process": "scholarscribe",
+      "trigger": "OAuth code exchange and token refresh",
+      "opt_in": "yes (same flow)",
+      "sends_user_text": "never; only the authorization code / refresh token",
+      "code": ["src-tauri/src/google_docs_net.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "www.googleapis.com",
+      "class": "runtime-app",
+      "process": "scholarscribe",
+      "trigger": "Drive v3 revision list and revision download (scope: drive.readonly)",
+      "opt_in": "yes (same flow)",
+      "sends_user_text": "receives revision text from Google; sends nothing but the request and bearer token",
+      "code": ["src-tauri/src/google_docs_net.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "docs.google.com",
+      "class": "runtime-app",
+      "process": "scholarscribe",
+      "trigger": "Fallback plain-text revision export endpoint",
+      "opt_in": "yes (same flow, fallback only)",
+      "code": ["src-tauri/src/google_docs_net.rs"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "drive.google.com",
+      "class": "parse-only",
+      "process": "scholarscribe",
+      "trigger": "User-pasted Google Doc URLs are parsed to extract the document id; the host is never contacted",
+      "opt_in": "n/a",
+      "code": ["src-tauri/src/google_docs.rs"],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "console.cloud.google.com",
+      "class": "display-link",
+      "process": "system-browser (only if the user clicks)",
+      "trigger": "UI instruction text telling the user where to create their own OAuth client id",
+      "opt_in": "user click",
+      "code": ["src/components/Provenance.svelte"],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "cdn.jsdelivr.net",
+      "class": "verifier-fallback",
+      "process": "verifier-page",
+      "trigger": "Standalone verifier/index.html loads jszip/js-sha256/tweetnacl from vendored local files; the CDN is used only if the vendored copies are missing",
+      "opt_in": "automatic fallback, vendored by default",
+      "code": ["verifier/index.html"],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "example.com",
+      "class": "display-link",
+      "process": "none",
+      "trigger": "Example string used by the URL-repair cleaner and its UI hint; never fetched",
+      "opt_in": "n/a",
+      "code": ["src-tauri/src/text_cleaner.rs", "src/components/AITextCleaner.svelte"],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "schemas.openxmlformats.org",
+      "class": "namespace",
+      "process": "none",
+      "trigger": "OOXML XML namespace strings used to parse .docx; never fetched",
+      "opt_in": "n/a",
+      "code": ["src-tauri/src/docx_reading.rs"],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "api.crossref.org",
+      "class": "dev-only",
+      "process": "none",
+      "trigger": "Recorded in src/lib/references.json as the URL a developer or maintainer used to verify the citations; the app itself never contacts it. If reference integrity (Crossref DOI checks) is ever implemented in-app, it will be opt-in and this entry will change class.",
+      "opt_in": "n/a",
+      "code": ["src/lib/references.json"],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "schema.tauri.app",
+      "class": "dev-only",
+      "process": "none",
+      "trigger": "$schema reference for JSON config editing in an IDE; never fetched by the app",
+      "opt_in": "n/a",
+      "code": ["src-tauri/tauri.conf.json", "src-tauri/capabilities/default.json"],
+      "enforced_in_security_md": false
+    },
+    { "host": "doi.org", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Citation source links", "opt_in": "user click", "code": ["src/components/DetectorLiteracy.svelte", "src-tauri/src/appeal_letter.rs", "src-tauri/src/disclosure.rs"], "enforced_in_security_md": false },
+    { "host": "ollama.com", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Download-Ollama and documentation links in the Models tab", "opt_in": "user click", "code": ["src/components/Models.svelte"], "enforced_in_security_md": false },
+    { "host": "github.com", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Project and issues links in the About tab", "opt_in": "user click", "code": ["src/components/About.svelte"], "enforced_in_security_md": false },
+    { "host": "orcid.org", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "ORCID guidance link", "opt_in": "user click", "code": ["src/components/About.svelte"], "enforced_in_security_md": false },
+    { "host": "tauri.app", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Framework credit link", "opt_in": "user click", "code": ["src/components/About.svelte"], "enforced_in_security_md": false },
+    { "host": "svelte.dev", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Framework credit link", "opt_in": "user click", "code": ["src/components/About.svelte"], "enforced_in_security_md": false },
+    { "host": "www.nature.com", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Journal policy reference in document statistics", "opt_in": "user click", "code": ["src-tauri/src/document_stats.rs"], "enforced_in_security_md": false },
+    { "host": "www.icmje.org", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Journal policy reference in document statistics", "opt_in": "user click", "code": ["src-tauri/src/document_stats.rs"], "enforced_in_security_md": false },
+    { "host": "www.elsevier.com", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Journal policy reference", "opt_in": "user click", "code": ["src-tauri/src/document_stats.rs"], "enforced_in_security_md": false },
+    { "host": "www.aclweb.org", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Journal policy reference", "opt_in": "user click", "code": ["src-tauri/src/document_stats.rs"], "enforced_in_security_md": false },
+    { "host": "journals.ieeeauthorcenter.ieee.org", "class": "display-link", "process": "system-browser (only if the user clicks)", "trigger": "Journal policy reference", "opt_in": "user click", "code": ["src-tauri/src/document_stats.rs"], "enforced_in_security_md": false }
+  ]
+}

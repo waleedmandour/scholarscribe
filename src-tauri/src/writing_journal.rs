@@ -1,7 +1,8 @@
 //! Writing Process Journal, auto-saves timestamped snapshots of draft text,
-//! creating a verifiable process record that can serve as evidence of
+//! keeping a local, plain-JSON process record. These snapshots are NOT signed
+//! and NOT verifiable, and are not connected to the signed provenance chain;
+//! signed evidence comes from the Provenance export packet only.
 #![allow(unused_variables, unused_mut, unused_assignments, dead_code)]
-//! authentic authorship. Aligns with the opt-in persistence architecture.
 //!
 //! Snapshots are stored as JSON files in the app data directory under
 //! `journals/`. Each snapshot includes: timestamp, content, word count,
@@ -200,7 +201,7 @@ pub fn journal_list_sessions(app: AppHandle) -> Result<Vec<JournalSession>, Stri
             total_words_final: last.word_count,
         });
     }
-    out.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    out.sort_by_key(|s| std::cmp::Reverse(s.updated_at));
     Ok(out)
 }
 
@@ -237,10 +238,10 @@ pub fn journal_delete_session(app: AppHandle, session_id: String) -> Result<usiz
         .flatten()
     {
         let fname = entry.file_name().to_string_lossy().to_string();
-        if fname.starts_with(&format!("{}_", session_id)) {
-            if std::fs::remove_file(entry.path()).is_ok() {
-                count += 1;
-            }
+        if fname.starts_with(&format!("{}_", session_id))
+            && std::fs::remove_file(entry.path()).is_ok()
+        {
+            count += 1;
         }
     }
     Ok(count)
@@ -254,7 +255,7 @@ pub fn journal_export_session(
 ) -> Result<(), String> {
     let snaps = journal_get_snapshots(app, session_id.clone())?;
     let mut out = String::new();
-    out.push_str(&format!("# Writing Process Journal Export\n\n"));
+    out.push_str("# Writing Process Journal Export\n\n");
     out.push_str(&format!("Session ID: {}\n", session_id));
     out.push_str(&format!("Snapshots: {}\n", snaps.len()));
     out.push_str(&format!(

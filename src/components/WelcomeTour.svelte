@@ -264,7 +264,7 @@
           <div class="tour-icon-big">▦</div>
           <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
-            The sidebar organizes 20 tools into 4 categories. <strong>Click any cell
+            The sidebar organizes 20 tools into 7 workflow phases. <strong>Click any cell
             below to jump straight to that tab.</strong>
           </p>
           <div class="tour-grid">
