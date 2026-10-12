@@ -90,7 +90,8 @@ jobs:
         working-directory: src-tauri
         run: |
           cargo install cargo-cyclonedx --locked --quiet
-          cargo cyclonedx --output-format json --output-path ../sbom-cargo.json
+          cargo cyclonedx --format json
+          mv ./scholarscribe.cdx.json ../sbom-cargo.json
       - uses: actions/upload-artifact@v4
         with:
           name: sbom-cargo
