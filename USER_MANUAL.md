@@ -1,6 +1,6 @@
 # ScholarScribe. User Manual
 
-*v2.2.0*
+> **Version 2.2.1 r2 (pre-release)**
 
 This manual walks you through installing ScholarScribe, downloading a model, and using each of its modules, including the v2.1.0 Writing Provenance module.
 
@@ -53,7 +53,7 @@ To verify Ollama is running, open a browser and visit <http://localhost:11434>. 
 ### Option A: pre-built installer (recommended)
 
 1. Go to <https://github.com/waleedmandour/scholarscribe/releases>.
-2. Under the latest release (v2.2.0), download `ScholarScribe_2.2.0_x64_en-US.msi` (or the `ScholarScribe_2.2.0_x64-setup.exe` NSIS installer).
+2. Under the latest release (v2.2.1 r2), download `ScholarScribe_2.2.1_x64_en-US.msi` (or the `ScholarScribe_2.2.1_x64-setup.exe` NSIS installer).
 3. Double-click the file. Windows SmartScreen may warn you, click **More info → Run anyway** (the installer is currently unsigned; code signing is planned for a future release).
 4. The installer adds ScholarScribe to your Start menu. Launch it from there.
 
@@ -68,7 +68,7 @@ npm install
 npm run tauri build
 ```
 
-Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_2.2.0_x64_en-US.msi`.
+Output installer appears at `src-tauri\target\release\bundle\msi\ScholarScribe_2.2.1_x64_en-US.msi`.
 
 ---
 
@@ -165,7 +165,7 @@ The four cards cover:
 1. **Perplexity and burstiness**, the two main signals most detectors use.
 2. **Where detectors fail**, false-positive bias against non-native English writers, unreliability on short passages, sensitivity to editing, and adversarial fragility. Each point links to peer-reviewed evaluations.
 3. **What this means for you**, practical guidance depending on whether you wrote the draft yourself, used AI assistance, or are an instructor/reviewer.
-4. **Further reading**. Liang et al. (2023), Weber-Wulff et al. (2023), Laban et al. (2024), and university statements on detector reliability.
+4. **Further reading**. Liang et al. (2023), Weber-Wulff et al. (2023), and university statements on detector reliability.
 
 ## 8b. Module: Writing Provenance (v2.1.0, opt-in)
 
@@ -222,7 +222,7 @@ In short: ScholarScribe does not monitor students or researchers. It lets *them*
 
 - ScholarScribe supports `.txt`, `.md`, `.tex`, `.rst`, `.csv`, `.json`, and `.docx` everywhere files are accepted, including the Text Cleaner (with format-preserving clean-and-save), Citations, Stats, Structure, Journal, and the v2.1.0 Provenance tab (which reads Word Track Changes directly).
 - If a `.docx` fails to open, it is probably a legacy `.doc` (Word 97-2003) or a password-protected file. Re-save it as `.docx` in Word first, then try again.
-- Very large `.docx` files (tens of MB, e.g. with many embedded images) can be slow to parse. Provenance sessions above 1,000 revisions are processed in chunks with a progress indicator.
+- Very large `.docx` files (tens of MB, e.g. with many embedded images) can be slow to parse. Provenance reads the whole revision list in one pass, so a document with several thousand tracked changes may take a while on the Provenance tab.
 
 **The app crashes.**
 
@@ -235,10 +235,10 @@ In short: ScholarScribe does not monitor students or researchers. It lets *them*
 
 If you want to verify ScholarScribe's privacy claims yourself:
 
-1. **Outbound network calls.** All HTTP code lives in `src-tauri/src/ollama.rs` and `src-tauri/src/google_docs_net.rs`. The base URL for AI features is `http://127.0.0.1:11434`, localhost only. The only external hosts ever contacted are `registry.ollama.ai` (model downloads, no text) and, only when you explicitly connect a Google Doc in the Provenance tab. Google's OAuth/Docs endpoints, with every call logged in the Privacy Audit tab. You can confirm this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
+1. **Outbound network calls.** The HTTP code lives in `src-tauri/src/ollama.rs` and `src-tauri/src/abstract_generator.rs` (loopback Ollama client, base URL `http://127.0.0.1:11434`, localhost only) and `src-tauri/src/google_docs_net.rs` (the opt-in Google bridge). ScholarScribe's own process contacts only your local Ollama daemon; the daemon itself fetches models from `registry.ollama.ai` or `hf.co` when you pull, at your request. Google's OAuth/Drive endpoints are contacted only when you explicitly connect a Google Doc in the Provenance tab, with every call logged in the Privacy Audit tab. The full host list is machine-readable in `docs/NETWORK_SURFACE.json`. You can confirm all of this by running ScholarScribe behind a tool like [GlassWire](https://www.glasswire.com/) or Wireshark.
 2. **Frontend CSP.** `src-tauri/tauri.conf.json` restricts the UI's `connect-src` to `self` and `127.0.0.1:11434`. The frontend literally cannot make an outbound request to any other host.
 3. **Telemetry.** Search the codebase for "telemetry", "analytics", "tracking", "posthog", "mixpanel", "amplitude", you will find zero matches.
-4. **File system.** ScholarScribe only reads files you explicitly pick via the file dialog. It writes nothing to disk except its own log file (in `%APPDATA%\com.scholarscribe.app\logs\`).
-5. **Crash reports.** None. Errors are logged locally only.
+4. **File system.** ScholarScribe only reads files you explicitly pick via the file dialog. It writes to disk only what you opt into: saved drafts, writing journals, and provenance exports, stored under the app data folder (`%APPDATA%\com.scholarscribe.app\data\`). There is no separate log file; errors go to the console (stderr).
+5. **Crash reports.** None. Errors go to the console (stderr) and are not uploaded anywhere.
 
 If you find a privacy issue, please report it via [SECURITY.md](SECURITY.md).

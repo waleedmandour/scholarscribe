@@ -34,7 +34,7 @@
 
 <div class="card">
   <div class="card-title">Where detectors fail, and who pays the price</div>
-  <p>Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023; Laban et al., 2024) repeatedly find:</p>
+  <p>Independent evaluations (Liang et al., 2023; Weber-Wulff et al., 2023) repeatedly find:</p>
   <ul style="line-height: 1.7;">
     <li>
       <strong>False-positive bias against non-native English writers.</strong> Text by authors with lower English
@@ -58,17 +58,17 @@
   </ul>
 
   <VerifiedStat
-    figure="Testing seven widely used GPT detectors on 91 TOEFL essays written by non-native English speakers, more than half of the essays were incorrectly labeled AI-generated, with an average false-positive rate of 61.3%. Native-speaker essays were misclassified at near-zero rates, and some detectors flagged up to 97.8% of TOEFL essays."
+    figure="Testing seven widely used GPT detectors on 91 TOEFL essays written by non-native English speakers, more than half of the essays were incorrectly labeled AI-generated, with an average false-positive rate of 61.3%. Native-speaker essays were misclassified far less often, and some detectors flagged up to 97.8% of TOEFL essays."
     sourceUrl="https://doi.org/10.1016/j.patter.2023.100779"
     sourceLabel="Liang et al. (2023), Patterns"
     lastVerified="2026-09-29"
   />
 
   <VerifiedStat
-    figure="The study tested 14 detectors (12 public tools plus Turnitin and PlagiarismCheck). No tool exceeded 80% accuracy; only five exceeded 70%; tools were systematically biased toward classifying AI output as human-written. Six of 14 tools produced false positives and 13 of 14 produced false negatives. Accuracy degraded further on paraphrased and machine-translated text."
-    sourceUrl="https://doi.org/10.1016/j.patter.2023.100846"
-    sourceLabel="Weber-Wulff et al. (2023), Patterns"
-    lastVerified="2026-09-29"
+    figure="The study covered 12 publicly available detection tools plus two commercial systems (Turnitin and PlagiarismCheck). The researchers conclude that the available detection tools are neither accurate nor reliable and have a main bias towards classifying the output as human-written rather than detecting AI-generated text. Content obfuscation techniques (paraphrasing, machine translation) significantly worsen tool performance."
+    sourceUrl="https://doi.org/10.1007/s40979-023-00146-z"
+    sourceLabel="Weber-Wulff et al. (2023), International Journal for Educational Integrity"
+    lastVerified="2026-10-13"
   />
 </div>
 
@@ -96,8 +96,7 @@
   <div class="card-title">Further reading</div>
   <ul style="line-height: 1.7;">
     <li>Liang, W., et al. <em>GPT detectors are biased against non-native English writers.</em> Patterns, 2023. <a href="https://doi.org/10.1016/j.patter.2023.100779" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100779</a></li>
-    <li>Weber-Wulff, D., et al. <em>Testing of detection signals for AI-generated text.</em> Patterns, 2023. <a href="https://doi.org/10.1016/j.patter.2023.100846" target="_blank" rel="noopener">DOI: 10.1016/j.patter.2023.100846</a></li>
-    <li>Laban, P., et al. <em>Determining the believability and harm of AI-generated outputs.</em> ACL 2024.</li>
+    <li>Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., Foltýnek, T., Guerrero-Dib, J., Popoola, O., Šigut, P., & Waddington, L. <em>Testing of detection tools for AI-generated text.</em> International Journal for Educational Integrity, 19(1), 26, 2023. <a href="https://doi.org/10.1007/s40979-023-00146-z" target="_blank" rel="noopener">DOI: 10.1007/s40979-023-00146-z</a></li>
     <li>University guidance: Vanderbilt, Pitt, Texas-Austin statements on AI-detector reliability (searchable online).</li>
   </ul>
 </div>

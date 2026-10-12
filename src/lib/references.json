@@ -1,0 +1,41 @@
+{
+  "$comment": "Single source of truth for research references cited in user-facing templates and tabs (Appeal Letter, Detector Literacy, Risk Profiler, About). scripts/check-references.mjs and the Rust test in src-tauri/src/appeal_letter.rs verify that every reference key used in user-facing text exists here. Add new references ONLY with a DOI that has been fetched and verified; record the verification in docs/DECISIONS.md.",
+  "references": {
+    "liang-2023": {
+      "key": "liang-2023",
+      "full_citation": "Liang, W., Yuksekgonul, M., Mao, Y., Wu, E., & Zou, J. (2023). GPT detectors are biased against non-native English writers. Patterns, 4(7), 100779. https://doi.org/10.1016/j.patter.2023.100779",
+      "doi": "10.1016/j.patter.2023.100779",
+      "authors": ["Liang, Weixin", "Yuksekgonul, Mert", "Mao, Yining", "Wu, Eric", "Zou, James"],
+      "title": "GPT detectors are biased against non-native English writers",
+      "venue": "Patterns, 4(7), 100779",
+      "year": 2023,
+      "verified_against": "https://api.crossref.org/works/10.1016/j.patter.2023.100779",
+      "verified_date": "2026-10-13",
+      "used_for": "Evidence that AI-text detectors can misclassify non-native English writing; motivates the caution shown by the Risk Profile and Appeal Letter features."
+    },
+    "weber-wulff-2023": {
+      "key": "weber-wulff-2023",
+      "full_citation": "Weber-Wulff, D., Anohina-Naumeca, A., Bjelobaba, S., Foltýnek, T., Guerrero-Dib, J., Popoola, O., Šigut, P., & Waddington, L. (2023). Testing of detection tools for AI-generated text. International Journal for Educational Integrity, 19(1), 26. https://doi.org/10.1007/s40979-023-00146-z",
+      "doi": "10.1007/s40979-023-00146-z",
+      "authors": ["Weber-Wulff, Debora", "Anohina-Naumeca, Alla", "Bjelobaba, Sonja", "Foltýnek, Tomáš", "Guerrero-Dib, Jean", "Popoola, Olumide", "Šigut, Petr", "Waddington, Lorna"],
+      "title": "Testing of detection tools for AI-generated text",
+      "venue": "International Journal for Educational Integrity, 19(1), 26",
+      "year": 2023,
+      "verified_against": "https://api.crossref.org/works/10.1007/s40979-023-00146-z",
+      "verified_date": "2026-10-13",
+      "used_for": "Independent evaluation of 14 AI-text detection tools: the study concludes the tools are neither accurate nor reliable and tend to label text as human-written, with both false positives and false negatives observed. ScholarScribe must not claim that all tools showed high false-positive rates."
+    }
+  },
+  "removed_references": {
+    "laban-2024": {
+      "reason": "Cited in v2.2.1 as 'Laban et al. (2024), Determining the believability and harm of AI-generated outputs, ACL 2024'. No such paper could be identified on 2026-10-13 via Crossref queries by title and author (api.crossref.org). The closest real Laban et al. 2024 work is 'Can LLM-Generated Misinformation Be Detected?' (ICLR 2024), which studies detection of LLM-generated misinformation, not the accuracy of AI-text detectors, and therefore does not support the detector-literacy claims it was cited for. Removed everywhere (README, USER_MANUAL, Detector Literacy tab) per milestone task T1.3. Do not re-add without a verified DOI.",
+      "removed_date": "2026-10-13",
+      "removed_from": ["README.md", "USER_MANUAL.md", "src/components/DetectorLiteracy.svelte"]
+    },
+    "weber-wulff-2023-patterns-100846": {
+      "reason": "An incorrect bibliographic identity that circulated in v2.2.1 ('Testing of detection signals for AI-generated text', Patterns, DOI 10.1016/j.patter.2023.100846). Crossref shows that DOI belongs to 'Revealing factors influencing polymer degradation with rank-based machine learning' (Yuan et al., Patterns 2023), which is unrelated. Replaced everywhere by the verified weber-wulff-2023 entry above.",
+      "removed_date": "2026-10-13",
+      "removed_from": ["src/components/DetectorLiteracy.svelte", "docs/ETHICS.md"]
+    }
+  }
+}
