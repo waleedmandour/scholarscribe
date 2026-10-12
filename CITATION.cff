@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use ScholarScribe in your research workflow, please cite it."
+title: "ScholarScribe: a privacy-first, local-LLM writing companion for researchers"
+authors:
+  - family-names: Mandour
+    given-names: Waleed
+    orcid: "https://orcid.org/0000-0002-9262-5993"
+abstract: >-
+  ScholarScribe is a cross-platform desktop application for researchers that
+  provides local, privacy-preserving writing assistance through Ollama-hosted
+  large language models. It includes Writing Provenance, an author-side
+  evidence tool that turns Word Track Changes or Google Docs revision history
+  into hash-chained, Ed25519-signed export packets, an AI-use disclosure
+  generator, citation-pattern inventory, and educational modules about
+  AI-text detector reliability. All inference is local; the app's documented
+  network surface is listed in docs/NETWORK_SURFACE.json.
+keywords:
+  - academic writing
+  - writing provenance
+  - local LLM
+  - Ollama
+  - research integrity
+  - AI disclosure
+license: MIT
+repository-code: "https://github.com/waleedmandour/scholarscribe"
+version: 2.2.1
+date-released: "2026-09-29"
+preferred-citation:
+  type: software
+  title: "ScholarScribe: a privacy-first, local-LLM writing companion for researchers"
+  authors:
+    - family-names: Mandour
+      given-names: Waleed
+  version: 2.2.1
+  date-released: "2026-09-29"
+  doi: 10.5281/zenodo.23052647
+identifiers:
+  - description: "Versioned DOI for the v2.2.1 Zenodo record (the concept DOI for all versions is 10.5281/zenodo.20781043)"
+    type: doi
+    value: 10.5281/zenodo.23052647
