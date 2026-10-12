@@ -93,10 +93,13 @@
 
 <h1>Writing Process Journal</h1>
 <p class="lead">
-  Auto-saves timestamped snapshots of your draft at user-defined intervals, creating a verifiable
-  process record that can serve as evidence of authentic authorship. Each snapshot is diffed from
-  the previous one. Exports to a timestamped Markdown file. Aligns with the opt-in persistence
-  architecture, requires persistence to be enabled in the Saved Work tab.
+  Auto-saves timestamped snapshots of your draft at user-defined intervals, keeping a local,
+  plain-JSON process record of your writing sessions. These snapshots are not signed and not
+  verifiable, and they are not connected to the signed provenance chain; for signed, verifiable
+  evidence use the Provenance export packet. The journal stores the full draft text of each
+  snapshot locally. Each snapshot is diffed from the previous one. Exports to a timestamped
+  Markdown file. Aligns with the opt-in persistence architecture, requires persistence to be
+  enabled in the Saved Work tab.
 </p>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}

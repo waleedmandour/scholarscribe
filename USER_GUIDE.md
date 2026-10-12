@@ -1,7 +1,7 @@
 # ScholarScribe. User Guide
 
-> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no cloud calls, no paid APIs.
-> **Version 2.2.1 · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
+> A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
+> **Version 2.2.1 r2 (pre-release) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
 
 ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
 
@@ -125,11 +125,11 @@ The feature is **off by default**, nothing is recorded until you opt in, and no 
 This is *evidence you can offer*, not an AI-detection score, and not proof of authorship. See `docs/PROVENANCE_SPEC.md` for the full format specification and limitations.
 
 ### E. Verify ScholarScribe's privacy claims yourself
-**Privacy Audit** tab, watch the live log as you use other tabs. The only outbound host you should ever see is `registry.ollama.ai` (model downloads, no text), plus, if you explicitly connected a Google Doc, the Google endpoints it called. Anything else is a red flag.
+**Privacy Audit** tab, watch the live log as you use other tabs. ScholarScribe's own process talks to `127.0.0.1:11434` (your local Ollama); model downloads are fetched by the Ollama daemon itself from `registry.ollama.ai` or `hf.co` (so they do not appear in this in-app log), and the Google Drive/OAuth endpoints appear only if you explicitly connect a Google Doc. Anything else from the app process is a red flag.
 
 ## 5. Privacy in one sentence
 
-**Nothing you write, paste, or open ever leaves your device.** Drafts, `.bib` files, chat messages, and reference samples stay in memory or in local JSON files. The Privacy Audit log is in-memory only and is cleared on app close.
+**Your writing stays on your device.** Drafts, `.bib` files, chat messages, and reference samples stay in memory or in local JSON files, and AI inference runs only through your local Ollama. The one designed exception: if you explicitly connect a Google Doc in the Provenance tab, its revision text is fetched from Google and processed locally; every such call is logged in the Privacy Audit tab. The log itself is in-memory only and is cleared on app close.
 
 ## 6. Ethical use, please read
 
@@ -138,10 +138,10 @@ ScholarScribe is designed for researchers who have **genuinely written** their m
 - ✅ Helps you draft, paraphrase, and refine **your own** writing.
 - ✅ Validates citations and generates disclosure statements.
 - ✅ Educates you about how AI detectors work and where they fail.
-- ✅ Maintains timestamped evidence of your writing process.
+- ✅ Maintains local timestamped snapshots of your writing process (plain JSON, not signed; signed evidence comes from the Provenance export).
 - ❌ Does **not** evade AI detectors or lower detection scores.
 - ❌ Does **not** help misrepresent AI-generated text as original human work.
-- ❌ Does **not** contact any third-party AI API (OpenAI, Anthropic, etc.). The only outbound hosts are `registry.ollama.ai` (model downloads, no text) and, only if you explicitly connect a Google Doc in the Provenance tab. Google's Docs API. Every outbound call is logged live in the Privacy Audit tab.
+- ❌ Does **not** contact any third-party AI API (OpenAI, Anthropic, etc.). The outbound hosts are `127.0.0.1:11434` (your local Ollama, always), Google's OAuth/Docs API endpoints (only if you explicitly connect a Google Doc in the Provenance tab), and, at your request via the Ollama daemon, `registry.ollama.ai`/`hf.co` for model downloads. Every outbound call the app itself makes is logged live in the Privacy Audit tab.
 
 If you used AI assistance, **disclose it**, the Disclosure tab makes this easy. See [`docs/ETHICS.md`](docs/ETHICS.md) for the full policy.
 
