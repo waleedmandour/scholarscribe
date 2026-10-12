@@ -8,6 +8,12 @@
 # can use this workflow to add the missing assets without re-running the
 # other platforms.
 #
+# The build+upload goes through tauri-action (same as release.yml) because
+# tauri-action is what packages the .app bundle into the .app.tar.gz asset
+# (the bundler alone does not), and it names uploads with the target arch
+# (ScholarScribe_x64.app.tar.gz). tauri-action finds the existing release
+# by tag and attaches the new assets; nothing else is touched.
+#
 # To trigger: Actions -> Release Intel Mac (one-off) -> Run workflow ->
 # enter the existing tag, e.g. v2.2.1-r2
 
@@ -60,41 +66,21 @@ jobs:
       - name: Verify frontend type-checks
         run: npm run check
 
-      - name: Build Intel macOS app (cross-compile)
-        run: npx tauri build --target x86_64-apple-darwin
+      - name: Build Intel macOS app and attach assets to the release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ inputs.tag }}
+          releaseName: "${{ inputs.tag }} (Pre-release)"
+          args: --target x86_64-apple-darwin
 
-      - name: Upload Intel assets to the release and refresh CHECKSUMS.txt
+      - name: Refresh CHECKSUMS.txt over all release assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           TAG: ${{ inputs.tag }}
         run: |
-          set -euo pipefail
-          DMG=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -n 1)
-          APP_TGZ=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz | head -n 1)
-          echo "Intel dmg:   $DMG"
-          echo "Intel app:   $APP_TGZ"
-          RELEASE_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/$TAG")
-          RELEASE_ID=$(echo "$RELEASE_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-          UPLOAD_URL=$(echo "$RELEASE_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['upload_url'].split('{')[0])")
-          upload() { # $1=file, $2=content-type, $3=asset name
-            # Delete an existing asset with the same name first (idempotent re-runs).
-            EXISTING=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$3" \
-              | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['id'] if data else '')")
-            if [ -n "$EXISTING" ]; then
-              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/assets/$EXISTING"
-            fi
-            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: $2" \
-              --data-binary @"$1" \
-              "$UPLOAD_URL?name=$3"
-          }
-          upload "$DMG"     "application/x-apple-diskimage" "$(basename "$DMG")"
-          upload "$APP_TGZ" "application/gzip"              "$(basename "$APP_TGZ")"
-          # Refresh CHECKSUMS.txt over every current asset.
           python3 - <<'PYEOF'
           import hashlib, json, os, urllib.request, urllib.error
           TOKEN = os.environ['GITHUB_TOKEN']; REPO = os.environ['GITHUB_REPOSITORY']; TAG = os.environ['TAG']
@@ -120,5 +106,6 @@ jobs:
               headers={'Authorization': f'token {TOKEN}', 'Accept': 'application/vnd.github+json', 'Content-Type': 'text/plain'})
           with urllib.request.urlopen(req) as r: print(f'CHECKSUMS.txt refreshed over {len(lines)} assets: HTTP {r.status}')
           PYEOF
+
       - name: Summary
         run: echo "Intel macOS assets attached to ${{ inputs.tag }}; CHECKSUMS.txt refreshed."
