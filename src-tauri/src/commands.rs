@@ -25,6 +25,29 @@ pub async fn ollama_status(
     ollama::status(state.inner()).await
 }
 
+/// Rich Ollama connectivity probe for the Models page status card:
+/// connected flag plus the daemon version and locally available model
+/// count when the daemon answers (v2.2.1 r3).
+#[tauri::command]
+pub async fn ollama_probe(
+    state: State<'_, ollama::OllamaState>,
+) -> Result<ollama::OllamaProbe, ollama::OllamaError> {
+    Ok(ollama::probe(state.inner()).await)
+}
+
+/// Convert a .docx file into a compilable LaTeX article (v2.2.1 r3).
+/// Deterministic structural conversion; runs entirely locally.
+#[tauri::command]
+pub async fn docx_to_latex(
+    path: String,
+    output_path: String,
+) -> Result<crate::docx_to_latex::DocxToLatexResult, String> {
+    crate::docx_to_latex::convert_docx_to_latex(
+        std::path::Path::new(&path),
+        std::path::Path::new(&output_path),
+    )
+}
+
 #[tauri::command]
 pub async fn ollama_list_models(
     state: State<'_, ollama::OllamaState>,

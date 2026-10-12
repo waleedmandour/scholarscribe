@@ -4,6 +4,7 @@
     api,
     type CleanOptions,
     type CleanResult,
+    type DocxToLatexResult,
     defaultCleanOptions,
     strictCleanOptions,
   } from "../lib/api";
@@ -25,6 +26,36 @@
     transformations_applied: string[];
     skipped_operations: string[];
   } | null = null;
+
+  // docx → LaTeX conversion (v2.2.1 r3).
+  let latexResult: DocxToLatexResult | null = null;
+  let latexBusy = false;
+
+  async function convertToLatex() {
+    if (!docxSourcePath) {
+      error = "Pick a .docx file first.";
+      return;
+    }
+    const inputName = docxSourcePath.split(/[\\/]/).pop() || "document.docx";
+    const stem = inputName.replace(/\.docx$/i, "");
+    const outputPath = await save({
+      defaultPath: `${stem}.tex`,
+      filters: [{ name: "LaTeX document", extensions: ["tex"] }],
+    });
+    if (!outputPath) return;
+    error = "";
+    latexBusy = true;
+    latexResult = null;
+    result = null;
+    preserveResult = null;
+    try {
+      latexResult = await api.docxToLatex(docxSourcePath, outputPath);
+    } catch (e) {
+      error = String(e);
+    } finally {
+      latexBusy = false;
+    }
+  }
 
   let opts: CleanOptions = { ...defaultCleanOptions };
 
@@ -187,6 +218,7 @@
     docxSourcePath = "";
     result = null;
     preserveResult = null;
+    latexResult = null;
   }
 
   function resetToDefaults() {
@@ -298,6 +330,13 @@
       title="Clean the .docx in place, modifies each text run, preserves all tables/images/hyperlinks/headers/footers/styles. Saves to a new .docx file."
     >
       {busy ? "Working…" : "Clean & save as .docx (preserves format)"}
+    </button>
+    <button
+      on:click={convertToLatex}
+      disabled={latexBusy || !docxSourcePath}
+      title="Convert the document's structure (headings, lists, bold/italic, tables) into a compilable LaTeX article (.tex). Deterministic local conversion: no network, no LLM."
+    >
+      {latexBusy ? "Converting…" : "Convert to LaTeX (.tex)"}
     </button>
   {/if}
 </div>
@@ -430,5 +469,42 @@
       <li>Page setup, margins, orientation</li>
     </ul>
   </div>
+{/if}
+
+{#if latexResult}
+  <h2>Result, .docx converted to LaTeX</h2>
+  <div class="callout info">
+    <strong>Saved:</strong> <code>{latexResult.output_path}</code><br />
+    <strong>Body paragraphs:</strong> {latexResult.paragraphs.toLocaleString()} ·
+    <strong>Headings:</strong> {latexResult.headings.toLocaleString()} ·
+    <strong>List items:</strong> {latexResult.list_items.toLocaleString()} ·
+    <strong>Tables:</strong> {latexResult.tables.toLocaleString()}
+  </div>
+
+  <div class="card">
+    <div class="card-title">How the document was mapped</div>
+    <ul style="margin: 6px 0 0 16px; padding: 0; line-height: 1.7;">
+      <li><code>Title</code> → \title&#123;&#125; + \maketitle; <code>Heading1-3</code> → \section/\subsection/\subsubsection; <code>Heading4+</code> → \paragraph</li>
+      <li>Bulleted paragraphs → \begin&#123;itemize&#125; \item lists; bold/italic runs → \textbf&#123;&#125;/\emph&#123;&#125;</li>
+      <li>Tables → simple \begin&#123;tabular&#125; grids; LaTeX special characters (%, &amp;, #, _, $, &#123;, &#125;, ~, ^, \) are escaped</li>
+      <li>Line breaks inside a paragraph → LaTeX \\ line breaks</li>
+    </ul>
+    <p class="muted" style="font-size: var(--font-sm); margin-top: 10px;">
+      The conversion is deterministic and runs entirely on this device: no network calls, no LLM.
+      Images, equations, footnotes, and text boxes are not converted; compile the output with
+      pdflatex or xelatex and check the result before submission.
+    </p>
+  </div>
+
+  {#if latexResult.warnings.length > 0}
+    <div class="card">
+      <div class="card-title">Warnings (what the converter did not map)</div>
+      <ul style="margin: 6px 0 0 16px; padding: 0;">
+        {#each latexResult.warnings as w}
+          <li style="font-size: var(--font-sm);">{w}</li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 {/if}
 

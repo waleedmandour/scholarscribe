@@ -110,6 +110,24 @@ export interface SystemInfo {
   os_name: string;
 }
 
+// Rich Ollama connectivity probe for the Models page status card (v2.2.1 r3).
+export interface OllamaProbe {
+  connected: boolean;
+  version: string | null;
+  model_count: number | null;
+  base_url: string;
+}
+
+// Outcome of a .docx → LaTeX conversion (v2.2.1 r3).
+export interface DocxToLatexResult {
+  output_path: string;
+  paragraphs: number;
+  headings: number;
+  list_items: number;
+  tables: number;
+  warnings: string[];
+}
+
 export interface GgufCompatResult {
   file_path: string;
   file_size_gb: number;
@@ -431,6 +449,9 @@ export interface AbstractError {
 export const api = {
   appInfo: () => invoke<Record<string, unknown>>("app_info"),
   ollamaStatus: () => invoke<boolean>("ollama_status"),
+  ollamaProbe: () => invoke<OllamaProbe>("ollama_probe"),
+  docxToLatex: (path: string, outputPath: string) =>
+    invoke<DocxToLatexResult>("docx_to_latex", { path, outputPath }),
   ollamaListModels: () => invoke<ModelInfo[]>("ollama_list_models"),
   ollamaPullModel: (name: string) => invoke<void>("ollama_pull_model", { name }),
   ollamaDeleteModel: (name: string) => invoke<void>("ollama_delete_model", { name }),

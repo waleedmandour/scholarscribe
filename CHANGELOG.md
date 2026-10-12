@@ -8,6 +8,49 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1-r3] - 2026-10-13 (pre-release)
+
+A usability milestone requested by the maintainer: sidebar reorder, live
+Ollama status, model search, and docx to LaTeX conversion. All features run
+locally; the network surface is unchanged (23 declared hosts, CI-verified).
+
+### Added
+
+- **Ollama status card (Models page).** Directly below the PC specs card, a
+  live status card shows whether the local Ollama daemon is reachable at
+  `127.0.0.1:11434`: connected (daemon version, locally installed model
+  count, endpoint) or not detected (the four setup steps and a Re-check
+  button). The page re-probes every 15 seconds while open, and the card is
+  driven by a new `ollama_probe` command that answers `/api/version` and
+  `/api/tags` on loopback only. No new hosts.
+- **Model search (Models page).** A live, local-only search filters both the
+  installed-models table and the recommended catalog by name, tag, or
+  description, with match counts and a no-match state for each list.
+- **docx to LaTeX conversion (Text Cleaner page).** With a .docx loaded, a
+  new "Convert to LaTeX (.tex)" action produces a compilable article through
+  a deterministic structural mapping: Title/Heading1-6 styles →
+  \title/\section/\subsection/\subsubsection/\paragraph; bulleted paragraphs
+  → itemize lists; bold/italic runs → \textbf{}/\emph{}; tables → tabular
+  grids; LaTeX special characters escaped; `w:br` → `\\`. Unknown styles and
+  merged/nested table constructs are reported in a warnings card instead of
+  being silently dropped. New `docx_to_latex` module with 4 tests (escaping,
+  structural mapping, unknown-style warnings, corrupt-file rejection).
+
+### Changed
+
+- **Sidebar.** The About page moved directly under the Get started section
+  (Models, then About); the welcome tour order was updated to match.
+- **Release engineering.** The Intel-macOS release leg cross-compiles on the
+  Apple Silicon runner (`--target x86_64-apple-darwin`) because the macos-13
+  Intel runner queue is unavailable for this repository (the v2.2.1 job sat
+  queued for 24 hours and was auto-cancelled, so v2.2.1 shipped without
+  Intel assets). A one-off `release-intel-mac.yml` workflow backfills Intel
+  assets onto already-published releases and refreshes CHECKSUMS.txt.
+- **Dependencies (npm).** Combined bump: svelte ^5.57.2,
+  @sveltejs/vite-plugin-svelte ^7.3.1, vite ^8.3.4 (the individual dependabot
+  bumps conflicted on peer ranges); lockfile regenerated, postcss 8.5.29
+  included. svelte-check stays at 0 errors / 11 warnings (unchanged).
+
 ## [2.2.1-r2] - 2026-10-13 (pre-release, agent milestone M1)
 
 A truthful-claims, safe-defaults and CI milestone. No new user-facing

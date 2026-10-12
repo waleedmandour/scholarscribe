@@ -8,6 +8,7 @@
     type PullProgress,
     type GgufCompatResult,
     type SystemInfo,
+    type OllamaProbe,
   } from "../lib/api";
 
   export let ollamaOk = false;
@@ -28,6 +29,44 @@
   let ggufModelName = "";
   let ggufImporting = false;
   let ggufError = "";
+
+  // Ollama connectivity probe (v2.2.1 r3): drives the status card below the
+  // PC specs. One backend call returns connected flag, daemon version, and
+  // the locally installed model count.
+  let probe: OllamaProbe | null = null;
+  let probing = false;
+  let probeTimer: ReturnType<typeof setInterval> | null = null;
+
+  async function probeOllama() {
+    probing = true;
+    const wasConnected = probe?.connected ?? false;
+    try {
+      probe = await api.ollamaProbe();
+    } catch {
+      probe = { connected: false, version: null, model_count: null, base_url: "127.0.0.1:11434" };
+    } finally {
+      probing = false;
+    }
+    // Coming back online: refresh the installed list automatically.
+    if (!wasConnected && probe.connected && installed.length === 0) {
+      await refresh();
+    }
+  }
+
+  // Model search (v2.2.1 r3): live, local-only filter over the installed
+  // list and the recommended catalog. No network involved.
+  let query = "";
+  $: q = query.trim().toLowerCase();
+  $: filteredInstalled = q
+    ? installed.filter((m) => m.name.toLowerCase().includes(q))
+    : installed;
+  $: filteredRecommended = q
+    ? recommended.filter((r) =>
+        `${r.name} ${r.label} ${r.description} ${(r.tags || []).join(" ")}`
+          .toLowerCase()
+          .includes(q),
+      )
+    : recommended;
 
   async function refresh() {
     if (!ollamaOk) return;
@@ -76,10 +115,15 @@
       console.error("Models onMount failed", e);
       error = "Failed to initialize Models tab. Check that the app is running correctly.";
     }
+    probeOllama();
+    // Re-probe periodically so the status card stays honest if the daemon
+    // is started or stopped while this page is open.
+    probeTimer = setInterval(probeOllama, 15000);
   });
 
   onDestroy(() => {
     listeners.forEach((u) => u && u());
+    if (probeTimer) clearInterval(probeTimer);
   });
 
   async function pull(name: string) {
@@ -204,17 +248,69 @@
   </div>
 {/if}
 
-{#if !ollamaOk}
-  <div class="callout warn">
-    <strong>Ollama is not running.</strong> ScholarScribe needs Ollama as its local LLM runtime.
-    <ol style="margin: 8px 0 0 16px; padding: 0;">
-      <li>Download Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> (free, ~150 MB).</li>
-      <li>Run the installer. On Windows it auto-starts as a background service.</li>
-      <li>Confirm the Ollama icon (a llama) appears in your system tray.</li>
-      <li>Come back here; the status pill in the sidebar will turn green.</li>
-    </ol>
-  </div>
-{/if}
+<!-- Ollama connectivity status (v2.2.1 r3). Rendered directly below the PC
+     specs so the user sees machine + runtime in one glance. -->
+<div class="card" style="padding: 12px 16px;">
+  {#if !probe}
+    <div class="row" style="align-items: center;">
+      <span class="tag">{probing ? "Checking for Ollama…" : "Status unknown"}</span>
+      <button class="shrink" on:click={probeOllama} disabled={probing}>Re-check</button>
+    </div>
+  {:else if probe.connected}
+    <div class="row" style="align-items: center;">
+      <span class="tag green" style="font-weight: 600;">● Ollama connected</span>
+      <span style="font-size: var(--font-sm);">
+        {#if probe.version}<span class="dim">Daemon:</span> <strong>v{probe.version}</strong>{/if}
+        {#if probe.model_count !== null}
+          · <span class="dim">Local models:</span> <strong>{probe.model_count}</strong>
+        {/if}
+        · <span class="dim">Endpoint:</span> <code>{probe.base_url}</code>
+      </span>
+      <div class="spacer"></div>
+      <button class="shrink" on:click={probeOllama} disabled={probing}>{probing ? "Checking…" : "Re-check"}</button>
+    </div>
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 6px;">
+      All inference runs through this local daemon. No prompt or draft text ever leaves your device.
+    </div>
+  {:else}
+    <div class="row" style="align-items: center;">
+      <span class="tag" style="font-weight: 600; color: var(--danger);">● Ollama not detected</span>
+      <span class="dim" style="font-size: var(--font-sm);">
+        Nothing answered at <code>{probe.base_url}</code>.
+      </span>
+      <div class="spacer"></div>
+      <button class="shrink" on:click={probeOllama} disabled={probing}>{probing ? "Checking…" : "Re-check"}</button>
+    </div>
+    <div style="font-size: var(--font-sm); margin-top: 8px;">
+      <strong>ScholarScribe needs Ollama as its local LLM runtime.</strong>
+      <ol style="margin: 6px 0 0 16px; padding: 0;">
+        <li>Download Ollama from <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a> (free, ~150 MB).</li>
+        <li>Run the installer. On Windows it auto-starts as a background service.</li>
+        <li>Confirm the Ollama icon (a llama) appears in your system tray.</li>
+        <li>Come back here, or press Re-check; the card above will turn green.</li>
+      </ol>
+    </div>
+  {/if}
+</div>
+
+<!-- Model search (v2.2.1 r3): live local filter over installed + catalog. -->
+<div class="card" style="padding: 12px 16px;">
+  <div class="card-title">Search models</div>
+  <input
+    type="search"
+    bind:value={query}
+    placeholder="Search by name, tag, or description (e.g. llama, 7b, code, qwen)…"
+    style="width: 100%;"
+    aria-label="Search models"
+  />
+  {#if q}
+    <div class="dim" style="font-size: var(--font-sm); margin-top: 6px;">
+      {filteredInstalled.length} installed · {filteredRecommended.length} catalog
+      match{filteredRecommended.length === 1 ? "" : "es"} for “{query.trim()}”
+      <button class="shrink" style="margin-left: 8px;" on:click={() => (query = "")}>Clear</button>
+    </div>
+  {/if}
+</div>
 
 {#if error}
   <div class="callout warn"><strong>Error:</strong> {error}</div>
@@ -224,13 +320,19 @@
 <div class="card">
   {#if loading}
     <p class="no-data">Loading…</p>
-  {:else if installed.length === 0}
-    <p class="no-data">No models installed yet. Pick one from the catalog below, import a .gguf file, or install by name.</p>
+  {:else if filteredInstalled.length === 0}
+    <p class="no-data">
+      {#if q}
+        No installed models match “{query.trim()}”. Try a shorter search term, or pick one from the catalog below.
+      {:else}
+        No models installed yet. Pick one from the catalog below, import a .gguf file, or install by name.
+      {/if}
+    </p>
   {:else}
     <table>
       <thead><tr><th>Name</th><th>Size</th><th>Last used</th><th></th></tr></thead>
       <tbody>
-        {#each installed as m}
+        {#each filteredInstalled as m}
           <tr>
             <td><strong>{m.name}</strong></td>
             <td>{fmtSize(m.size)}</td>
@@ -291,7 +393,10 @@
 </div>
 
 <h2>Recommended catalog</h2>
-{#each recommended as r}
+{#if q && filteredRecommended.length === 0}
+  <div class="card"><p class="no-data">No catalog models match “{query.trim()}”. You can still install any model by name with “Install by name…” above.</p></div>
+{/if}
+{#each filteredRecommended as r}
   <div class="card">
     <div class="row" style="align-items: flex-start;">
       <div style="flex: 1;">

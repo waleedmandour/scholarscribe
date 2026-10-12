@@ -55,6 +55,59 @@ pub async fn status(state: &OllamaState) -> Result<bool, OllamaError> {
     Ok(resp.map(|r| r.status().is_success()).unwrap_or(false))
 }
 
+/// Rich connectivity probe result for the Models page status card (v2.2.1 r3).
+#[derive(Debug, Clone, Serialize)]
+pub struct OllamaProbe {
+    pub connected: bool,
+    pub version: Option<String>,
+    pub model_count: Option<usize>,
+    pub base_url: String,
+}
+
+/// Probe the Ollama daemon: `/api/version` for reachability + version, then
+/// `/api/tags` for the locally available model count. Never errors: a daemon
+/// that does not answer simply reports connected=false, so the UI can render
+/// a professional status card from a single call. Both endpoints are on the
+/// loopback base address only; no other host is contacted.
+pub async fn probe(state: &OllamaState) -> OllamaProbe {
+    let mut p = OllamaProbe {
+        connected: false,
+        version: None,
+        model_count: None,
+        base_url: base_url().to_string(),
+    };
+    if let Ok(resp) = state
+        .client
+        .get(format!("{}/api/version", OLLAMA_BASE))
+        .timeout(Duration::from_secs(3))
+        .send()
+        .await
+    {
+        if resp.status().is_success() {
+            if let Ok(v) = resp.json::<serde_json::Value>().await {
+                p.version = v.get("version").and_then(|x| x.as_str()).map(String::from);
+            }
+            p.connected = true;
+        }
+    }
+    if p.connected {
+        if let Ok(resp) = state
+            .client
+            .get(format!("{}/api/tags", OLLAMA_BASE))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await
+        {
+            if resp.status().is_success() {
+                if let Ok(v) = resp.json::<serde_json::Value>().await {
+                    p.model_count = v.get("models").and_then(|m| m.as_array()).map(|a| a.len());
+                }
+            }
+        }
+    }
+    p
+}
+
 pub async fn list_models(state: &OllamaState) -> Result<Vec<ModelInfo>, OllamaError> {
     let resp = state
         .client

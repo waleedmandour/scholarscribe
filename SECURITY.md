@@ -1,6 +1,6 @@
 # Security Policy
 
-Applies to ScholarScribe v2.2.1 r2. The authoritative machine-readable list of hosts this app can contact is `docs/NETWORK_SURFACE.json`; this file and that JSON are kept in sync and CI fails if they drift (see `.github/workflows/ci.yml`, job `network-surface`).
+Applies to ScholarScribe v2.2.1 r3. The authoritative machine-readable list of hosts this app can contact is `docs/NETWORK_SURFACE.json`; this file and that JSON are kept in sync and CI fails if they drift (see `.github/workflows/ci.yml`, job `network-surface`).
 
 ## Reporting a vulnerability
 
