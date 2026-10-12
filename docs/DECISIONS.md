@@ -4,6 +4,24 @@ Running log per the work order: date, decision, alternatives considered, sources
 
 ---
 
+## 2026-10-13 | r3-fix | Tauri JS packages pinned to the Rust crates' minors
+
+- **Decision:** The v2.2.1-r2 lockfile regeneration (PR #35) floated
+  `@tauri-apps/api` to 2.12.3, `@tauri-apps/plugin-dialog` to 2.8.2 and
+  `@tauri-apps/plugin-shell` to 2.5.0 (they sit on `^2.0.0` in package.json),
+  while the Rust crates stayed at tauri 2.11.5 / dialog 2.7.3 / shell 2.3.6
+  (the Rust-side dependabot group PR #26 is still unmerged). The tauri CLI
+  hard-errors on this parity break ("Found version mismatched Tauri
+  packages"), which failed all three non-queued release legs on the first
+  v2.2.1-r3 tag push. Fix: pin the three JS packages to the exact versions
+  matching the Rust minors (`@tauri-apps/api 2.11.1`,
+  `@tauri-apps/plugin-dialog 2.7.3`, `@tauri-apps/plugin-shell 2.3.6`) and
+  regenerate the lockfile. `@tauri-apps/cli` stays on `^2.0.0`.
+- **Alternatives:** merge PR #26 (Rust 2.12.2/dialog 2.8.1/shell 2.4.1) — rejected: shell would then mismatch JS 2.5.0 anyway, and a same-day Rust minor cascade is more risk than a JS pin; wait for dependabot to pair both sides — rejected: blocks the r3 release.
+- **Consequence:** when the maintainer later bumps these, BOTH sides must move together (Rust crates in Cargo.toml AND the JS pins here). Dependabot will propose JS bumps; do not merge a JS-only tauri bump while the Rust side lags. Same fix must also restore the cross-compile matrix in release.yml (lost from #37 by a local `git reset --hard` before commit; re-applied in the same PR).
+
+---
+
 ## 2026-10-13 | r3 | Maintainer's four usability changes shipped as v2.2.1 r3
 
 - **Decision:** The maintainer requested (1) About directly under Get started, (2) Ollama connectivity detection displayed below the PC specs on the Models page, (3) a functional Model search, and (4) docx→LaTeX conversion "in its right section", then a rebuild as r3 pre-release. Placement decisions: About joins the Get started group (Models, About) rather than staying in Privacy and app, because the welcome flow is where version/credits questions arise; the Ollama status is a card below the specs card (machine + runtime in one glance) driven by a new `ollama_probe` command (`/api/version` + `/api/tags`, loopback only, no new hosts) instead of reusing the boolean `ollama_status`, so the card can show version and model count; the search filters installed + recommended lists live (no backend change, no network); the LaTeX converter lives on the Text Cleaner page because that is where .docx import already lives, avoiding a 21st tab that would ripple through the "20 tools" claims across README/USER_GUIDE/Quick Guide.

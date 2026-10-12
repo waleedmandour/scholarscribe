@@ -41,11 +41,15 @@ jobs:
           # --target arg needed.
           - platform: macos-latest
             args: ""
-          # macOS Intel (macos-13 is the last Intel runner). Native build
-          # for x86_64-apple-darwin. Produces a separate .dmg from the
-          # Apple Silicon build.
-          - platform: macos-13
-            args: ""
+          # macOS Intel, cross-compiled on the Apple Silicon runner.
+          # The macos-13 Intel runner queue has been unavailable for this
+          # repo: the v2.2.1 release job sat in queue for 24h and was
+          # auto-cancelled, so v2.2.1 shipped without Intel assets. Rust
+          # cross-compiles cleanly to x86_64-apple-darwin on arm64 macOS,
+          # and the dmg/app.tar.gz bundling on the host is arch-agnostic.
+          # Produces a separate .dmg from the Apple Silicon build.
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin"
           # Linux x64. Tauri's default produces both .deb and .AppImage.
           - platform: ubuntu-22.04
             args: ""
@@ -71,16 +75,21 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          # Include runner.arch in the key so Intel (X64) and Apple Silicon
-          # (ARM64) Mac caches do not collide.
-          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-${{ runner.arch }}-cargo-
+          # Include runner.arch and the matrix args in the key so the
+          # native Apple Silicon build and the x86_64 cross-compile (both
+          # on macos-latest, ARM64) do not share one target cache.
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ matrix.args }}-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ matrix.args }}-
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libdbus-1-dev
+
+      - name: Add cross-compile Rust target (Intel leg only)
+        if: contains(matrix.args, '--target x86_64-apple-darwin')
+        run: rustup target add x86_64-apple-darwin
 
       - name: Install npm dependencies
         run: npm install --no-audit --no-fund
