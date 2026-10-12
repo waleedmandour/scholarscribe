@@ -3341,7 +3341,7 @@ dependencies = [
 
 [[package]]
 name = "scholarscribe"
-version = "2.1.0"
+version = "2.2.1"
 dependencies = [
  "anyhow",
  "ed25519-dalek",
