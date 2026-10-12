@@ -1,6 +1,11 @@
 # ScholarScribe. continuous integration.
 # Runs on every push to main and on every pull request.
-# Verifies the frontend type-checks and the Rust code compiles.
+# Verifies: frontend type-check and build; Rust fmt, clippy (strict), check
+# and tests (including the Rust-vs-JS verifier cross-check fixture); the
+# network-surface test (source hosts vs docs/NETWORK_SURFACE.json vs
+# SECURITY.md); the references test (citations vs src/lib/references.json);
+# dependency audits (cargo audit report-only while open advisories await the
+# dependabot bumps; npm audit blocking) and a CycloneDX SBOM artifact.
 # Does NOT build installers. that's release.yml's job.
 
 name: CI
@@ -20,15 +25,19 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run check
       - run: npm run build
+      - name: JS-side tests (references, network surface, verifier cross-check)
+        run: npm test
 
   check-rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
       - uses: actions/cache@v4
         with:
           path: |
@@ -44,17 +53,45 @@ jobs:
       - name: cargo fmt check
         working-directory: src-tauri
         run: cargo fmt -- --check
-      - name: cargo clippy
+      - name: cargo clippy (strict; debt cleared in v2.2.1 r2)
         working-directory: src-tauri
         run: cargo clippy -- -D warnings
-        # Pre-existing clippy debt across 9 source files (~21 warnings:
-        # manual_inspect, if_same_then_else, useless_format, collapsible_if,
-        # unnecessary_sort_by, manual_pattern_char_comparison,
-        # regex_creation_in_loops, manual_strip, let_and_return, etc.)
-        # blocks strict clippy in this sprint. Tracked as a follow-up task
-        # in CHANGELOG.md decision 9. Re-enable strict mode (remove the
-        # continue-on-error line below) once that debt is cleared.
-        continue-on-error: true
+      - name: cargo test (blocking; includes the cross-language verifier fixture test)
+        working-directory: src-tauri
+        run: cargo test
       - name: cargo check
         working-directory: src-tauri
         run: cargo check
+      - name: "cargo audit (report-only; advisories await the pending dependabot bumps: quick-xml #16, time #12, reqwest/rustls #9, thiserror #17)"
+        working-directory: src-tauri
+        continue-on-error: true
+        run: |
+          cargo install cargo-audit --locked --quiet
+          cargo audit
+
+  security-and-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - name: npm audit (production dependencies, blocking)
+        run: npm audit --omit=dev
+      - name: CycloneDX SBOM (npm)
+        run: npx --yes @cyclonedx/cyclonedx-npm --omit dev --output-file sbom-npm.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-npm
+          path: sbom-npm.json
+      - name: CycloneDX SBOM (cargo)
+        working-directory: src-tauri
+        run: |
+          cargo install cargo-cyclonedx --locked --quiet
+          cargo cyclonedx --output-format json --output-path ../sbom-cargo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cargo
+          path: sbom-cargo.json

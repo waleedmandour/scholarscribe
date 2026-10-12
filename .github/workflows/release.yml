@@ -96,7 +96,19 @@ jobs:
           tagName: ${{ inputs.tag || github.ref_name }}
           releaseName: "${{ inputs.tag || github.ref_name }} (Pre-release)"
           releaseBody: |
-            ScholarScribe ${{ inputs.tag || github.ref_name }}
+            ScholarScribe ${{ inputs.tag || github.ref_name }} (Pre-release)
+
+            ## What changed in this release
+
+            See [CHANGELOG.md](CHANGELOG.md) for the full entry for this tag.
+
+            - Truthful-claims pass: README, SECURITY, USER_GUIDE and USER_MANUAL now state the network surface exactly (loopback Ollama always; opt-in Google Docs bridge; Ollama daemon fetches models from registry.ollama.ai or hf.co), and docs/NETWORK_SURFACE.json is the machine-readable source enforced by CI.
+            - Citation integrity: Weber-Wulff et al. (2023) corrected to its real identity (Testing of detection tools for AI-generated text, International Journal for Educational Integrity 19(1):26, DOI 10.1007/s40979-023-00146-z); the unverifiable "Laban et al. (2024)" citation was removed everywhere; src/lib/references.json is now the single source of references, enforced by a test.
+            - Writing Provenance: style_analysis.json is now opt-in (off by default, labelled informational and not evidence); older packets that contain it still verify. Risk Profile output was never exported and remains excluded.
+            - Writing Journal is now described honestly: local plain-JSON snapshots, not signed or verifiable.
+            - CI: cargo test (blocking), clippy -D warnings, the Rust-vs-JS verifier cross-check fixture, the network-surface test, the references test, cargo audit, npm audit, and a CycloneDX SBOM.
+            - Dash-gate removed from release notes and CI; the two sentences the old sweep had mangled are fixed.
+            - New: CITATION.cff, docs/FOR_EDITORS.md, THIRD_PARTY_LICENSES.md, backfilled release notes for v2.2.0-pre and v2.2.1.
 
             ## Install
 
@@ -114,7 +126,7 @@ jobs:
 
             ## Privacy
 
-            Zero telemetry. Single outbound host (registry.ollama.ai, only on model download). All inference runs locally via Ollama. See [SECURITY.md](SECURITY.md).
+            Zero telemetry. ScholarScribe's own process contacts `127.0.0.1:11434` (your local Ollama) always, plus Google's OAuth/Drive endpoints only if you opt in to the Google Docs import in the Provenance tab. Model downloads are fetched by the Ollama daemon itself (from `registry.ollama.ai` or `hf.co`) at your request and carry no text. All inference runs locally via Ollama. Full host list: [docs/NETWORK_SURFACE.json](docs/NETWORK_SURFACE.json) and [SECURITY.md](SECURITY.md).
 
             ## Ethical use
 
@@ -122,7 +134,7 @@ jobs:
 
             ## Verification
 
-            All commits pass `npm run check`, `npm run build`, `cargo fmt --check`, and `cargo check`. Clippy runs in informational mode (`continue-on-error: true`); approximately 21 pre-existing clippy warnings across 9 source files are tracked as a follow-up refactor sprint (see CHANGELOG.md decision 9). A grep for em (U+2014) and en (U+2013) dashes across user-facing files returns zero matches. The `CHECKSUMS.txt` asset contains SHA-256 digests for every binary artifact and the User Guide PDF.
+            This release was gated on: `npm ci`, `npm run check`, `npm run build`, `cargo fmt --check`, `cargo check`, `cargo test` (all Rust tests including the Rust-vs-JS verifier cross-check fixture), `cargo clippy -- -D warnings`, the network-surface test (source hosts vs `docs/NETWORK_SURFACE.json` vs SECURITY.md), the references test (citations vs `src/lib/references.json`), and `npm audit --omit=dev`. Full history in [CHANGELOG.md](CHANGELOG.md). The `CHECKSUMS.txt` asset contains SHA-256 digests for every binary artifact and the User Guide PDF; when the maintainer's signing secret is configured in CI, a detached minisign signature `CHECKSUMS.txt.minisig` is attached as well.
           releaseDraft: false
           prerelease: true
           args: ${{ matrix.args }}
@@ -213,3 +225,49 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           TAG_OVERRIDE: ${{ inputs.tag || github.ref_name }}
+
+      # T1.7: sign CHECKSUMS.txt with minisign when the maintainer has
+      # configured the MINISIGN_SECRET_KEY (and optionally MINISIGN_PASSWORD)
+      # secrets. With no secret configured this step skips with a visible
+      # notice instead of failing the release (N6: skip with a visible notice).
+      - name: Sign CHECKSUMS.txt (minisign, only if signing secrets exist)
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TAG_OVERRIDE: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [ -z "$MINISIGN_SECRET_KEY" ]; then
+            echo "::notice::CHECKSUMS.txt signing skipped: the MINISIGN_SECRET_KEY secret is not configured. Add it (plus MINISIGN_PASSWORD if the key is protected) to enable signed checksums, and publish the matching public key in docs/."
+            exit 0
+          fi
+          cargo install minisign --locked --quiet
+          mkdir -p /tmp/minisign
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > /tmp/minisign/release.key
+          chmod 600 /tmp/minisign/release.key
+          TAG="${TAG_OVERRIDE:-$GITHUB_REF_NAME}"
+          RELEASE_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/$TAG")
+          ASSET_URL=$(echo "$RELEASE_JSON" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for a in d.get('assets',[]):
+              if a['name']=='CHECKSUMS.txt':
+                  print(a['browser_download_url']); break
+          ")
+          if [ -z "$ASSET_URL" ]; then
+            echo "::notice::No CHECKSUMS.txt asset found to sign; skipping."
+            exit 0
+          fi
+          curl -sL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/minisign/CHECKSUMS.txt "$ASSET_URL"
+          export MINISIGN_PASSWORD
+          ~/.cargo/bin/minisign -S -s /tmp/minisign/release.key -m /tmp/minisign/CHECKSUMS.txt
+          UPLOAD_URL=$(echo "$RELEASE_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['upload_url'].split('{')[0])")
+          curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: text/plain" \
+            --data-binary @/tmp/minisign/CHECKSUMS.txt.minisig \
+            "$UPLOAD_URL?name=CHECKSUMS.txt.minisig"
+          rm -f /tmp/minisign/release.key
