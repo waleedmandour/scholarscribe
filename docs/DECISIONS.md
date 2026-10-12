@@ -4,6 +4,15 @@ Running log per the work order: date, decision, alternatives considered, sources
 
 ---
 
+## 2026-10-13 | r3 | Maintainer's four usability changes shipped as v2.2.1 r3
+
+- **Decision:** The maintainer requested (1) About directly under Get started, (2) Ollama connectivity detection displayed below the PC specs on the Models page, (3) a functional Model search, and (4) docx→LaTeX conversion "in its right section", then a rebuild as r3 pre-release. Placement decisions: About joins the Get started group (Models, About) rather than staying in Privacy and app, because the welcome flow is where version/credits questions arise; the Ollama status is a card below the specs card (machine + runtime in one glance) driven by a new `ollama_probe` command (`/api/version` + `/api/tags`, loopback only, no new hosts) instead of reusing the boolean `ollama_status`, so the card can show version and model count; the search filters installed + recommended lists live (no backend change, no network); the LaTeX converter lives on the Text Cleaner page because that is where .docx import already lives, avoiding a 21st tab that would ripple through the "20 tools" claims across README/USER_GUIDE/Quick Guide.
+- **Alternatives:** a new "LaTeX" tab (rejected: tool-count claims in docs would all change); a sidebar-wide "search all pages" (rejected: the request was model search); showing Ollama status only via the existing sidebar pill (rejected: the maintainer asked for the Models page specifically, below the PC specs).
+- **Version identity:** tag `v2.2.1-r3`, display "v2.2.1 r3 (Pre-release)"; machine fields stay numeric 2.2.1 (same MSI rationale as r2, DECISIONS 2026-10-13 M1).
+- **Release engineering note:** the Intel-macOS leg cross-compiles on Apple Silicon (`--target x86_64-apple-darwin`) because the macos-13 queue never picks up jobs for this repo (evidence: v2.2.1 job queued exactly 24h then auto-cancelled; v2.2.1 shipped no Intel assets). `release-intel-mac.yml` backfills Intel assets onto already-cut tags; its build/upload path must go through tauri-action because tauri-action (not the bundler) packages `.app` into `.app.tar.gz`.
+
+---
+
 ## 2026-10-13 | M0 | User-level sysroot for baseline gates in the audit sandbox
 
 - **Decision:** To run `cargo check/test/clippy` in a rootless sandbox missing `libwebkit2gtk-4.1-dev`/`libgtk-3-dev`/`libsoup-3.0-dev`, the audit downloaded the Debian 13 dev packages and extracted them to a user directory (`/home/z/sysroot`), resolving them via `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH`. This is a sandbox-only workaround; nothing in the repo or CI depends on it.

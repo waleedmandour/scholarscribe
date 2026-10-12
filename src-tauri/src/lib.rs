@@ -15,6 +15,7 @@ mod commands;
 mod disclosure;
 mod document_stats;
 mod docx_reading;
+mod docx_to_latex;
 mod google_docs;
 mod google_docs_commands;
 mod google_docs_net;
@@ -57,6 +58,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::ollama_status,
+            commands::ollama_probe,
+            commands::docx_to_latex,
             commands::ollama_list_models,
             commands::ollama_pull_model,
             commands::ollama_delete_model,

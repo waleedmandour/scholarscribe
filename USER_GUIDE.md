@@ -1,7 +1,7 @@
 # ScholarScribe. User Guide
 
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
-> **Version 2.2.1 r2 (pre-release) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
+> **Version 2.2.1 r3 (pre-release) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
 
 ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
 
@@ -17,7 +17,7 @@ ScholarScribe helps you draft, clean, validate, and disclose your manuscript usi
 
 ## 2. Download a model (1 minute)
 
-Open the **Models** tab. The top card shows your CPU and RAM. Pick a model that fits your memory:
+Open the **Models** tab. The top card shows your CPU and RAM, and the card directly below it shows whether the local Ollama daemon is connected (version, installed model count, endpoint `127.0.0.1:11434`) or not detected, with setup steps and a Re-check button. A search box filters both your installed models and the recommended catalog by name, tag, or description. Pick a model that fits your memory:
 
 | Your RAM | Recommended models |
 |---|---|
@@ -98,6 +98,7 @@ The sidebar footer also holds the **A-/A/A+ font-scale control** (0.9, 1.0, 1.15
 - **Extract & clean .docx**, runs all cleaners; loses formatting.
 - **Clean & save as .docx (preserves format)**, modifies text in place; tables, images, hyperlinks, and styles are untouched. Output: `<original>-cleaned.docx`.
 - **⚡ Strict clean**, applies all 24 transformations (BOM, line endings, bullets, markdown headings, etc.).
+- **Convert to LaTeX (.tex)**, maps the document's structure (Title/Heading styles, bulleted lists, bold/italic runs, tables) into a compilable LaTeX article. Deterministic and fully local; anything the converter does not map is listed in the warnings card.
 
 ### B. Validate references before submission
 **Citations** tab → **Open draft** (`.txt`/`.docx`) → **Open .bib file** → **Validate citations**. Three lists appear:

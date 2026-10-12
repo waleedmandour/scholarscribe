@@ -81,8 +81,11 @@
   // Tabs grouped by workflow phase. Group is a presentation-only field;
   // tab IDs, routes, and types are unchanged.
   const tabs: { id: Tab; label: string; icon: string; group: string }[] = [
-    // Get started
+    // Get started (About sits directly under the Get started section since
+    // v2.2.1 r3: version, environment, and credits are where first-time
+    // users look, right after the Models setup page)
     { id: "models", label: "Models", icon: "M", group: "Get started" },
+    { id: "about", label: "About", icon: "A", group: "Get started" },
     // Prepare the draft
     { id: "cleaner", label: "Text Cleaner", icon: "T", group: "Prepare the draft" },
     { id: "citations", label: "Citations", icon: "C", group: "Prepare the draft" },
@@ -108,7 +111,6 @@
     // Privacy and app
     { id: "audit", label: "Privacy Audit", icon: "P", group: "Privacy and app" },
     { id: "saved", label: "Saved Work", icon: "W", group: "Privacy and app" },
-    { id: "about", label: "About", icon: "A", group: "Privacy and app" },
   ];
 
   async function refreshStatus() {
