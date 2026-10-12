@@ -342,9 +342,7 @@ pub fn analyze_by_sections(text: &str) -> SectionReadabilityReport {
         interpretation: "Document-wide average".into(),
     };
 
-    let explanation = format!(
-        "Readability varies naturally across sections: Methods sections typically score harder on Flesch (which is appropriate, they describe technical procedures), while introductions and discussions should be more accessible. This section-aware view helps you calibrate your writing appropriately for each part of the manuscript."
-    );
+    let explanation = "Readability varies naturally across sections: Methods sections typically score harder on Flesch (which is appropriate, they describe technical procedures), while introductions and discussions should be more accessible. This section-aware view helps you calibrate your writing appropriately for each part of the manuscript.".to_string();
 
     SectionReadabilityReport {
         sections: section_results,

@@ -297,7 +297,7 @@ fn normalize_pages(s: &str) -> String {
     // Strip trailing period
     let s = s.trim_end_matches('.').trim().to_string();
     // Replace single dash or en/em dash with double dash
-    let s = s.replace('\u{2013}', "--").replace('\u{2014}', "--");
+    let s = s.replace(['\u{2013}', '\u{2014}'], "--");
     // If a single dash is between two numbers, expand to double dash.
     let s = Regex::new(r"(\d)-(\d)")
         .unwrap()

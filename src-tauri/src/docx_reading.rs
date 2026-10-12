@@ -122,10 +122,8 @@ fn extract_text_from_ooxml(xml: &str) -> String {
                 if !in_text {
                     out.push('\t');
                 }
-            } else if tag == "w:br" {
-                if !in_text {
-                    out.push('\n');
-                }
+            } else if tag == "w:br" && !in_text {
+                out.push('\n');
             }
         } else if in_text {
             current_text.push(c);
