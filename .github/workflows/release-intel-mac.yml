@@ -1,0 +1,124 @@
+# ScholarScribe. one-off helper: attach the Intel-macOS installers to an
+# already-published release, then refresh CHECKSUMS.txt.
+#
+# Why this exists: the macos-13 Intel runner queue has been unavailable for
+# this repo (the v2.2.1 job waited 24h and was auto-cancelled; v2.2.1
+# shipped without Intel assets). release.yml now cross-compiles the Intel
+# build on the Apple Silicon runner, but tags cut before that fix (v2.2.1-r2)
+# can use this workflow to add the missing assets without re-running the
+# other platforms.
+#
+# To trigger: Actions -> Release Intel Mac (one-off) -> Run workflow ->
+# enter the existing tag, e.g. v2.2.1-r2
+
+name: Release Intel Mac (one-off)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to attach Intel assets to (e.g. v2.2.1-r2)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-intel:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout (at the given tag)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Rust stable with Intel target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-intel-x-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-cargo-intel-x-
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify frontend type-checks
+        run: npm run check
+
+      - name: Build Intel macOS app (cross-compile)
+        run: npx tauri build --target x86_64-apple-darwin
+
+      - name: Upload Intel assets to the release and refresh CHECKSUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          DMG=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -n 1)
+          APP_TGZ=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz | head -n 1)
+          echo "Intel dmg:   $DMG"
+          echo "Intel app:   $APP_TGZ"
+          RELEASE_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/$TAG")
+          RELEASE_ID=$(echo "$RELEASE_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+          UPLOAD_URL=$(echo "$RELEASE_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin)['upload_url'].split('{')[0])")
+          upload() { # $1=file, $2=content-type, $3=asset name
+            # Delete an existing asset with the same name first (idempotent re-runs).
+            EXISTING=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$3" \
+              | python3 -c "import json,sys; data=json.load(sys.stdin); print(data[0]['id'] if data else '')")
+            if [ -n "$EXISTING" ]; then
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/assets/$EXISTING"
+            fi
+            curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $2" \
+              --data-binary @"$1" \
+              "$UPLOAD_URL?name=$3"
+          }
+          upload "$DMG"     "application/x-apple-diskimage" "$(basename "$DMG")"
+          upload "$APP_TGZ" "application/gzip"              "$(basename "$APP_TGZ")"
+          # Refresh CHECKSUMS.txt over every current asset.
+          python3 - <<'PYEOF'
+          import hashlib, json, os, urllib.request, urllib.error
+          TOKEN = os.environ['GITHUB_TOKEN']; REPO = os.environ['GITHUB_REPOSITORY']; TAG = os.environ['TAG']
+          def api(path):
+              req = urllib.request.Request(f"https://api.github.com/repos/{REPO}/{path}",
+                  headers={'Authorization': f'token {TOKEN}', 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(req) as r: return json.loads(r.read())
+          release = api(f'releases/tags/{TAG}')
+          for a in release.get('assets', []):
+              if a['name'] == 'CHECKSUMS.txt':
+                  req = urllib.request.Request(f"https://api.github.com/repos/{REPO}/releases/assets/{a['id']}", method='DELETE',
+                      headers={'Authorization': f'token {TOKEN}'})
+                  urllib.request.urlopen(req); break
+          lines = []
+          for a in release.get('assets', []):
+              if a['name'] == 'CHECKSUMS.txt': continue
+              req = urllib.request.Request(a['browser_download_url'], headers={'Authorization': f'token {TOKEN}'})
+              with urllib.request.urlopen(req) as r: data = r.read()
+              lines.append(f'{hashlib.sha256(data).hexdigest()}  {a["name"]}')
+          upload_url = release['upload_url'].split('{')[0]
+          body = '\n'.join(lines) + '\n'
+          req = urllib.request.Request(upload_url + '?name=CHECKSUMS.txt', data=body.encode(), method='POST',
+              headers={'Authorization': f'token {TOKEN}', 'Accept': 'application/vnd.github+json', 'Content-Type': 'text/plain'})
+          with urllib.request.urlopen(req) as r: print(f'CHECKSUMS.txt refreshed over {len(lines)} assets: HTTP {r.status}')
+          PYEOF
+      - name: Summary
+        run: echo "Intel macOS assets attached to ${{ inputs.tag }}; CHECKSUMS.txt refreshed."
