@@ -667,7 +667,7 @@ pub fn summarize_verification(m: &ProvenanceManifest) -> VerificationResult {
     }
 }
 
-fn decode_hex(s: &str) -> Result<Vec<u8>, String> {
+pub fn decode_hex(s: &str) -> Result<Vec<u8>, String> {
     if s.len() % 2 != 0 {
         return Err("odd-length hex".into());
     }
@@ -818,12 +818,13 @@ pub fn validate_citations_basic(
 // ---------------------------------------------------------------------------
 
 /// Build the provenance export bundle as a ZIP archive in memory.
-/// Contents: manifest.json, disclosure.txt, style_analysis.json,
-/// citation_validation.json, README.txt.
+/// Contents: manifest.json, disclosure.txt, citation_validation.json,
+/// README.txt, plus style_analysis.json only when the user opts in
+/// (T1.5: it is informational, uncalibrated, and off by default).
 pub fn build_export_zip(
     manifest_json: &str,
     disclosure_txt: &str,
-    style_analysis_json: &str,
+    style_analysis_json: Option<&str>,
     citation_validation_json: &str,
     readme_txt: &str,
 ) -> Result<Vec<u8>, ProvenanceError> {
@@ -841,7 +842,9 @@ pub fn build_export_zip(
     };
     add("manifest.json", manifest_json)?;
     add("disclosure.txt", disclosure_txt)?;
-    add("style_analysis.json", style_analysis_json)?;
+    if let Some(style_json) = style_analysis_json {
+        add("style_analysis.json", style_json)?;
+    }
     add("citation_validation.json", citation_validation_json)?;
     add("README.txt", readme_txt)?;
     let cursor = zip
@@ -1313,7 +1316,9 @@ mod tests {
 
     #[test]
     fn export_zip_contains_all_entries() {
-        let bytes = build_export_zip("{}", "d", "{}", "{}", "r").unwrap();
+        // T1.5: style_analysis.json is opt-in. With the flag on, all five
+        // entries exist; with it off (the default), the packet has four.
+        let bytes = build_export_zip("{}", "d", Some("{}"), "{}", "r").unwrap();
         let cursor = std::io::Cursor::new(bytes);
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         let mut names = Vec::new();
@@ -1324,6 +1329,26 @@ mod tests {
             "manifest.json",
             "disclosure.txt",
             "style_analysis.json",
+            "citation_validation.json",
+            "README.txt",
+        ] {
+            assert!(names.contains(&expected.to_string()), "missing {expected}");
+        }
+
+        let bytes = build_export_zip("{}", "d", None, "{}", "r").unwrap();
+        let cursor = std::io::Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(cursor).unwrap();
+        let mut names = Vec::new();
+        for i in 0..archive.len() {
+            names.push(archive.by_index(i).unwrap().name().to_string());
+        }
+        assert!(
+            !names.contains(&"style_analysis.json".to_string()),
+            "style_analysis.json must not be in the default export"
+        );
+        for expected in [
+            "manifest.json",
+            "disclosure.txt",
             "citation_validation.json",
             "README.txt",
         ] {

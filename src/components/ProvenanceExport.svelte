@@ -16,6 +16,7 @@
   let result: ProvenanceExportResult | null = null;
   let baselineText = "";
   let showAdvanced = false;
+  let includeStyleAnalysis = false;
 
   async function doExport() {
     if (!docRef) return;
@@ -32,8 +33,8 @@
       const baseline = baselineText.trim().length >= 40 ? baselineText : null;
       result =
         source === "docx"
-          ? await api.provenanceExportZip(docRef, path, baseline)
-          : await api.googleExportZip(clientId, docRef, path, baseline);
+          ? await api.provenanceExportZip(docRef, path, baseline, includeStyleAnalysis)
+          : await api.googleExportZip(clientId, docRef, path, baseline, includeStyleAnalysis);
     } catch (e) {
       error = String(e);
     } finally {
@@ -102,6 +103,16 @@
         The exported package contains aggregate metrics only, never this text
         and never the document text.
       </p>
+      <label class="small" style="display: flex; gap: 6px; align-items: flex-start; margin-top: 8px;">
+        <input type="checkbox" bind:checked={includeStyleAnalysis} />
+        <span>
+          Include <code>style_analysis.json</code> (off by default). This file
+          holds the style-consistency number and interpretation bands. It is
+          <strong>informational, uncalibrated, and not evidence</strong>; do not
+          present it to editors or integrity officers as such. The Risk Profile
+          output is never included in any export.
+        </span>
+      </label>
     </div>
   {/if}
 
