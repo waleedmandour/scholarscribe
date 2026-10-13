@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { open } from "@tauri-apps/plugin-shell";
   import { api, type DraftMeta, type Draft } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let enabled = false;
   let drafts: DraftMeta[] = [];
@@ -117,12 +118,11 @@
   };
 </script>
 
-<h1>Saved Work</h1>
-<p class="lead">
+<PageHeader icon="save" title="Saved Work">
   ScholarScribe can save your drafts, chat history, and disclosure statements locally on your
   device. <strong>Persistence is OFF by default</strong>, you must explicitly enable it below.
   Nothing is ever synced to the cloud.
-</p>
+</PageHeader>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 

@@ -1,14 +1,14 @@
 <script lang="ts">
   import VerifiedStat from "./VerifiedStat.svelte";
+  import PageHeader from "./PageHeader.svelte";
   // Static educational content. No backend calls.
 </script>
 
-<h1>Detector Literacy</h1>
-<p class="lead">
+<PageHeader icon="book" title="Detector Literacy">
   How AI-detection tools (Turnitin's AI score, GPTZero, Originality.ai, etc.) actually work: what they measure,
   where they fail, and what that means for you as a researcher. This module is educational only; it does not help
   you evade detection.
-</p>
+</PageHeader>
 
 <div class="card">
   <div class="card-title">The two big ideas: perplexity and burstiness</div>

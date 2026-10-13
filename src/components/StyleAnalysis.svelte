@@ -5,6 +5,7 @@
     type StyleProfile,
     type StyleComparison,
   } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let draftText = "";
   let draftPath = "";
@@ -85,13 +86,12 @@
   }
 </script>
 
-<h1>Style Analysis</h1>
-<p class="lead">
+<PageHeader icon="pen" title="Style Analysis">
   Compare a draft against a sample of <em>your own</em> prior writing. ScholarScribe extracts descriptive stylistic
   statistics (sentence length, hedging, passive voice, citation density, and others) and reports how closely the
   draft matches your established voice. Use this to spot drafts that drift away from your usual register, or to confirm
   that a co-author's edit still sounds like the team.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>What this is, and what it is not.</strong>

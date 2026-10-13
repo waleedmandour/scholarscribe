@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open, save } from "@tauri-apps/plugin-dialog";
   import { api, type CitationReport, type ConvertPlainToBibResult, type PlainRefStyle } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   type RefMode = "bib_file" | "paste";
 
@@ -148,15 +149,14 @@
   }
 </script>
 
-<h1>Citation Manager</h1>
-<p class="lead">
+<PageHeader icon="quote" title="Citation Manager">
   Validate your draft's in-text citations against your reference list.
   Catches undefined citations (likely fabricated or wrong), unused references (trim your
   reference list before submission), and shows how many times each reference is cited.
   Two modes: load an existing <code>.bib</code> file, or paste a plain-text reference list
   (APA, MLA, Chicago, Vancouver, or auto-detect) and let ScholarScribe convert it to BibTeX
   for you. All parsing is local; your draft and references never leave your device.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>Why this matters.</strong>

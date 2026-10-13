@@ -6,6 +6,7 @@
     type ModelInfo,
     type ChatMessage,
   } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   export let ollamaOk = false;
 
@@ -143,12 +144,11 @@
     : 0;
 </script>
 
-<h1>Chat</h1>
-<p class="lead">
+<PageHeader icon="message" title="Chat">
   A simple local-only chat interface to your installed models. Useful for brainstorming phrasing, asking a model to
   critique a paragraph, or running a quick sanity check on an idea. Attach a manuscript or paper section to discuss
   it directly with the model. Everything stays on your device.
-</p>
+</PageHeader>
 
 {#if !ollamaOk}
   <div class="callout warn"><strong>No backend.</strong> Start Ollama to use chat.</div>

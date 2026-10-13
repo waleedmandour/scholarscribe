@@ -2,6 +2,7 @@
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type RiskProfile } from "../lib/api";
   import VerifiedStat from "./VerifiedStat.svelte";
+  import PageHeader from "./PageHeader.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -93,14 +94,13 @@
   };
 </script>
 
-<h1>Authenticity Risk Profiler</h1>
-<p class="lead">
+<PageHeader icon="gauge" title="Authenticity Risk Profiler">
   Assesses whether your draft's surface features (vocabulary diversity as a perplexity proxy,
   sentence-length variability as a burstiness proxy) overlap with the typical profile of
   AI-generated text. Based on the documented false-positive risk factors from Liang et al. (2023)
   and Weber-Wulff et al. (2023). <strong>This is not a detection-evasion tool</strong>; it helps
   you understand whether your genuine writing shares surface features with AI text.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>Ethical note.</strong> A "high risk" designation means your writing shares surface features

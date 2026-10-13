@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { api, type SystemInfo } from "../lib/api";
   import { openTour } from "../lib/onboarding";
+  import PageHeader from "./PageHeader.svelte";
+  import Icon from "./Icon.svelte";
 
   let sysInfo: SystemInfo | null = null;
   let appVersion = "";
@@ -19,23 +21,22 @@
   });
 </script>
 
+<PageHeader icon="info" title="About ScholarScribe">
+  A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device:
+  no telemetry, no cloud calls, no paid APIs.
+</PageHeader>
+
 <div class="callout info" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
   <div>
-    <strong>New here?</strong> Take the 5-step interactive tour to learn the essentials in about a minute.
+    <strong>New here?</strong> Take the 6-step interactive tour to learn the essentials in about a minute.
   </div>
   <button on:click={openTour} style="flex: 0 0 auto;">
-    ✦ Walk me through the app
+    <span style="display: inline-flex; vertical-align: -0.14em; margin-right: 6px;"><Icon name="sparkle" size={14} /></span>Walk me through the app
   </button>
 </div>
 
-<h1>About ScholarScribe</h1>
-<p class="lead">
-  A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device:
-  no telemetry, no cloud calls, no paid APIs.
-</p>
-
 <div class="card">
-  <div class="card-title">Version & environment</div>
+  <div class="card-title"><Icon name="info" size={16} /> Version &amp; environment</div>
   <table>
     <tbody>
       <tr><td class="dim" style="width: 200px;">App version</td><td>v{appVersion} (pre-release)</td></tr>
@@ -55,15 +56,16 @@
 <div class="card">
   <p style="margin: 0 0 12px;">
     ScholarScribe helps researchers who are writing their own manuscripts to work with AI assistance
-    transparently and on their own device. Five modules:
+    transparently and on their own device. Seven modules:
   </p>
   <ul style="margin: 0; padding-left: 20px; line-height: 1.7;">
-    <li><strong>Models</strong>, Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
-    <li><strong>Style Analysis</strong>, Compare a draft to a sample of <em>your own</em> prior writing. Includes reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog).</li>
-    <li><strong>Chat</strong>, Local-only chat with a system-prompt guardrail that refuses requests to evade detectors or fabricate citations.</li>
-    <li><strong>Disclosure Assistant</strong>, Generate venue-compliant AI-use disclosure statements for ICMJE, Nature, IEEE, Elsevier, ACL.</li>
-    <li><strong>Detector Literacy</strong>, Plain-English explainer of how AI detectors work and where they fail, with peer-reviewed citations.</li>
-    <li><strong>Privacy Audit</strong>, In-session log of every file read and outbound HTTP call, so you can verify the app's privacy claims yourself.</li>
+    <li><strong>Models.</strong> Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
+    <li><strong>Text Cleaner.</strong> Fix common copy-paste artifacts, and convert a cleaned <code>.docx</code> to LaTeX with a deterministic structural mapping.</li>
+    <li><strong>Style Analysis.</strong> Compare a draft to a sample of <em>your own</em> prior writing. Includes reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog).</li>
+    <li><strong>Chat.</strong> Local-only chat with a system-prompt guardrail that refuses requests to evade detectors or fabricate citations.</li>
+    <li><strong>Disclosure Assistant.</strong> Generate venue-compliant AI-use disclosure statements for ICMJE, Nature, IEEE, Elsevier, ACL.</li>
+    <li><strong>Detector Literacy.</strong> Plain-English explainer of how AI detectors work and where they fail, with peer-reviewed citations.</li>
+    <li><strong>Privacy Audit.</strong> In-session log of every file read and outbound HTTP call, so you can verify the app's privacy claims yourself.</li>
   </ul>
 </div>
 

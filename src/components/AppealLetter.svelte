@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, type AppealLetterInput, type AppealLetterOutput } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let input: AppealLetterInput = {
     researcher_name: "", researcher_title: "Dr.", institution: "",
@@ -29,12 +30,11 @@
   }
 </script>
 
-<h1>False-Positive Appeal Letter Generator</h1>
-<p class="lead">
+<PageHeader icon="mail" title="False-Positive Appeal Letter Generator">
   Drafts a professional, evidence-based appeal letter for researchers whose work has been falsely
   flagged by AI detection tools. References Liang et al. (2023) and Weber-Wulff et al. (2023) by name,
   and Turnitin's own guidance that scores are indicators, not proof. All processing is local.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>Entirely ethical.</strong> False positives are documented in the peer-reviewed literature.

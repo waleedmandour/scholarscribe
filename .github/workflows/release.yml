@@ -111,13 +111,17 @@ jobs:
 
             See [CHANGELOG.md](CHANGELOG.md) for the full entry for this tag.
 
-            - Sidebar: About moved directly under the Get started section (Models, then About); the welcome tour order matches.
-            - Models page: live Ollama status card directly below the PC specs - connected shows the daemon version, locally installed model count, and the loopback endpoint `127.0.0.1:11434`; not detected shows setup steps plus a Re-check button. The page re-probes every 15 seconds while open. Loopback only; no new hosts.
-            - Models page: model search - a live, local-only filter over the installed list and the recommended catalog by name, tag, or description.
-            - Text Cleaner: docx to LaTeX conversion - "Convert to LaTeX (.tex)" maps Title/Heading styles, bulleted lists, bold/italic runs, and tables into a compilable article with full LaTeX escaping; unmapped constructs are reported in a warnings card. Deterministic and fully local: no network, no LLM.
+            - Critical fix: the r3 installers opened to a white screen because the root component was still instantiated with the Svelte 4 style `new App({ target })`, which the Svelte 5 runtime rejects with `effect_orphan` before anything renders. The app is now mounted with the Svelte 5 `mount()` API, and a new `check-svelte-mount` CI test blocks the legacy pattern from returning.
+            - UI: one inline SVG icon set across the sidebar, page headers, theme toggle, and welcome tour (no emoji, no external assets, CSP safe).
+            - UI: all 20 pages open with a shared header (icon badge, title, lead paragraph) that matches the sidebar icon.
+            - UI: refined light and dark themes with layered neutrals, an active-tab accent bar, themed thin scrollbars, focus-visible outlines, table row hover, and a reduced-motion guard.
+            - Copy: sidebar footer version label corrected, About module list completed to seven entries, tour step titles made evergreen, and zero em or en dashes in user-facing strings.
+            - Models page: live Ollama status card directly below the PC specs; connected shows the daemon version, installed model count, and the loopback endpoint `127.0.0.1:11434`, not detected shows setup steps plus a Re-check button. The page re-probes every 15 seconds while open. Loopback only; no new hosts.
+            - Models page: model search, a live, local-only filter over the installed list and the recommended catalog by name, tag, or description.
+            - Text Cleaner: docx to LaTeX conversion, "Convert to LaTeX (.tex)" maps Title/Heading styles, bulleted lists, bold/italic runs, and tables into a compilable article with full LaTeX escaping; unmapped constructs are reported in a warnings card. Deterministic and fully local: no network, no LLM.
             - Truthful-claims pass (r2) still in force: README, SECURITY, USER_GUIDE and USER_MANUAL state the network surface exactly; docs/NETWORK_SURFACE.json is the machine-readable source enforced by CI.
             - Citation integrity (r2) still in force: src/lib/references.json is the single source of references, enforced by a test; Writing Provenance exports keep style_analysis.json opt-in.
-            - CI: cargo test (blocking), clippy -D warnings, the Rust-vs-JS verifier cross-check fixture, the network-surface test, the references test, cargo audit, npm audit, and a CycloneDX SBOM.
+            - CI: cargo test (blocking), clippy -D warnings, the Rust-vs-JS verifier cross-check fixture, the network-surface test, the references test, the new check-svelte-mount startup gate, cargo audit, npm audit, and a CycloneDX SBOM.
 
             ## Install
 
