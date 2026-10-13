@@ -1,23 +1,23 @@
-# ScholarScribe. User Guide
+# ScholarScribe User Guide
 
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
-> **Version 2.2.1 r4 (pre-release) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
+> **Version 2.2.1 (stable) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
 
-ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
+ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This 2-page guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
 
 ---
 
 ## 1. Install (2 minutes)
 
-1. **Install Ollama**, the free, open-source local LLM runtime. Download from <https://ollama.com/download> (~150 MB) and run the installer. Look for the llama icon in your system tray.
-2. **Install ScholarScribe**, download the installer for your platform from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases): `.msi`/`.exe` (Windows), `.dmg` (macOS), or `.deb`/`.rpm`/`.AppImage` (Linux), and run it. ScholarScribe appears in your Start menu, Applications folder, or app launcher.
+1. **Install Ollama**, the free, open-source local LLM runtime: download from <https://ollama.com/download> (~150 MB) and run the installer. Look for the llama icon in your system tray.
+2. **Install ScholarScribe**: download the installer for your platform from the [Releases page](https://github.com/waleedmandour/scholarscribe/releases): `.msi`/`.exe` (Windows), `.dmg` (macOS), or `.deb`/`.AppImage` (Linux), and run it. Optionally verify your download against the release's `CHECKSUMS.txt` (SHA-256).
 3. **Launch ScholarScribe.** The sidebar should show a green **Ollama backend: running** pill. If it's red, start the Ollama service from your tray.
 
 > **Build from source** (optional): `git clone … && npm install && npm run tauri build`. Requires Rust 1.77+, Node 18+, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ## 2. Download a model (1 minute)
 
-Open the **Models** tab. The top card shows your CPU and RAM, and the card directly below it shows whether the local Ollama daemon is connected (version, installed model count, endpoint `127.0.0.1:11434`) or not detected, with setup steps and a Re-check button. A search box filters both your installed models and the recommended catalog by name, tag, or description. Pick a model that fits your memory:
+Open the **Models** tab. The top card shows your CPU and RAM, and the card below it shows whether the local Ollama daemon is connected (version, installed model count, endpoint `127.0.0.1:11434`) or not detected, with setup steps and a Re-check button. A search box filters both your installed models and the recommended catalog by name, tag, or description. Pick a model that fits your memory:
 
 | Your RAM | Recommended models |
 |---|---|
@@ -30,104 +30,54 @@ Click **Download** and wait 2-15 minutes (depending on model size and connection
 
 ## 3. The 21 tabs at a glance
 
-The sidebar is organized into 7 workflow phases that follow the order you'd typically use while writing a manuscript:
-
-### Get started
+The sidebar groups the tabs into 7 workflow phases that follow the order you'd typically use while writing a manuscript:
 
 | # | Tab | What it does |
 |---|---|---|
-| 1 | **Models** | Install, import, and manage local LLMs |
+| | **Get started** | |
+| 1 | **About** | Version, environment, developer credits, re-open the welcome tour |
+| 2 | **Models** | Install, import, and manage local LLMs |
+| | **Prepare the draft** | |
+| 3 | **Text Cleaner** | Fix 23 PDF/OCR/web artifacts in `.txt`, `.md`, or `.docx` |
+| 4 | **Language Check** | Offline spelling, grammar, and style checks with one click corrections (English, five dialects) |
+| 5 | **Citations** | Validate in-text citations against your `.bib` file |
+| | **Understand the draft** | |
+| 6 | **Stats** | Word count, readability, journal-target comparison |
+| 7 | **Structure** | Heading tree + missing-section suggestions |
+| | **AI writing help** | |
+| 8 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
+| 9 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
+| 10 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
+| | **Authenticity and style** | |
+| 11 | **Detector Literacy** | How AI detectors work, and where they fail |
+| 12 | **Risk Profile** | Does your draft share surface features with AI text? |
+| 13 | **Style Analysis** | Compare a draft to your own prior writing |
+| 14 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
+| 15 | **Voice Check** | Spot within-document stylistic shifts |
+| | **Evidence and compliance** | |
+| 16 | **Journal** | Auto-saved timestamped snapshots of your draft |
+| 17 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
+| 18 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
+| 19 | **Disclosure** | Generate venue-compliant AI-use statements |
+| | **Privacy and app** | |
+| 20 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
+| 21 | **Saved Work** | Opt-in local JSON persistence (off by default) |
 
-### Prepare the draft
-
-| # | Tab | What it does |
-|---|---|---|
-| 2 | **Text Cleaner** | Fix 24 PDF/OCR/web artifacts in `.txt`, `.md`, or `.docx` |
-| 3 | **Language Check** | Offline spelling, grammar, and style checks with one click corrections (English, five dialects) |
-| 4 | **Citations** | Validate in-text citations against your `.bib` file |
-
-### Understand the draft
-
-| # | Tab | What it does |
-|---|---|---|
-| 5 | **Stats** | Word count, readability, journal-target comparison |
-| 6 | **Structure** | Heading tree + missing-section suggestions |
-
-### AI writing help
-
-| # | Tab | What it does |
-|---|---|---|
-| 7 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
-| 8 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
-| 9 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
-
-### Authenticity and style
-
-Detector Literacy appears before Risk Profile, so the mechanism is explained before a score is shown. Style Fingerprint is adjacent to Style Analysis.
-
-| # | Tab | What it does |
-|---|---|---|
-| 10 | **Detector Literacy** | How AI detectors work, and where they fail |
-| 11 | **Risk Profile** | Does your draft share surface features with AI text? |
-| 12 | **Style Analysis** | Compare a draft to your own prior writing |
-| 13 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
-| 14 | **Voice Check** | Spot within-document stylistic shifts |
-
-### Evidence and compliance
-
-| # | Tab | What it does |
-|---|---|---|
-| 15 | **Journal** | Auto-saved timestamped snapshots of your draft |
-| 16 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
-| 17 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
-| 18 | **Disclosure** | Generate venue-compliant AI-use statements |
-
-### Privacy and app
-
-The sidebar footer also holds the **A-/A/A+ font-scale control** (0.9, 1.0, 1.15) and the **Comfortable / Compact density toggle**. Both persist across restarts.
-
-| # | Tab | What it does |
-|---|---|---|
-| 19 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
-| 20 | **Saved Work** | Opt-in local JSON persistence (off by default) |
-| 21 | **About** | Version, environment, credits |
+The sidebar footer also holds the **A-/A/A+ font-scale control** and the **Comfortable / Compact density toggle**; both persist across restarts.
 
 ## 4. Common workflows
 
-### A. Clean a messy PDF-extracted draft
-**Text Cleaner** tab → **Open file…** (or paste) → leave the 12 default cleaners on → click **Clean text**. For Word documents, choose:
-- **Extract & clean .docx**, runs all cleaners; loses formatting.
-- **Clean & save as .docx (preserves format)**, modifies text in place; tables, images, hyperlinks, and styles are untouched. Output: `<original>-cleaned.docx`.
-- **⚡ Strict clean**, applies all 24 transformations (BOM, line endings, bullets, markdown headings, etc.).
-- **Convert to LaTeX (.tex)**, maps the document's structure (Title/Heading styles, bulleted lists, bold/italic runs, tables) into a compilable LaTeX article. Deterministic and fully local; anything the converter does not map is listed in the warnings card.
+**Clean a messy PDF-extracted draft.** In the **Text Cleaner** tab, click **Open file…** (or paste), leave the 12 default cleaners on, and click **Clean text**. For Word documents: **Extract & clean .docx** runs all cleaners and loses formatting; **Clean & save as .docx (preserves format)** modifies text in place and writes `<original>-cleaned.docx` with tables, images, hyperlinks, and styles untouched. **Strict clean** applies all 23 transformations. **Convert to LaTeX (.tex)** maps Title/Heading styles, bulleted lists, bold/italic runs, and tables into a compilable LaTeX article, deterministically and fully local; anything unmapped is listed in the warnings card.
 
-### B. Validate references before submission
-**Citations** tab → **Open draft** (`.txt`/`.docx`) → **Open .bib file** → **Validate citations**. Three lists appear:
-- **Undefined citations**, in your draft but not in your `.bib` (most likely fabricated or wrong).
-- **Unused references**, in your `.bib` but never cited.
-- **Citation count per reference**, spot token citations.
+**Validate references before submission.** In the **Citations** tab, **Open draft**, **Open .bib file**, then **Validate citations**. You get undefined citations (in your draft but not your `.bib`, most likely fabricated or wrong), unused references, and per-reference citation counts. You can also paste raw references to convert them to BibTeX (v2.2.1 r4).
 
-### C. Check whether a draft still sounds like "you"
-**Style Analysis** tab → paste your draft on the left → paste ≥1,000 words of **your own prior published writing** on the right → **Analyze & compare**. The overall distance score and per-feature interpretations tell you whether the draft drifts from your usual register.
+**Check whether a draft still sounds like "you".** In the **Style Analysis** tab, paste your draft on the left, paste at least 1,000 words of **your own prior published writing** on the right, then click **Analyze & compare**. The distance score and per-feature interpretations show whether the draft drifts from your usual register.
 
-### D. Disclose AI assistance (recommended)
-**Disclosure** tab → pick your venue (ICMJE, Nature, IEEE, Elsevier, ACL, or Generic) → fill in tool, task, model, name → **Generate disclosure** → paste the statement into your manuscript or cover letter. Each template links to the venue's official AI-use policy.
+**Disclose AI assistance (recommended).** In the **Disclosure** tab, pick your venue (ICMJE, Nature, IEEE, Elsevier, ACL, or Generic), fill in tool, task, model, and name, then click **Generate disclosure**. Each template links to the venue's official AI-use policy.
 
-### D2. Writing Provenance, step by step (v2.1.0)
-The feature is **off by default**, nothing is recorded until you opt in, and no document text ever leaves your device at any step.
+**Writing Provenance in brief (v2.1.0).** Off by default; nothing is recorded until you opt in. Write in Word with Track Changes on, opt in under the Provenance tab, choose the `.docx` (or connect a Google Doc, read-only, every call logged), review the session timeline, and export the signed `.zip`: hashes and counts, never your text. Anyone can verify it offline with `verifier/index.html`: chain intact, signature valid. Full spec: `docs/PROVENANCE_SPEC.md`.
 
-1. In Word, switch on **Review → Track Changes**, then write and revise as usual. Word itself records who inserted or deleted what, and when. A document you already edited with Track Changes on works as-is.
-2. Open the **Provenance** tab and read the disclosure dialog. Click **I understand, enable Provenance** to opt in.
-3. Click **Choose .docx...** and pick your document, or click **Connect Google Doc** to import its version history (read-only scope; every outbound call is logged in the **Privacy Audit** tab).
-4. Review the **session timeline**: edits are grouped into sessions per author (gaps up to 30 minutes), chained per author, and gaps longer than 7 days are flagged as anomalies, reported honestly, not treated as accusations.
-5. First export only: click **Export public key...** and keep the key file, reviewers need it to check your Ed25519 signature.
-6. Click **Export provenance (.zip)**. The package contains `manifest.json` (SHA-256 hash-chained, signed sessions), `disclosure.txt`, `style_analysis.json`, `citation_validation.json`, and `README.txt`, hashes and counts, never your text.
-7. Share the .zip. Anyone can verify it offline: open `verifier/index.html` from the repository in any browser, load the package and your public key → **chain intact** and **signature valid**.
-
-This is *evidence you can offer*, not an AI-detection score, and not proof of authorship. See `docs/PROVENANCE_SPEC.md` for the full format specification and limitations.
-
-### E. Verify ScholarScribe's privacy claims yourself
-**Privacy Audit** tab, watch the live log as you use other tabs. ScholarScribe's own process talks to `127.0.0.1:11434` (your local Ollama); model downloads are fetched by the Ollama daemon itself from `registry.ollama.ai` or `hf.co` (so they do not appear in this in-app log), and the Google Drive/OAuth endpoints appear only if you explicitly connect a Google Doc. Anything else from the app process is a red flag.
+**Audit the privacy claims yourself.** Open the **Privacy Audit** tab and watch the live log as you use other tabs. ScholarScribe's own process should contact only `127.0.0.1:11434` (your local Ollama), plus Google's endpoints only if you connect a Google Doc. Model downloads are fetched by the Ollama daemon itself and do not appear in this in-app log.
 
 ## 5. Privacy in one sentence
 
@@ -137,24 +87,16 @@ This is *evidence you can offer*, not an AI-detection score, and not proof of au
 
 ScholarScribe is designed for researchers who have **genuinely written** their manuscript and want transparent, local AI assistance.
 
-- ✅ Helps you draft, paraphrase, and refine **your own** writing.
-- ✅ Validates citations and generates disclosure statements.
-- ✅ Educates you about how AI detectors work and where they fail.
-- ✅ Maintains local timestamped snapshots of your writing process (plain JSON, not signed; signed evidence comes from the Provenance export).
-- ❌ Does **not** evade AI detectors or lower detection scores.
-- ❌ Does **not** help misrepresent AI-generated text as original human work.
-- ❌ Does **not** contact any third-party AI API (OpenAI, Anthropic, etc.). The outbound hosts are `127.0.0.1:11434` (your local Ollama, always), Google's OAuth/Docs API endpoints (only if you explicitly connect a Google Doc in the Provenance tab), and, at your request via the Ollama daemon, `registry.ollama.ai`/`hf.co` for model downloads. Every outbound call the app itself makes is logged live in the Privacy Audit tab.
+- **It does** help you draft, paraphrase, and refine **your own** writing; validate citations; generate disclosure statements; maintain local timestamped snapshots of your writing process; and educate you about how AI detectors work and where they fail.
+- **It does not** evade AI detectors or lower detection scores, and does **not** help misrepresent AI-generated text as original human work.
+- **It does not** contact any third-party AI API (OpenAI, Anthropic, etc.). The app itself talks only to `127.0.0.1:11434` (always), Google's OAuth/Docs endpoints (only if you explicitly connect a Google Doc), and logs every outbound call live in the Privacy Audit tab; model downloads are fetched by the Ollama daemon at your request from `registry.ollama.ai`/`hf.co` and carry no text.
 
 If you used AI assistance, **disclose it**, the Disclosure tab makes this easy. See [`docs/ETHICS.md`](docs/ETHICS.md) for the full policy.
 
 ## 7. Need more detail?
 
-- **Full reference manual:** [`USER_MANUAL.md`](USER_MANUAL.md)
-- **Source code:** <https://github.com/waleedmandour/scholarscribe>
-- **Report a bug:** <https://github.com/waleedmandour/scholarscribe/issues>
-- **Security policy:** [`SECURITY.md`](SECURITY.md)
+**Full reference manual:** [`USER_MANUAL.md`](USER_MANUAL.md) · **Source code:** <https://github.com/waleedmandour/scholarscribe> · **Report a bug:** <https://github.com/waleedmandour/scholarscribe/issues> · **Security policy:** [`SECURITY.md`](SECURITY.md)
 
 ---
 
-*ScholarScribe © 2026 Dr. Waleed Mandour. Released under the MIT License.*
-*Persistent identifier: <https://doi.org/10.5281/zenodo.23052647>*
+*ScholarScribe © 2026 Dr. Waleed Mandour. Released under the MIT License. Persistent identifier: <https://doi.org/10.5281/zenodo.23052647>*

@@ -84,11 +84,11 @@
   // Tabs grouped by workflow phase. Group is a presentation-only field;
   // tab IDs, routes, and types are unchanged.
   const tabs: { id: Tab; label: string; icon: IconName; group: string }[] = [
-    // Get started (About sits directly under the Get started section since
-    // v2.2.1 r3: version, environment, and credits are where first-time
-    // users look, right after the Models setup page)
-    { id: "models", label: "Models", icon: "cube", group: "Get started" },
+    // Get started (About sits at the top of the Get started section since
+    // v2.2.1 stable: version, environment, and credits are the first thing
+    // a first-time user sees, before the Models setup page)
     { id: "about", label: "About", icon: "info", group: "Get started" },
+    { id: "models", label: "Models", icon: "cube", group: "Get started" },
     // Prepare the draft. Language Check sits directly after Text Cleaner so
     // the natural order is: clean the text, check its language, then manage
     // citations.

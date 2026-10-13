@@ -3,7 +3,7 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.1 r5 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r5_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
+[![Status: v2.2.1 (stable)](https://img.shields.io/badge/Status-v2.2.1_stable-green.svg)](https://github.com/waleedmandour/scholarscribe/releases)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -93,11 +93,11 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r5 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r5 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r5 |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r5 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r5 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 |
 
 Install with your platform's package manager:
 
@@ -135,6 +135,21 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 .\scripts\build-windows.ps1
 ```
 
+### 3. Verify your download (CHECKSUMS.txt)
+
+Every release ships a `CHECKSUMS.txt` asset containing SHA-256 digests for every other asset (all installers and the User Guide PDF). The file is rebuilt by a dedicated CI job that runs only after all platform builds have finished, so it always covers the complete asset set. To verify the file you downloaded:
+
+```bash
+# Linux / macOS
+shasum -a 256 -c CHECKSUMS.txt 2>/dev/null | grep OK   # or compare a single file:
+shasum -a 256 ScholarScribe_2.2.1_x64-setup.exe
+
+# Windows (PowerShell)
+Get-FileHash .\ScholarScribe_2.2.1_x64-setup.exe -Algorithm SHA256
+```
+
+Then compare the printed digest with the matching line in `CHECKSUMS.txt`. If they differ, re-download; if they still differ, please open an issue.
+
 ### Quick start (5 minutes)
 
 When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 21 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
@@ -144,6 +159,12 @@ See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The l
 ---
 
 ## Feature overview
+
+The sidebar mirrors this order: the **Get started** group holds About first (version, environment, credits), then Models (the setup page).
+
+### About tab
+
+Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators, and a "Walk me through the app" button to re-open the welcome tour.
 
 ### Models tab
 
@@ -383,10 +404,6 @@ Opt-in local persistence. Disabled by default. When enabled:
 
 The Privacy Audit log is **never** persisted, it stays in-memory only.
 
-### About tab
-
-Version, environment (CPU, RAM, OS), developer credentials (Dr. Waleed Mandour), acknowledgments crediting GLM 5.1 and GLM 5.2 (Z.ai) as engineering collaborators, and a "Walk me through the app" button to re-open the welcome tour.
-
 ---
 
 ## Statistics and citations
@@ -513,7 +530,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.1 r5 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.1 (stable), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 

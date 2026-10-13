@@ -1,6 +1,6 @@
 # ScholarScribe. User Manual
 
-> **Version 2.2.1 r4 (pre-release)**
+> **Version 2.2.1 (stable)**
 
 This manual walks you through installing ScholarScribe, downloading a model, and using each of its modules, including the v2.1.0 Writing Provenance module.
 
@@ -54,7 +54,7 @@ To verify Ollama is running, open a browser and visit <http://localhost:11434>. 
 ### Option A: pre-built installer (recommended)
 
 1. Go to <https://github.com/waleedmandour/scholarscribe/releases>.
-2. Under the latest release (v2.2.1 r4), download `ScholarScribe_2.2.1_x64_en-US.msi` (or the `ScholarScribe_2.2.1_x64-setup.exe` NSIS installer).
+2. Under the latest release (v2.2.1), download `ScholarScribe_2.2.1_x64_en-US.msi` (or the `ScholarScribe_2.2.1_x64-setup.exe` NSIS installer).
 3. Double-click the file. Windows SmartScreen may warn you, click **More info → Run anyway** (the installer is currently unsigned; code signing is planned for a future release).
 4. The installer adds ScholarScribe to your Start menu. Launch it from there.
 
