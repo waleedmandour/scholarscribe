@@ -573,7 +573,7 @@ Their findings inform the application's ethical stance and its refusal to facili
 
 MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
 
-**Persistent identifier (v2.2.1):** https://doi.org/10.5281/zenodo.23052647
+**Persistent identifier (v2.2.1):** https://doi.org/10.5281/zenodo.23324356
 
 **Versioned DOIs:** Each release of ScholarScribe gets its own Zenodo DOI. The concept DOI (all versions) is https://doi.org/10.5281/zenodo.20781043. Cite the specific version DOI above for reproducibility. See all versions at https://zenodo.org/doi/10.5281/zenodo.20781043.
 

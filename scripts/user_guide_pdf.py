@@ -504,8 +504,8 @@ def build_title_band(styles: dict, logo_path: Path | None = None) -> list:
 
     if logo_path and logo_path.exists():
         try:
-            # Render at 16mm wide, preserving aspect ratio (icons are 1:1).
-            logo = Image(str(logo_path), width=16 * mm, height=16 * mm)
+            # Render at 22mm wide, preserving aspect ratio (icons are 1:1).
+            logo = Image(str(logo_path), width=22 * mm, height=22 * mm)
             logo.hAlign = "CENTER"
             flow.append(logo)
             flow.append(Spacer(1, 2.6 * mm))
