@@ -82,7 +82,7 @@ jobs:
         run: npm audit --omit=dev
       - name: CycloneDX SBOM (npm)
         run: npx --yes @cyclonedx/cyclonedx-npm --omit dev --output-file sbom-npm.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-npm
           path: sbom-npm.json
@@ -92,7 +92,7 @@ jobs:
           cargo install cargo-cyclonedx --locked --quiet
           cargo cyclonedx --format json
           mv ./scholarscribe.cdx.json ../sbom-cargo.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-cargo
           path: sbom-cargo.json
