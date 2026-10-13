@@ -144,7 +144,7 @@
     }
   }
 
-  // v0.1.7: one-click strict cleaning, applies ALL 24 operations
+  // v0.1.7: one-click strict cleaning, applies ALL 23 operations
   async function cleanStrict() {
     if (inputKind === "docx" && !docxSourcePath) {
       error = "Pick a .docx file first.";
@@ -285,7 +285,7 @@
     <div class="card-subtitle">Toggle which transformations to apply, or use a preset below.</div>
     <div class="row" style="margin: 8px 0; gap: 8px;">
       <button class="shrink" on:click={resetToDefaults} title="Sensible defaults for most academic text">Default</button>
-      <button class="shrink primary" on:click={applyStrictPreset} title="Turn on ALL 24 operations (including hidden chars, asterisks, markdown headings, ellipsis, etc.)">Strict (all 24)</button>
+      <button class="shrink primary" on:click={applyStrictPreset} title="Turn on ALL 23 operations (including hidden chars, asterisks, markdown headings, ellipsis, etc.)">Strict (all 23)</button>
       <button class="shrink" on:click={enableAll}>Enable all</button>
     </div>
     <div style="display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px;">
@@ -318,9 +318,9 @@
     class="primary"
     on:click={cleanStrict}
     disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
-    title="Apply ALL 24 cleaning operations (default + strict: hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, soft hyphens, variation selectors, line endings, repeated punctuation)"
+    title="Apply ALL 23 cleaning operations (default + strict: hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, soft hyphens, variation selectors, line endings, repeated punctuation)"
   >
-    {busy ? "Working…" : "Strict clean (all 24 ops)"}
+    {busy ? "Working…" : "Strict clean (all 23 ops)"}
   </button>
 
   {#if inputKind === "docx"}

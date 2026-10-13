@@ -13,10 +13,12 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Export verifiable Writing Provenance** *(new in v2.1.0)*, turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts, never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
-- **Clean messy text** with the AI Text Cleaner, 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
+- **Clean messy text** with the AI Text Cleaner, 23 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 23.
+- **Convert Word to LaTeX** *(new in v2.2.1 r3)*, with a `.docx` loaded in the Text Cleaner, the "Convert to LaTeX (.tex)" action produces a compilable LaTeX article through a deterministic structural mapping: Title and Heading 1 to 6 styles become `\title`, `\section`, `\subsection`, `\subsubsection`, and `\paragraph`; bulleted paragraphs become `itemize` lists; bold and italic runs become `\textbf` and `\emph`; tables become `tabular` grids; special characters are LaTeX-escaped. Unknown styles and merged or nested table constructs are reported in a warnings card, never silently dropped. No LLM, no network: a pure, auditable local transformation.
+- **Convert pasted reference lists to BibTeX** *(new in v2.2.1 r4)*, paste references in your venue's style (APA 7th, MLA 9th, Chicago 17th, Vancouver, or plain with auto-detect) in the Citation Manager and ScholarScribe converts them to BibTeX, offers the `.bib` for download, and auto-validates the result against your draft. The heuristic parser tolerates mixed formats and flags entries where fields could not be extracted.
 - **Check spelling, grammar, and style offline** *(new in v2.2.1 r5)*, the Language Check tab flags issues in your draft and proposes one click corrections, powered by the embedded harper engine. The Grammarly job with the opposite trust model: your text is analyzed in memory on your machine, never uploaded. Five English dialects, a personal dictionary, and per-rule settings.
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
-- **Validate citations** against your `.bib` file, lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
+- **Validate citations** against your `.bib` file (or against a pasted reference list converted to BibTeX), lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
 - **Analyze document structure**, extract heading tree, get suggestions for missing sections (Introduction, Methods, Results, Discussion, Conclusion, etc.), spot short sections.
 - **Generate a structured abstract**, local LLM produces a Background/Methods/Results/Conclusions abstract from your draft. Also generates section-by-section commentary.
@@ -103,11 +105,14 @@ Install with your platform's package manager:
 # Linux (Debian/Ubuntu)
 sudo apt install ./ScholarScribe_2.2.1_amd64.deb
 
-# Linux (Fedora/RHEL/SUSE)
-sudo dnf install ./ScholarScribe-2.2.1-1.x86_64.rpm
+# Linux (any distro): make the AppImage executable and run it
+chmod +x ScholarScribe_2.2.1_amd64.AppImage
+./ScholarScribe_2.2.1_amd64.AppImage
 
-# Windows / macOS: double-click the .msi / .dmg
+# Windows / macOS: double-click the .msi / .exe / .dmg
 ```
+
+Note: current releases ship Linux as `.deb` and `.AppImage`. Older releases (up to v2.2.0-pre) also shipped an `.rpm`; if you need RPM packaging, build from source with `npm run tauri build` on a RPM-based distro.
 
 **Option B, build from source**
 
@@ -158,10 +163,10 @@ You can also:
 
 ### Text Cleaner tab
 
-**24 rule-based text transformations** that fix common artifacts from copy-pasted text, especially from PDFs, web pages, OCR, and word processors. Two presets:
+**23 rule-based text transformations** that fix common artifacts from copy-pasted text, especially from PDFs, web pages, OCR, and word processors. Two presets:
 
 - **Default** (12 ops): fix mojibake, expand ligatures, normalize quotes/dashes, strip zero-width/control chars, join hyphenated line breaks, join broken sentences, join broken URLs, fix broken citations, remove page numbers, collapse whitespace.
-- **Strict** (24 ops, ⚡ button): all of the above PLUS strip BOM, normalize line endings (CRLF→LF), convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis (…→...), remove asterisks (*), remove markdown headings (#), normalize bullets (•→-), collapse repeated punctuation (!!!→!).
+- **Strict** (23 ops, ⚡ button): all of the above PLUS strip BOM, normalize line endings (CRLF→LF), convert non-breaking spaces, normalize Unicode whitespace, strip soft hyphens, strip variation selectors, convert ellipsis (…→...), remove asterisks (*), remove markdown headings (#), normalize bullets (•→-), collapse repeated punctuation (!!!→!).
 
 | Default operation | What it fixes |
 |---|---|
@@ -197,6 +202,15 @@ You can also:
 1. **Extract & clean text**, extracts text and runs all enabled transformations. Loses formatting but applies every cleaner including cross-paragraph ones.
 2. **Clean & save as .docx (preserves format)**, modifies each `<w:t>` text run in place. Preserves all tables, images, hyperlinks, headers/footers, footnotes/endnotes, styles, theme, and track changes. Saves to a new `.docx` (default name `<original>-cleaned.docx`). Cross-paragraph operations (join broken lines, fix broken citations, remove page numbers) are skipped because they'd require restructuring the document.
 
+**Convert to LaTeX (.tex)** *(new in v2.2.1 r3)*, a third action that appears once a `.docx` is loaded. It converts the document into a compilable LaTeX article through a deterministic, rule-based structural mapping, with no LLM and no network involved:
+
+- `Title` style → `\title{...}` + `\maketitle`; Heading 1/2/3 → `\section`, `\subsection`, `\subsubsection`; Heading 4 to 6 → `\paragraph`
+- Bulleted and numbered list paragraphs (`w:numPr`) → `itemize`/`item` runs
+- Tables (`w:tbl`) → simple `tabular` grids; bold/italic runs → `\textbf{...}`/`\emph{...}`; `w:br` line breaks → `\\`
+- Everything else becomes plain paragraphs with LaTeX special characters escaped
+
+Unknown paragraph styles are passed through as body text, and merged table cells (`gridSpan`/`vMerge`) and nested tables are flattened, all reported in a warnings card so you know exactly what the converter did and did not map. The converter is covered by 4 Rust tests (escaping, structural mapping, unknown-style warnings, corrupt-file rejection).
+
 ### Language Check tab
 
 **Offline proofreading with proposed corrections.** Paste text or import a `.txt`, `.md`, `.tex`, or `.docx` file, choose an English dialect (American, British, Canadian, Australian, Indian), and run the check. The engine is [harper](https://github.com/Automattic/harper) (Apache 2.0), embedded in the Rust backend and pinned to an exact version. Issues are grouped into Spelling, Grammar, and Style tabs with live counts; each card shows the message, the sentence context, the rule, and typed suggestions (replace, insert, remove). Corrections apply from the server side so offsets never drift, and the page re-checks automatically after each apply. Extras: a personal dictionary for names and technical terms, per rule on/off toggles with curated defaults, apply-all per category, and copy or `.txt` export of the corrected text.
@@ -205,13 +219,20 @@ Checking runs in the app process: no helper program, no local socket, no new net
 
 ### Citation Manager tab
 
-Validates your draft's in-text citations against your `.bib` (BibTeX) file. Three checks:
+Validates your draft's in-text citations against your `.bib` (BibTeX) file. Two input modes and three checks:
+
+**Input modes** *(paste-references mode new in v2.2.1 r4)*:
+
+1. **Load a `.bib` file**, the classic path. All parsing is local, hand-written, and no `.bib` content leaves your device.
+2. **Paste a plain-text reference list**, if your references live in a Word document or plain text in your venue's citation style (APA 7th, MLA 9th, Chicago 17th notes-bibliography, Vancouver, or Plain / auto-detect), paste them and ScholarScribe converts each entry to BibTeX, offers the `.bib` file for download, and auto-validates the converted list against your draft. The parser is heuristic and tolerant of mixed formats; entries where fields could not be extracted carry per-entry warnings instead of failing silently.
+
+**Checks**:
 
 1. **Undefined citations**, every `(Author, Year)` or `(Author et al., Year)` in your draft that doesn't match an entry in your `.bib` file. These are the citations most likely to be fabricated or wrong.
 2. **Unused references**, every `.bib` entry that's never cited in your draft. Helps you trim your reference list before submission.
 3. **Citation count per reference**, how many times each `.bib` entry is cited, so you can spot references that are cited only once (often a sign of a token citation).
 
-All parsing is local. No `.bib` content leaves your device. The BibTeX parser is hand-written (no third-party BibTeX dependency).
+All parsing is local in both modes. No reference content leaves your device. The BibTeX and plain-text reference parsers are hand-written (no third-party BibTeX dependency).
 
 ### Document Statistics tab
 
@@ -410,9 +431,12 @@ scholarscribe/
 │   │   ├── commands.rs         Tauri command handlers (the API surface)
 │   │   ├── ollama.rs           Ollama HTTP client (the ONLY outbound network code)
 │   │   ├── style.rs            Style analysis (descriptive statistics + readability)
-│   │   ├── text_cleaner.rs     12 cleaning operations + per-run variant for .docx
+│   │   ├── text_cleaner.rs     Rule-based text cleaning (12 base + 11 strict ops)
 │   │   ├── docx_reading.rs     .docx → plain text extraction (zip + OOXML walk)
+│   │   ├── docx_to_latex.rs    .docx → compilable LaTeX article (deterministic mapping), v2.2.1 r3
 │   │   ├── citation_manager.rs BibTeX parser + citation validator
+│   │   ├── plain_ref_parser.rs Plain-text reference list → BibTeX converter, v2.2.1 r4
+│   │   ├── language_check.rs   Offline spelling/grammar/style engine (embedded harper), v2.2.1 r5
 │   │   ├── document_stats.rs   Document statistics
 │   │   ├── structure_analyzer.rs  Heading tree + missing-section detection
 │   │   ├── abstract_generator.rs  Local-LLM structured abstract generation
@@ -434,9 +458,14 @@ scholarscribe/
 │   ├── App.svelte              Shell + sidebar + theme toggle + welcome-tour mount
 │   ├── lib/api.ts              Typed Tauri invoke wrappers
 │   ├── lib/onboarding.ts       Welcome-tour visibility store (localStorage-backed)
+│   ├── lib/icons.ts            Shared inline SVG icon set (unified in r4)
+│   ├── lib/references.json     Single source for every cited reference (CI-enforced)
 │   └── components/
+│       ├── Icon.svelte / PageHeader.svelte  Shared icon + page header (r4)
+│       ├── VerifiedStat.svelte   Stat + source link + "Last verified" date
 │       ├── Models.svelte
-│       ├── AITextCleaner.svelte
+│       ├── AITextCleaner.svelte  Cleaner + docx-to-LaTeX conversion
+│       ├── LanguageCheck.svelte  Offline Language Check tab, v2.2.1 r5
 │       ├── CitationManager.svelte
 │       ├── DocumentStats.svelte
 │       ├── StructureAnalyzer.svelte
@@ -460,7 +489,11 @@ scholarscribe/
 │       └── About.svelte
 ├── docs/
 │   ├── ETHICS.md               Full ethical-use policy
-│   └── PROVENANCE_SPEC.md      Writing Provenance specification & limitations (v2.1.0)
+│   ├── PROVENANCE_SPEC.md      Writing Provenance specification & limitations (v2.1.0)
+│   ├── NETWORK_SURFACE.json    Machine-readable host list (cross-checked in CI)
+│   ├── AUDIT.md / DECISIONS.md / FOR_EDITORS.md   Audit, decision log, editor guidance
+│   └── release-notes/          Per-release notes
+├── scripts/                    CI gates (references, network surface, svelte mount, tauri parity) + release helpers
 ├── verifier/                   Standalone offline HTML verifier for exported packets
 ├── USER_GUIDE.md               2-page quick start (also shipped as PDF in releases)
 ├── USER_MANUAL.md              Full reference manual
@@ -505,6 +538,7 @@ Built on top of outstanding open-source work, including:
 - [Tauri](https://tauri.app), the cross-platform desktop framework that keeps the installer tiny
 - [Ollama](https://ollama.com), the local LLM runtime that does the heavy lifting of model management
 - [Svelte](https://svelte.dev), the frontend framework
+- [harper](https://github.com/Automattic/harper), the offline grammar engine behind Language Check (Apache 2.0, pinned to an exact version, embedded in the Rust process)
 - The open LLM authors: Google (Gemma), Alibaba (Qwen), Meta (Llama), Microsoft (Phi), DeepSeek
 
 ### Research Community
