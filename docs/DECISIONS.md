@@ -17,7 +17,7 @@ Running log per the work order: date, decision, alternatives considered, sources
   matching the Rust minors (`@tauri-apps/api 2.11.1`,
   `@tauri-apps/plugin-dialog 2.7.3`, `@tauri-apps/plugin-shell 2.3.6`) and
   regenerate the lockfile. `@tauri-apps/cli` stays on `^2.0.0`.
-- **Alternatives:** merge PR #26 (Rust 2.12.2/dialog 2.8.1/shell 2.4.1) — rejected: shell would then mismatch JS 2.5.0 anyway, and a same-day Rust minor cascade is more risk than a JS pin; wait for dependabot to pair both sides — rejected: blocks the r3 release.
+- **Alternatives:** merge PR #26 (Rust 2.12.2/dialog 2.8.1/shell 2.4.1), rejected: shell would then mismatch JS 2.5.0 anyway, and a same-day Rust minor cascade is more risk than a JS pin; or wait for dependabot to pair both sides, rejected: blocks the r3 release.
 - **Consequence:** when the maintainer later bumps these, BOTH sides must move together (Rust crates in Cargo.toml AND the JS pins here). Dependabot will propose JS bumps; do not merge a JS-only tauri bump while the Rust side lags. Same fix must also restore the cross-compile matrix in release.yml (lost from #37 by a local `git reset --hard` before commit; re-applied in the same PR).
 
 ---
@@ -76,3 +76,15 @@ Running log per the work order: date, decision, alternatives considered, sources
 
 - **Decision:** `cargo audit` runs in CI with `continue-on-error: true` and a visible annotation, because 4 unique advisories (quick-xml x2, rustls, time) and 7 unmaintained-crate warnings are open today and all map to pending dependabot PRs (#16, #9, #12, #17). `npm audit --omit=dev` is blocking (currently 0 vulnerabilities). Once the dependabot bumps merge, flip cargo audit to blocking.
 - **Alternatives:** ignoring the findings (N1/N3 violation), pinning forks (out of scope).
+
+## 2026-10-13 | M2 | Root component must mount via Svelte 5 `mount()` (r4 white screen fix)
+
+- **Decision:** `src/main.ts` instantiates the app with `mount(App, { target })` from "svelte". The Svelte 4 style `new App({ target })` compiles fine under svelte 5.57.x but throws `effect_orphan` at runtime before first paint, which shipped in the r3 installers as a white screen. A new npm gate (`scripts/check-svelte-mount.mjs`, wired into `npm test`) fails CI if `new App(` or `new Component(` appears in code (comments excluded).
+- **Why it slipped:** the r2 dependency bump (svelte ^5.57.2) passed svelte-check and `vite build`, neither of which exercises runtime mounting; no smoke test loaded the built bundle until now. The r4 verification added a headless Chromium sweep that loads the production `build/` output, mocks the Tauri bridge, and clicks through all 20 tabs.
+- **Consequence:** pages keep the legacy `$:` reactive statements and `on:click` syntax, which remain supported for non-runes components; migration to runes stays optional and out of scope for r4.
+
+## 2026-10-13 | M2 | One inline SVG icon set, no icon fonts, no emoji glyphs
+
+- **Decision:** sidebar tabs, page headers (new shared `PageHeader.svelte`), the theme toggle, and the welcome tour use `Icon.svelte` + `src/lib/icons.ts`: inline SVG paths, 24 viewBox, 1.7 stroke, currentColor. The name registry lives in a plain TS module because `export type` from a Svelte 5 instance script is rejected by svelte-check.
+- **Alternatives:** an icon font (rejected: extra asset, worse CSP story), emoji glyphs (rejected: platform-dependent rendering, unprofessional variance), external SVG files via `img` (rejected: extra requests and no currentColor inheritance).
+- **Consequence:** docs/NETWORK_SURFACE.json gained one `namespace` class entry for `www.w3.org` (the SVG xmlns identifier in `Icon.svelte`); it is a namespace label, never fetched. All prior CSS class names are preserved; only tokens were retuned.

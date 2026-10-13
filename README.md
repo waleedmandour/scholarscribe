@@ -3,7 +3,7 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.1 r3 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r3_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
+[![Status: v2.2.1 r4 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r4_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -90,11 +90,11 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r3 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r3 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r3 |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r3 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r3 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r4 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r4 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r4 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r4 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r4 |
 
 Install with your platform's package manager:
 
@@ -473,7 +473,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.1 r3 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.1 r4 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 

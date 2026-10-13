@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type StructureReport } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -35,12 +36,11 @@
   }
 </script>
 
-<h1>Structure Analyzer</h1>
-<p class="lead">
+<PageHeader icon="layers" title="Structure Analyzer">
   Extract your document's heading tree and get suggestions for missing sections.
   For <code>.docx</code> files, headings are detected via Word's built-in heading styles.
   For plain text, headings are detected via markdown <code>#</code> prefixes or ALL-CAPS lines.
-</p>
+</PageHeader>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 

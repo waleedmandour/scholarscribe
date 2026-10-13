@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open, save } from "@tauri-apps/plugin-dialog";
   import { api, type StyleFingerprint } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   type PaperEntry = { label: string; text: string };
   let papers: PaperEntry[] = [];
@@ -74,13 +75,12 @@
   }
 </script>
 
-<h1>Multi-Paper Style Fingerprint</h1>
-<p class="lead">
+<PageHeader icon="fingerprint" title="Multi-Paper Style Fingerprint">
   Aggregate style metrics across multiple papers by the same author, producing a shareable
   (privacy-safe) stylometric signature. <strong>Only aggregate metrics are exported, no raw text
   ever leaves your device.</strong> The fingerprint can accompany a manuscript submission as
   supplementary evidence of authorial consistency.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>Privacy-safe by design.</strong> The exported fingerprint contains only numbers

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { api, type AuditEntry, type AuditSummary } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let entries: AuditEntry[] = [];
   let summary: AuditSummary | null = null;
@@ -42,12 +43,11 @@
     : entries.filter((e) => e.kind === filter);
 </script>
 
-<h1>Privacy Audit</h1>
-<p class="lead">
+<PageHeader icon="eye" title="Privacy Audit">
   Every time ScholarScribe reads a file or makes an outbound HTTP call this session, it's recorded here.
   The log is in-memory only, it's cleared when the app closes. Use it to verify the app is doing
   exactly what it claims: reading only the files you pick, and talking only to the hosts it should.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>How to read this.</strong>

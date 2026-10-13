@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type ModelInfo } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   export let ollamaOk = false;
   let inputText = "";
@@ -46,12 +47,11 @@
   }
 </script>
 
-<h1>Abstract Generator</h1>
-<p class="lead">
+<PageHeader icon="file-text" title="Abstract Generator">
   Generate a structured abstract (Background/Methods/Results/Conclusions) from your manuscript
   using a locally-installed LLM. Also generates section-by-section commentary. Runs entirely on
   your device.
-</p>
+</PageHeader>
 
 {#if !ollamaOk}
   <div class="callout warn"><strong>Ollama is not running.</strong> Start Ollama and install a model first.</div>

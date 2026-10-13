@@ -10,6 +10,7 @@
     type SystemInfo,
     type OllamaProbe,
   } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   export let ollamaOk = false;
   const dispatch = createEventDispatcher();
@@ -229,13 +230,12 @@
   }
 </script>
 
-<h1>Models</h1>
-<p class="lead">
+<PageHeader icon="cube" title="Models">
   Install open LLMs on your device. All models run locally via
   <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>; no text ever leaves your
   computer. Pick a model whose <strong>min RAM</strong> fits your machine; running an undersized model
   is the most common cause of slow responses.
-</p>
+</PageHeader>
 
 {#if sysInfo}
   <div class="card" style="padding: 12px 16px;">
@@ -258,7 +258,7 @@
     </div>
   {:else if probe.connected}
     <div class="row" style="align-items: center;">
-      <span class="tag green" style="font-weight: 600;">● Ollama connected</span>
+      <span class="tag green" style="font-weight: 600;"><span class="status-dot"></span>Ollama connected</span>
       <span style="font-size: var(--font-sm);">
         {#if probe.version}<span class="dim">Daemon:</span> <strong>v{probe.version}</strong>{/if}
         {#if probe.model_count !== null}
@@ -274,7 +274,7 @@
     </div>
   {:else}
     <div class="row" style="align-items: center;">
-      <span class="tag" style="font-weight: 600; color: var(--danger);">● Ollama not detected</span>
+      <span class="tag red" style="font-weight: 600;"><span class="status-dot"></span>Ollama not detected</span>
       <span class="dim" style="font-size: var(--font-sm);">
         Nothing answered at <code>{probe.base_url}</code>.
       </span>

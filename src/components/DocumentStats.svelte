@@ -2,6 +2,7 @@
   import { open } from "@tauri-apps/plugin-dialog";
   import VerifiedStat from "./VerifiedStat.svelte";
   import { api, type DocStats } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -64,12 +65,11 @@
   }
 </script>
 
-<h1>Document Statistics</h1>
-<p class="lead">
+<PageHeader icon="chart" title="Document Statistics">
   A quick health-check panel for your draft: word count, sentence count, section count,
   citation count, reading time, readability scores, and a comparison panel with common
   journal targets. All processing is local.
-</p>
+</PageHeader>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
   import { api, type ConsistencyReport } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -27,13 +28,12 @@
   }
 </script>
 
-<h1>Voice Consistency Checker</h1>
-<p class="lead">
+<PageHeader icon="wave" title="Voice Consistency Checker">
   Flags within-document stylistic inconsistencies, passages where sentence length, hedging density,
   or vocabulary diversity abruptly shifts. Sudden stylistic shifts within a single paper are a
   legitimate editorial concern (and a documented AI-detection signal). Helps researchers ensure
   cohesion regardless of AI involvement.
-</p>
+</PageHeader>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 

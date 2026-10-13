@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, type ModelInfo, type ChatMessage } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   export let ollamaOk = false;
   let models: ModelInfo[] = [];
@@ -41,13 +42,12 @@
   function clear() { messages = []; }
 </script>
 
-<h1>Structured Writing Coach</h1>
-<p class="lead">
+<PageHeader icon="compass" title="Structured Writing Coach">
   A specialized chat mode where the LLM acts as a discipline-aware writing coach, asking Socratic
   questions that draw out your genuine reasoning rather than suggesting text. "What was your reasoning
   for choosing this method over X?" is fundamentally different from "rewrite this paragraph." This
   keeps the intellectual content authentically yours while providing scaffolding.
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>How this works.</strong> The coach will NEVER write or rewrite text for you. Instead, it asks

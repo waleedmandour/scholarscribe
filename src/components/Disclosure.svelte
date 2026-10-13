@@ -6,6 +6,7 @@
     type DisclosureOutput,
     type DisclosureInput,
   } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let venues: VenueTemplate[] = [];
   let selectedVenue = "icmje";
@@ -55,12 +56,11 @@
   $: currentVenue = venues.find((v) => v.id === selectedVenue);
 </script>
 
-<h1>Disclosure Assistant</h1>
-<p class="lead">
+<PageHeader icon="file-check" title="Disclosure Assistant">
   Generate a venue-compliant AI-use disclosure statement in one click. Major academic publishers, ICMJE journals,
   Nature, IEEE, Elsevier, ACL, now require explicit disclosure of AI assistance. Failing to disclose is itself
   a research-integrity violation. Use this tool to draft a statement you can paste into your manuscript or cover letter.
-</p>
+</PageHeader>
 
 <div class="card">
   <div class="card-title">Generate a disclosure statement</div>

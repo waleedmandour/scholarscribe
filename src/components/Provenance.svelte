@@ -11,6 +11,7 @@
   } from "../lib/api";
   import ProvenanceTimeline from "./ProvenanceTimeline.svelte";
   import ProvenanceExport from "./ProvenanceExport.svelte";
+  import PageHeader from "./PageHeader.svelte";
 
   let enabled = false;
   let checking = true;
@@ -144,13 +145,12 @@
   $: activeRef = source === "docx" ? docxPath : docUrl;
 </script>
 
-<h1>Writing Provenance</h1>
-<p class="lead">
+<PageHeader icon="shield" title="Writing Provenance">
   A signed, hash-chained record of your document's real revision history,
   built from Word's Track Changes or Google Docs' version history.
   <strong>Evidence, not verdict:</strong> this is not an AI-detection score and
   not proof of authorship.
-</p>
+</PageHeader>
 
 <div class="card">
   <h3 style="margin: 0 0 6px 0;">How to create provenance evidence, step by step</h3>

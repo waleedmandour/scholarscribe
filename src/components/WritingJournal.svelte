@@ -87,12 +87,12 @@
   function fmtTime(ts: number): string { return new Date(ts * 1000).toLocaleString(); }
 
   import { onMount, onDestroy } from "svelte";
+  import PageHeader from "./PageHeader.svelte";
   onMount(refresh);
   onDestroy(() => { if (autoSaveInterval) clearInterval(autoSaveInterval); });
 </script>
 
-<h1>Writing Process Journal</h1>
-<p class="lead">
+<PageHeader icon="history" title="Writing Process Journal">
   Auto-saves timestamped snapshots of your draft at user-defined intervals, keeping a local,
   plain-JSON process record of your writing sessions. These snapshots are not signed and not
   verifiable, and they are not connected to the signed provenance chain; for signed, verifiable
@@ -100,7 +100,7 @@
   snapshot locally. Each snapshot is diffed from the previous one. Exports to a timestamped
   Markdown file. Aligns with the opt-in persistence architecture, requires persistence to be
   enabled in the Saved Work tab.
-</p>
+</PageHeader>
 
 {#if error}<div class="callout warn"><strong>Error:</strong> {error}</div>{/if}
 
@@ -116,7 +116,7 @@
       <button class="shrink" on:click={createSession}>New session</button>
       <button class="primary shrink" on:click={saveSnapshot} disabled={!activeSessionId}>Save snapshot</button>
       <button class="shrink" on:click={toggleAutoSave} disabled={!activeSessionId}>
-        {autoSaveEnabled ? "⏸ Stop auto-save" : "▶ Auto-save (60s)"}
+        {autoSaveEnabled ? "Stop auto-save" : "Start auto-save (60s)"}
       </button>
       <button class="shrink" on:click={exportSession} disabled={!activeSessionId}>Export…</button>
     </div>

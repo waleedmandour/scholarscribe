@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { showTour, completeTour, closeTour } from "../lib/onboarding";
+  import Icon from "./Icon.svelte";
+  import type { IconName } from "../lib/icons";
 
   type TabId =
     | "models" | "cleaner" | "citations" | "stats" | "structure"
@@ -9,32 +11,32 @@
     | "disclosure" | "literacy" | "audit" | "saved" | "about";
 
   // Steps array: each entry renders one tour panel.
-  const steps = [
+  const steps: { title: string; icon: IconName }[] = [
     {
       title: "Welcome to ScholarScribe",
-      icon: "✦",
+      icon: "sparkle",
     },
     {
       title: "Your data never leaves this device",
-      icon: "🔒",
+      icon: "eye",
     },
     {
       title: "Start here: install a model",
-      icon: "⬇",
+      icon: "cube",
     },
     {
-      title: "New in 2.1.0: Writing Provenance",
-      icon: "📋",
+      title: "Evidence: Writing Provenance",
+      icon: "shield",
     },
     {
       title: "20 tools at your service",
-      icon: "▦",
+      icon: "layers",
     },
     {
       title: "Ethical use, please read",
-      icon: "⚖",
+      icon: "file-check",
     },
-  ] as const;
+  ];
 
   let step = 0;
   let dontShowAgain = false;
@@ -184,7 +186,7 @@
       <!-- Step body -->
       <div class="tour-body">
         {#if step === 0}
-          <div class="tour-icon-big">✦</div>
+          <div class="tour-icon-big"><Icon name={steps[0].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[0].title}</h2>
           <p class="tour-tagline">
             A privacy-first, local-LLM writing companion for researchers.
@@ -196,12 +198,12 @@
             About tab.
           </p>
           <div class="tour-meta">
-            <span class="tag">v2.1.0</span>
+            <span class="tag">v2.2.1 r4</span>
             <span class="tag">MIT License</span>
             <span class="tag green">Local-only</span>
           </div>
         {:else if step === 1}
-          <div class="tour-icon-big">🔒</div>
+          <div class="tour-icon-big"><Icon name={steps[1].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[1].title}</h2>
           <p class="tour-text">
             <strong>Nothing you write, paste, or open ever leaves your device.</strong>
@@ -219,7 +221,7 @@
             than <code>registry.ollama.ai</code> is a red flag.
           </div>
         {:else if step === 2}
-          <div class="tour-icon-big">⬇</div>
+          <div class="tour-icon-big"><Icon name={steps[2].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[2].title}</h2>
           <p class="tour-text">
             Open the <strong>Models</strong> tab when you finish this tour. The top card
@@ -240,7 +242,7 @@
             network.
           </p>
         {:else if step === 3}
-          <div class="tour-icon-big">📋</div>
+          <div class="tour-icon-big"><Icon name={steps[3].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[3].title}</h2>
           <p class="tour-text">
             Writing Provenance turns your document's own revision history into
@@ -261,7 +263,7 @@
             Open the Provenance tab
           </button>
         {:else if step === 4}
-          <div class="tour-icon-big">▦</div>
+          <div class="tour-icon-big"><Icon name={steps[4].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
             The sidebar organizes 20 tools into 7 workflow phases. <strong>Click any cell
@@ -287,7 +289,7 @@
             {/each}
           </div>
         {:else if step === 5}
-          <div class="tour-icon-big">⚖</div>
+          <div class="tour-icon-big"><Icon name={steps[5].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[5].title}</h2>
           <p class="tour-text">
             ScholarScribe is designed for researchers who have
@@ -336,7 +338,7 @@
           {#if isLast}
             <button class="primary" on:click={finish}>Start using ScholarScribe</button>
           {:else}
-            <button class="primary" on:click={next}>Next →</button>
+            <button class="primary" on:click={next}>Next <Icon name="arrow-right" size={14} /></button>
           {/if}
         </div>
       </div>
@@ -432,11 +434,16 @@
     overflow-y: auto;
   }
   .tour-icon-big {
-    font-size: var(--font-stat-xl);
-    line-height: 1;
-    margin-bottom: 8px;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border, rgba(47, 95, 216, 0.28));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
     color: var(--accent);
-    font-weight: 700;
   }
   .tour-title {
     font-size: var(--font-xl);

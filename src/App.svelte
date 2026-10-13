@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import Icon from "./components/Icon.svelte";
+  import type { IconName } from "./lib/icons";
   import Models from "./components/Models.svelte";
   import AITextCleaner from "./components/AITextCleaner.svelte";
   import CitationManager from "./components/CitationManager.svelte";
@@ -80,37 +82,37 @@
 
   // Tabs grouped by workflow phase. Group is a presentation-only field;
   // tab IDs, routes, and types are unchanged.
-  const tabs: { id: Tab; label: string; icon: string; group: string }[] = [
+  const tabs: { id: Tab; label: string; icon: IconName; group: string }[] = [
     // Get started (About sits directly under the Get started section since
     // v2.2.1 r3: version, environment, and credits are where first-time
     // users look, right after the Models setup page)
-    { id: "models", label: "Models", icon: "M", group: "Get started" },
-    { id: "about", label: "About", icon: "A", group: "Get started" },
+    { id: "models", label: "Models", icon: "cube", group: "Get started" },
+    { id: "about", label: "About", icon: "info", group: "Get started" },
     // Prepare the draft
-    { id: "cleaner", label: "Text Cleaner", icon: "T", group: "Prepare the draft" },
-    { id: "citations", label: "Citations", icon: "C", group: "Prepare the draft" },
+    { id: "cleaner", label: "Text Cleaner", icon: "eraser", group: "Prepare the draft" },
+    { id: "citations", label: "Citations", icon: "quote", group: "Prepare the draft" },
     // Understand the draft
-    { id: "stats", label: "Stats", icon: "#", group: "Understand the draft" },
-    { id: "structure", label: "Structure", icon: "S", group: "Understand the draft" },
+    { id: "stats", label: "Stats", icon: "chart", group: "Understand the draft" },
+    { id: "structure", label: "Structure", icon: "layers", group: "Understand the draft" },
     // AI writing help
-    { id: "abstract", label: "Abstract", icon: "A", group: "AI writing help" },
-    { id: "coach", label: "Writing Coach", icon: "?", group: "AI writing help" },
-    { id: "chat", label: "Chat", icon: "C", group: "AI writing help" },
+    { id: "abstract", label: "Abstract", icon: "file-text", group: "AI writing help" },
+    { id: "coach", label: "Writing Coach", icon: "compass", group: "AI writing help" },
+    { id: "chat", label: "Chat", icon: "message", group: "AI writing help" },
     // Authenticity and style (Detector Literacy appears before Risk Profile;
     // the mechanism is explained before a score is shown)
-    { id: "literacy", label: "Detector Literacy", icon: "L", group: "Authenticity and style" },
-    { id: "risk", label: "Risk Profile", icon: "R", group: "Authenticity and style" },
-    { id: "style", label: "Style Analysis", icon: "S", group: "Authenticity and style" },
-    { id: "fingerprint", label: "Fingerprint", icon: "F", group: "Authenticity and style" },
-    { id: "consistency", label: "Voice Check", icon: "V", group: "Authenticity and style" },
+    { id: "literacy", label: "Detector Literacy", icon: "book", group: "Authenticity and style" },
+    { id: "risk", label: "Risk Profile", icon: "gauge", group: "Authenticity and style" },
+    { id: "style", label: "Style Analysis", icon: "pen", group: "Authenticity and style" },
+    { id: "fingerprint", label: "Fingerprint", icon: "fingerprint", group: "Authenticity and style" },
+    { id: "consistency", label: "Voice Check", icon: "wave", group: "Authenticity and style" },
     // Evidence and compliance
-    { id: "journal", label: "Journal", icon: "J", group: "Evidence and compliance" },
-    { id: "provenance", label: "Provenance", icon: "≡", group: "Evidence and compliance" },
-    { id: "appeal", label: "Appeal Letter", icon: "L", group: "Evidence and compliance" },
-    { id: "disclosure", label: "Disclosure", icon: "D", group: "Evidence and compliance" },
+    { id: "journal", label: "Journal", icon: "history", group: "Evidence and compliance" },
+    { id: "provenance", label: "Provenance", icon: "shield", group: "Evidence and compliance" },
+    { id: "appeal", label: "Appeal Letter", icon: "mail", group: "Evidence and compliance" },
+    { id: "disclosure", label: "Disclosure", icon: "file-check", group: "Evidence and compliance" },
     // Privacy and app
-    { id: "audit", label: "Privacy Audit", icon: "P", group: "Privacy and app" },
-    { id: "saved", label: "Saved Work", icon: "W", group: "Privacy and app" },
+    { id: "audit", label: "Privacy Audit", icon: "eye", group: "Privacy and app" },
+    { id: "saved", label: "Saved Work", icon: "save", group: "Privacy and app" },
   ];
 
   async function refreshStatus() {
@@ -164,16 +166,18 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <span class="dot"></span>
+      <span class="brand-mark">
+        <Icon name="pen" size={15} />
+      </span>
       ScholarScribe
       <div class="spacer"></div>
       <button
         class="theme-toggle"
         on:click={cycleTheme}
-        title="Theme: {theme}"
+        title="Theme: {theme}. Click to change."
         aria-label="Toggle theme"
       >
-        {#if theme === "light"}☀️{:else if theme === "dark"}🌙{:else}🌗{/if}
+        <Icon name={theme === "light" ? "sun" : theme === "dark" ? "moon" : "monitor"} size={15} />
       </button>
     </div>
 
@@ -189,7 +193,7 @@
         tabindex="0"
         on:keydown={(e) => e.key === "Enter" && (active = t.id)}
       >
-        <span class="dim" style="width: 18px; text-align: center; font-weight: 600;">{t.icon}</span>
+        <span class="dim"><Icon name={t.icon} size={16} /></span>
         {t.label}
       </div>
     {/each}
@@ -208,14 +212,14 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v2.2.1 r2 · MIT · local-only
+        v2.2.1 r4 · MIT · local-only
       </div>
       <button
         class="walk-through-btn"
         on:click={openTour}
         title="Open the interactive welcome tour"
       >
-        ✦ Walk me through the app
+        <span style="display: inline-flex; vertical-align: -0.14em; margin-right: 6px;"><Icon name="sparkle" size={14} /></span>Walk me through the app
       </button>
       <div class="density-toggle" role="group" aria-label="Sidebar density">
         <button

@@ -8,6 +8,7 @@
     defaultCleanOptions,
     strictCleanOptions,
   } from "../lib/api";
+  import PageHeader from "./PageHeader.svelte";
 
   let inputText = "";
   let inputPath = "";
@@ -238,14 +239,13 @@
   }
 </script>
 
-<h1>AI Text Cleaner</h1>
-<p class="lead">
+<PageHeader icon="eraser" title="AI Text Cleaner">
   Cleans common artifacts from text you paste or import, especially from copy-pasting out of
   PDFs, scanned documents, web pages, and word processors. All cleaning runs locally on your
   device as deterministic rule-based transformations. No text is sent to any server.
   <strong>Two .docx modes</strong>: extract text only (loses formatting), or clean in place
   (preserves all tables, images, hyperlinks, headers, footers, and styles).
-</p>
+</PageHeader>
 
 <div class="callout info">
   <strong>What this does, and does not, do.</strong>
@@ -320,7 +320,7 @@
     disabled={busy || (inputKind === "text" ? !inputText.trim() : !docxSourcePath)}
     title="Apply ALL 24 cleaning operations (default + strict: hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, soft hyphens, variation selectors, line endings, repeated punctuation)"
   >
-    {busy ? "Working…" : "⚡ Strict clean (all 24 ops)"}
+    {busy ? "Working…" : "Strict clean (all 24 ops)"}
   </button>
 
   {#if inputKind === "docx"}

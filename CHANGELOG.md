@@ -8,6 +8,50 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1-r4] - 2026-10-13 (pre-release)
+
+A critical startup fix plus a visual polish pass. The r3 installers shipped a
+white screen at startup: `src/main.ts` still instantiated the root component
+with the Svelte 4 style `new App({ target })`, which the Svelte 5 runtime
+(5.57.x) rejects with `effect_orphan` before a single pixel renders. r4 fixes
+that, adds a CI regression gate, and lifts the interface to a consistent,
+icon-driven design system. Zero em or en dashes in any user-facing string.
+
+### Fixed
+
+- **White screen at startup (critical).** Root component is now mounted with
+  `mount(App, { target })` from "svelte", the Svelte 5 API. Reproduced
+  headless against the r3 production bundle (`#app` rendered 0 bytes and the
+  runtime threw `effect_orphan`); after the fix the same harness renders the
+  full shell (about 11 KB of DOM) and all 20 pages mount without errors.
+  A new `check-svelte-mount` npm test fails CI if `new App(`/`new Component(`
+  ever returns to `src/main.ts`.
+- **Stale sidebar version label.** The footer said "v2.2.1 r2" after the r3
+  release; it now says "v2.2.1 r4" and the About page tour mention was
+  corrected from a 5-step to the actual 6-step tour.
+
+### Changed
+
+- **Icon system.** All sidebar tabs, the page headers, the theme toggle, and
+  the welcome tour now use one inline SVG icon set (`Icon.svelte` +
+  `src/lib/icons.ts`): 24 viewBox, stroke based, currentColor, no emoji and
+  no external assets, CSP safe. Single-letter sidebar placeholders (M, T, #,
+  R) and emoji glyphs (theme sun/moon, tour clipboard, lock, scale) are gone.
+- **Page headers.** Every one of the 20 pages opens with a shared
+  `PageHeader` (icon badge, title, lead), so sidebar icons and page icons
+  always match and the hierarchy reads the same on every tab.
+- **Design tokens.** Refined light and dark palettes (layered neutrals,
+  softer borders, tuned accent), tighter heading tracking, smaller uppercase
+  group labels with wider letter spacing, active-tab accent bar, themed thin
+  scrollbars, focus-visible outlines, row hover on tables, and a
+  reduced-motion guard. All pre-existing class names are preserved.
+- **Welcome tour.** Step icons use the shared set, the version tag says
+  v2.2.1 r4, the "New in 2.1.0" step title is now the evergreen "Evidence:
+  Writing Provenance", and the icon sits in a tinted badge.
+- **About page.** Module list corrected to seven entries with full-sentence
+  punctuation (periods after the bold lead-ins instead of commas) and a new
+  Text Cleaner entry covering the docx to LaTeX conversion.
+
 ## [2.2.1-r3] - 2026-10-13 (pre-release)
 
 A usability milestone requested by the maintainer: sidebar reorder, live
