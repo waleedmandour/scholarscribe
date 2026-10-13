@@ -36,7 +36,7 @@ url = "2"
 # which are Stored or Deflated (Word never writes other methods). Default
 # features are off so the app does not link lzma (links = "lzma" is exclusive
 # and would conflict with harper-core's own zip dependency).
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "8", default-features = false, features = ["deflate"] }
 
 # Writing Provenance (v2.1.0), hash chain + Ed25519 signing + OOXML revisions
 sha2 = "0.10"
