@@ -39,15 +39,15 @@ url = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 
 # Writing Provenance (v2.1.0), hash chain + Ed25519 signing + OOXML revisions
-sha2 = "0.10"
-ed25519-dalek = { version = "2", features = ["rand_core"] }
+sha2 = "0.11"
+ed25519-dalek = { version = "3", features = ["rand_core"] }
 quick-xml = "0.31"
 # Language Check (v2.2.1 r5): offline, privacy-first grammar, spelling and
 # style lints. Pinned to an exact version on purpose: upgrades are deliberate
 # events reviewed against the upstream changelog (see the feature plan).
 harper-core = "=2.11.0"
 # CSPRNG for signing-key generation
-getrandom = "0.2"
+getrandom = "0.4"
 # OS keychain (Windows Credential Manager / macOS Keychain / Linux Secret Service)
 # for the signing key seed and the Google OAuth refresh token.
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
