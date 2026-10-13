@@ -103,6 +103,7 @@ jobs:
 
       - name: Derive release flavor from the tag
         id: meta
+        shell: bash
         run: |
           TAG="${{ inputs.tag || github.ref_name }}"
           # A plain vX.Y.Z tag publishes a stable release; any semver
