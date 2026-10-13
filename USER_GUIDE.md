@@ -2,6 +2,7 @@
 
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 > **Version 2.2.1 (stable) · Windows · macOS · Linux · MIT License · [github.com/waleedmandour/scholarscribe](https://github.com/waleedmandour/scholarscribe)**
+> **Dr. Waleed Mandour** · Assistant Lecturer, Sultan Qaboos University · w.abumandour@squ.edu.om
 
 ScholarScribe helps you draft, clean, validate, and disclose your manuscript using open LLMs that run on your own machine. This 2-page guide gets you productive in under 10 minutes. For deep reference, see [`USER_MANUAL.md`](USER_MANUAL.md).
 
@@ -99,4 +100,4 @@ If you used AI assistance, **disclose it**, the Disclosure tab makes this easy. 
 
 ---
 
-*ScholarScribe © 2026 Dr. Waleed Mandour. Released under the MIT License. Persistent identifier: <https://doi.org/10.5281/zenodo.23052647>*
+*ScholarScribe © 2026 Dr. Waleed Mandour. Released under the MIT License. Persistent identifier: <https://doi.org/10.5281/zenodo.23324356>*
