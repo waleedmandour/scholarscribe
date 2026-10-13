@@ -8,6 +8,37 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1] - 2026-10-13 (stable)
+
+Graduation of the v2.2.1 line from the r2 through r5 pre-releases to the
+stable release, plus the final polish pass. The tag v2.2.1 now points at
+this state and the release is marked latest; the original 29 September
+2026 build is documented in docs/release-notes/v2.2.1.md.
+
+### Changed
+
+- Sidebar order: the About tab now sits at the top of the Get started
+  group, before Models (the welcome tour's tab list mirrors this). The
+  default tab on launch is unchanged.
+- User Guide PDF regenerated as a true 2-page document: compact title
+  band instead of a full cover page, tighter typography, and group
+  bands inside the 21-tab overview. About is listed first and Models
+  second, and the stale 24-operation count was corrected to the
+  truthful 23.
+- README: the status badge and install table reference v2.2.1 (stable),
+  the feature overview mirrors the new sidebar order (About before
+  Models), and a new "Verify your download" subsection documents
+  CHECKSUMS.txt usage.
+- Release workflow: a plain vX.Y.Z tag now publishes a stable release
+  (no "(Pre-release)" suffix, prerelease=false), while any suffixed tag
+  (vX.Y.Z-rN, -pre, -rcN) keeps the previous pre-release behavior.
+
+### Notes
+
+- No Rust or frontend behavior changes beyond the sidebar order; the
+  r2 through r5 entries below describe everything else shipped in this
+  version.
+
 ## [2.2.1-r5] - 2026-10-13 (pre-release)
 
 The Language Check feature: offline spelling, grammar, and style checking with

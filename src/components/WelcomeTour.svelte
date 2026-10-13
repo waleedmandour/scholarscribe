@@ -82,8 +82,8 @@
         { id: "literacy",   name: "Detector Literacy", desc: "How detectors work + fail" },
         { id: "audit",      name: "Privacy Audit",     desc: "Live log of file/HTTP events" },
         { id: "saved",      name: "Saved Work",        desc: "Opt-in local JSON storage" },
-        { id: "models",     name: "Models",            desc: "Install / manage local LLMs" },
         { id: "about",      name: "About",             desc: "Version, environment, credits" },
+        { id: "models",     name: "Models",            desc: "Install / manage local LLMs" },
       ],
     },
   ];

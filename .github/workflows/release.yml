@@ -8,9 +8,13 @@
 #   3. Builds platform installers via `tauri build`.
 #   4. Uploads all installers to the matching GitHub Release.
 #
+# Release flavor is derived from the tag shape: a plain vX.Y.Z tag (e.g.
+# v2.2.1) publishes a STABLE release, any suffix (v2.2.1-r5, v2.3.0-pre)
+# publishes a pre-release, as before.
+#
 # To trigger:
-#   git tag v2.2.0-pre
-#   git push origin v2.2.0-pre
+#   git tag v2.2.1
+#   git push origin v2.2.1
 
 name: Release
 
@@ -97,31 +101,47 @@ jobs:
       - name: Verify frontend type-checks
         run: npm run check
 
+      - name: Derive release flavor from the tag
+        id: meta
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          # A plain vX.Y.Z tag publishes a stable release; any semver
+          # prerelease suffix (v2.2.1-r5, v2.3.0-pre, v2.3.0-rc1) keeps
+          # the historical pre-release behavior.
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "release_name=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "release_name=$TAG (Pre-release)" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: "${{ inputs.tag || github.ref_name }} (Pre-release)"
+          releaseName: ${{ steps.meta.outputs.release_name }}
           releaseBody: |
-            ScholarScribe ${{ inputs.tag || github.ref_name }} (Pre-release)
+            ScholarScribe ${{ inputs.tag || github.ref_name }}
 
             ## What changed in this release
 
             See [CHANGELOG.md](CHANGELOG.md) for the full entry for this tag.
 
-            - New feature: the Language Check tab. Offline spelling, grammar, and style checking with proposed corrections, powered by the embedded harper engine (Apache 2.0, pinned to an exact version). Paste or import text (.txt, .md, .tex, .docx), pick an English dialect (American, British, Canadian, Australian, Indian), review category-colored underlines, and apply or dismiss corrections with one click. Personal dictionary, per-rule settings, apply-all per category, and .txt export included. Your text is analyzed in memory on your machine and never leaves it; the network-surface test proves no new hosts.
+            - The Language Check tab: offline spelling, grammar, and style checking with proposed corrections, powered by the embedded harper engine (Apache 2.0, pinned to an exact version). Paste or import text (.txt, .md, .tex, .docx), pick an English dialect (American, British, Canadian, Australian, Indian), review category-colored underlines, and apply or dismiss corrections with one click. Personal dictionary, per-rule settings, apply-all per category, and .txt export included. Your text is analyzed in memory on your machine and never leaves it; the network-surface test proves no new hosts.
+            - Carried from the r3 and r4 pre-releases: deterministic docx-to-LaTeX conversion (Text Cleaner), paste-references-to-BibTeX (Citation Manager), and the Svelte 5 startup fix with its CI regression gate.
+            - Sidebar polish: the About tab now sits at the top of the Get started group, before Models, and the User Guide PDF is a true 2-page document.
+            - Release pipeline: a parity gate fails CI when the Rust crates and their npm counterparts drift in version; CHECKSUMS.txt refresh and minisign signing run in a dedicated final job that waits for all four build legs; a plain vX.Y.Z tag now publishes a stable release while any suffixed tag stays a pre-release.
             - Language Check is deterministic but not complete, and the app says so plainly: a rule based checker can miss errors and can flag correct academic wording, so ignore, dictionary, and rule toggles are one click away. English only in this release.
-            - Release pipeline: CHECKSUMS.txt refresh and minisign signing moved to a dedicated final job that waits for all four build legs, closing the r4 race that could publish a checksum file missing the slower legs' assets.
-            - r4 highlights carried forward: the Svelte 5 `mount()` startup fix with its CI regression gate, the unified inline SVG icon set, the shared page header, and the refined light and dark themes.
 
             ## Install
 
             1. Install [Ollama](https://ollama.com/download).
             2. Download the installer for your platform below.
             3. Open ScholarScribe, go to the Models tab, download a model.
-            4. See [USER_GUIDE.md](USER_GUIDE.md) for the 5-minute walkthrough. A polished PDF copy is attached below as `ScholarScribe-User-Guide.pdf`.
+            4. See [USER_GUIDE.md](USER_GUIDE.md) for the 2-page walkthrough. A polished PDF copy is attached below as `ScholarScribe-User-Guide.pdf`.
 
             ## Platforms
 
@@ -142,7 +162,7 @@ jobs:
 
             This release was gated on: `npm ci`, `npm run check`, `npm run build`, `cargo fmt --check`, `cargo check`, `cargo test` (all Rust tests including the Rust-vs-JS verifier cross-check fixture), `cargo clippy -- -D warnings`, the network-surface test (source hosts vs `docs/NETWORK_SURFACE.json` vs SECURITY.md), the references test (citations vs `src/lib/references.json`), and `npm audit --omit=dev`. Full history in [CHANGELOG.md](CHANGELOG.md). The `CHECKSUMS.txt` asset contains SHA-256 digests for every binary artifact and the User Guide PDF; when the maintainer's signing secret is configured in CI, a detached minisign signature `CHECKSUMS.txt.minisig` is attached as well.
           releaseDraft: false
-          prerelease: true
+          prerelease: ${{ steps.meta.outputs.is_prerelease == 'true' }}
           args: ${{ matrix.args }}
 
       # Generate the User Guide PDF and upload it to the release. Only runs on
