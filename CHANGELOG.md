@@ -8,6 +8,65 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1-r5] - 2026-10-13 (pre-release)
+
+The Language Check feature: offline spelling, grammar, and style checking with
+proposed corrections, closing the largest remaining gap with the tools
+researchers reach for daily, without weakening the privacy contract. The
+engine is harper-core (Apache 2.0, Automattic), embedded in the Rust process
+and pinned to an exact version. No new network hosts; the network-surface
+test proves it in CI.
+
+### Added
+
+- **Language Check tab** (Prepare the draft, directly after Text Cleaner).
+  Paste text or import `.txt`, `.md`, `.tex`, or `.docx`, pick an English
+  dialect (American, British, Canadian, Australian, Indian; the choice is
+  remembered), and run the check. Issues are grouped under Spelling, Grammar,
+  and Style tabs with live counts, rendered in an annotated preview with
+  category-colored underlines that jump to their cards on click. Each card
+  shows the message, sentence context, rule id and description, and typed
+  suggestions (replace, insert after, remove). Corrections apply server side
+  from the rightmost span leftward, so offsets never drift, and the page
+  re-checks automatically after every apply. Apply-all is available per
+  category, and the corrected text can be copied or saved as `.txt`.
+- **Personal dictionary.** One click add for flagged words (plus manual add
+  and remove). Stops false positives on names and technical terms. Persisted
+  to disk only when persistence is opted in; session-only otherwise.
+- **Rule settings.** Rules that fired in a check are listed with their state;
+  individual rules can be turned off from a card or the settings panel, and
+  all overrides can be reset to harper's curated defaults.
+- **Backend.** New `language_check.rs` module: run, apply, dictionary
+  (add/remove/list), settings (get/set), file import, and `.txt` export
+  commands; engine cached per dialect behind app state; import and export
+  record file_read/file_write audit entries.
+- **Fixture tests.** Ten Rust unit tests pin the engine: known-fault
+  sentences for spelling and grammar, right-to-left apply arithmetic, bad
+  span rejection, personal dictionary suppression, rule disablement, empty
+  and Unicode input safety, dense stable issue ids.
+
+### Changed
+
+- The app's `zip` dependency now enables only the `deflate` feature
+  (OOXML files are Stored or Deflated; Word never writes other methods).
+  This frees the exclusive `links = "lzma"` slot for harper's zip stack and
+  trims the binary slightly.
+- Third-party license inventory regenerated: harper-core, harper-brill,
+  harper-pos-utils, and harper-thesaurus (all Apache 2.0) are now listed.
+- Documentation: README feature list and Language Check section, USER_GUIDE
+  tab table (21 tabs), USER_MANUAL module section 8c, and the About page
+  module list (now eight modules) all state the feature's scope honestly,
+  including the English-only limitation. Zero em or en dashes in any
+  user-facing string.
+
+### Fixed
+
+- **Release pipeline: CHECKSUMS.txt race.** The refresh step used to run
+  inside the Linux build leg, which could finish before the Windows leg had
+  uploaded its installers, producing an incomplete checksum file (observed
+  on r4 and repaired manually). CHECKSUMS refresh and minisign signing now
+  run in a dedicated final job that waits for all four build legs.
+
 ## [2.2.1-r4] - 2026-10-13 (pre-release)
 
 A critical startup fix plus a visual polish pass. The r3 installers shipped a

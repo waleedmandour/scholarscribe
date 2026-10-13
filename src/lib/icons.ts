@@ -7,7 +7,8 @@ export type IconName =
   | "compass" | "message" | "book" | "gauge" | "pen" | "fingerprint"
   | "wave" | "history" | "shield" | "mail" | "file-check" | "eye" | "save"
   | "sun" | "moon" | "monitor" | "sparkle" | "search" | "refresh"
-  | "check" | "x" | "arrow-right" | "alert" | "cpu" | "server";
+  | "check" | "x" | "arrow-right" | "alert" | "cpu" | "server"
+  | "spellcheck";
 
 export interface IconPath {
   d?: string;
@@ -47,4 +48,5 @@ export const iconPaths: Record<IconName, IconPath[]> = {
   alert: [{ d: "M12 4 2.8 19.5h18.4Z" }, { d: "M12 10v4.2" }, { extra: '<circle cx="12" cy="17" r="0.4" fill="currentColor" stroke="none"/>' }],
   cpu: [{ extra: '<rect x="6" y="6" width="12" height="12" rx="1.5"/>' }, { extra: '<rect x="9.5" y="9.5" width="5" height="5" rx="0.5"/>' }, { d: "M9 2.5V6 M12 2.5V6 M15 2.5V6 M9 18v3.5 M12 18v3.5 M15 18v3.5 M2.5 9H6 M2.5 12H6 M2.5 15H6 M18 9h3.5 M18 12h3.5 M18 15h3.5" }],
   server: [{ extra: '<rect x="3.5" y="4" width="17" height="7" rx="1.5"/>' }, { extra: '<rect x="3.5" y="13" width="17" height="7" rx="1.5"/>' }, { d: "M7 7.5h.01 M7 16.5h.01" }],
+  spellcheck: [{ d: "M4 5.5h16 M4 10.5h9.5 M4 15.5h6" }, { d: "m13.5 17.5 2.2 2.2 4.3-4.9" }],
 };

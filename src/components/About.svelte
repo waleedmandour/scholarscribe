@@ -56,11 +56,12 @@
 <div class="card">
   <p style="margin: 0 0 12px;">
     ScholarScribe helps researchers who are writing their own manuscripts to work with AI assistance
-    transparently and on their own device. Seven modules:
+    transparently and on their own device. Eight modules:
   </p>
   <ul style="margin: 0; padding-left: 20px; line-height: 1.7;">
     <li><strong>Models.</strong> Install and run open LLMs (Gemma, Qwen, Llama, Phi-3) locally via Ollama. Import your own <code>.gguf</code> files with a built-in compatibility check.</li>
     <li><strong>Text Cleaner.</strong> Fix common copy-paste artifacts, and convert a cleaned <code>.docx</code> to LaTeX with a deterministic structural mapping.</li>
+    <li><strong>Language Check.</strong> Offline spelling, grammar, and style feedback with one click corrections, powered by the embedded harper engine. Nothing is sent anywhere.</li>
     <li><strong>Style Analysis.</strong> Compare a draft to a sample of <em>your own</em> prior writing. Includes reading-level metrics (Flesch, Flesch-Kincaid, Gunning Fog).</li>
     <li><strong>Chat.</strong> Local-only chat with a system-prompt guardrail that refuses requests to evade detectors or fabricate citations.</li>
     <li><strong>Disclosure Assistant.</strong> Generate venue-compliant AI-use disclosure statements for ICMJE, Nature, IEEE, Elsevier, ACL.</li>

@@ -111,17 +111,10 @@ jobs:
 
             See [CHANGELOG.md](CHANGELOG.md) for the full entry for this tag.
 
-            - Critical fix: the r3 installers opened to a white screen because the root component was still instantiated with the Svelte 4 style `new App({ target })`, which the Svelte 5 runtime rejects with `effect_orphan` before anything renders. The app is now mounted with the Svelte 5 `mount()` API, and a new `check-svelte-mount` CI test blocks the legacy pattern from returning.
-            - UI: one inline SVG icon set across the sidebar, page headers, theme toggle, and welcome tour (no emoji, no external assets, CSP safe).
-            - UI: all 20 pages open with a shared header (icon badge, title, lead paragraph) that matches the sidebar icon.
-            - UI: refined light and dark themes with layered neutrals, an active-tab accent bar, themed thin scrollbars, focus-visible outlines, table row hover, and a reduced-motion guard.
-            - Copy: sidebar footer version label corrected, About module list completed to seven entries, tour step titles made evergreen, and zero em or en dashes in user-facing strings.
-            - Models page: live Ollama status card directly below the PC specs; connected shows the daemon version, installed model count, and the loopback endpoint `127.0.0.1:11434`, not detected shows setup steps plus a Re-check button. The page re-probes every 15 seconds while open. Loopback only; no new hosts.
-            - Models page: model search, a live, local-only filter over the installed list and the recommended catalog by name, tag, or description.
-            - Text Cleaner: docx to LaTeX conversion, "Convert to LaTeX (.tex)" maps Title/Heading styles, bulleted lists, bold/italic runs, and tables into a compilable article with full LaTeX escaping; unmapped constructs are reported in a warnings card. Deterministic and fully local: no network, no LLM.
-            - Truthful-claims pass (r2) still in force: README, SECURITY, USER_GUIDE and USER_MANUAL state the network surface exactly; docs/NETWORK_SURFACE.json is the machine-readable source enforced by CI.
-            - Citation integrity (r2) still in force: src/lib/references.json is the single source of references, enforced by a test; Writing Provenance exports keep style_analysis.json opt-in.
-            - CI: cargo test (blocking), clippy -D warnings, the Rust-vs-JS verifier cross-check fixture, the network-surface test, the references test, the new check-svelte-mount startup gate, cargo audit, npm audit, and a CycloneDX SBOM.
+            - New feature: the Language Check tab. Offline spelling, grammar, and style checking with proposed corrections, powered by the embedded harper engine (Apache 2.0, pinned to an exact version). Paste or import text (.txt, .md, .tex, .docx), pick an English dialect (American, British, Canadian, Australian, Indian), review category-colored underlines, and apply or dismiss corrections with one click. Personal dictionary, per-rule settings, apply-all per category, and .txt export included. Your text is analyzed in memory on your machine and never leaves it; the network-surface test proves no new hosts.
+            - Language Check is deterministic but not complete, and the app says so plainly: a rule based checker can miss errors and can flag correct academic wording, so ignore, dictionary, and rule toggles are one click away. English only in this release.
+            - Release pipeline: CHECKSUMS.txt refresh and minisign signing moved to a dedicated final job that waits for all four build legs, closing the r4 race that could publish a checksum file missing the slower legs' assets.
+            - r4 highlights carried forward: the Svelte 5 `mount()` startup fix with its CI regression gate, the unified inline SVG icon set, the shared page header, and the refined light and dark themes.
 
             ## Install
 
@@ -185,7 +178,26 @@ jobs:
             -H "Content-Type: application/pdf" \
             --data-binary @ScholarScribe-User-Guide.pdf \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=ScholarScribe-User-Guide.pdf"
-          # Also refresh CHECKSUMS.txt to include the PDF.
+          # CHECKSUMS.txt is NOT refreshed here. The refresh used to run in this
+          # leg and could finish before the Windows leg uploaded its installers,
+          # producing an incomplete checksum file (observed on r4 and repaired
+          # manually). It now runs in the dedicated checksums job below, which
+          # waits for every build leg.
+
+  # Final job: runs only after ALL build legs succeed, so every asset (all
+  # platform installers plus the User Guide PDF) exists before CHECKSUMS.txt
+  # is computed. This closes the r4 race where faster legs produced a
+  # CHECKSUMS.txt missing the slower legs' assets.
+  checksums:
+    needs: build
+    runs-on: ubuntu-22.04
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      TAG_OVERRIDE: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - name: Refresh CHECKSUMS.txt from all published assets
+        run: |
           python3 - <<'PYEOF'
           import hashlib, json, os, urllib.request, urllib.error, sys
           TOKEN = os.environ['GITHUB_TOKEN']
@@ -234,17 +246,15 @@ jobs:
           except urllib.error.HTTPError as e:
               print(f'CHECKSUMS upload failed: {e.read().decode()[:300]}', file=sys.stderr)
           PYEOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          TAG_OVERRIDE: ${{ inputs.tag || github.ref_name }}
 
       # T1.7: sign CHECKSUMS.txt with minisign when the maintainer has
       # configured the MINISIGN_SECRET_KEY (and optionally MINISIGN_PASSWORD)
       # secrets. With no secret configured this step skips with a visible
       # notice instead of failing the release (N6: skip with a visible notice).
+      - name: Install Rust (for minisign)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Sign CHECKSUMS.txt (minisign, only if signing secrets exist)
-        if: matrix.platform == 'ubuntu-22.04'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
