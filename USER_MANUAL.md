@@ -17,8 +17,9 @@ This manual walks you through installing ScholarScribe, downloading a model, and
 7. [Module: Disclosure Assistant](#7-module-disclosure-assistant)
 8. [Module: Detector Literacy](#8-module-detector-literacy)
 9. [Module: Writing Provenance](#8b-module-writing-provenance-v210--opt-in)
-10. [Troubleshooting](#9-troubleshooting)
-11. [Privacy audit](#10-privacy-audit)
+10. [Module: Language Check](#8c-module-language-check-v221-r5)
+11. [Troubleshooting](#9-troubleshooting)
+12. [Privacy audit](#10-privacy-audit)
 
 ---
 
@@ -192,6 +193,14 @@ If your institution, journal, or instructor asks for evidence of your writing pr
 In short: ScholarScribe does not monitor students or researchers. It lets *them* package the revision evidence their own editor already recorded, on their own machine, and share it only when they choose to. That is why the feature is framed throughout as **evidence, not verdict**.
 
 ---
+
+## 8c. Module: Language Check (v2.2.1 r5)
+
+Language Check is an offline proofreader: it flags spelling, grammar, and style issues in your draft and proposes concrete corrections you accept or dismiss with one click. It is the same job Grammarly does, with the opposite trust model: the checking engine (harper, an open source, Apache 2.0 library) is embedded inside the ScholarScribe process, so your text is analyzed in memory on your machine and never sent anywhere. No account, no upload, no new network hosts.
+
+**Workflow.** Paste text or import a `.txt`, `.md`, `.tex`, or `.docx` file, pick an English dialect (American, British, Canadian, Australian, or Indian; your choice is remembered), and click **Check language**. The preview underlines every flagged span in its category color (spelling, grammar, or style); clicking an underline jumps to the matching card. Each card shows the problem, the sentence context, the rule that fired, and the proposed correction. Apply a correction and the text updates in place, then the page re-checks automatically. You can also apply all corrections in a category at once, ignore an issue for the session, add a flagged word to your personal dictionary so it stops being flagged, or turn a specific rule off. The corrected text can be copied or saved as `.txt`.
+
+**Honest limits.** A rule based checker is deterministic but not complete: it will not catch every error a large commercial service catches, and it can flag correct academic wording. English only in this release. Your personal dictionary persists to disk only if you have opted in to persistence (Saved Work tab); otherwise it lasts for the session. Dialect and rule preferences are stored like the theme preference. Nothing you paste is ever written to disk by the checker itself.
 
 ## 9. Troubleshooting
 

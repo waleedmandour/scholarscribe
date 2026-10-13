@@ -28,7 +28,7 @@ Open the **Models** tab. The top card shows your CPU and RAM, and the card direc
 
 Click **Download** and wait 2-15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…**: ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
 
-## 3. The 20 tabs at a glance
+## 3. The 21 tabs at a glance
 
 The sidebar is organized into 7 workflow phases that follow the order you'd typically use while writing a manuscript:
 
@@ -43,22 +43,23 @@ The sidebar is organized into 7 workflow phases that follow the order you'd typi
 | # | Tab | What it does |
 |---|---|---|
 | 2 | **Text Cleaner** | Fix 24 PDF/OCR/web artifacts in `.txt`, `.md`, or `.docx` |
-| 3 | **Citations** | Validate in-text citations against your `.bib` file |
+| 3 | **Language Check** | Offline spelling, grammar, and style checks with one click corrections (English, five dialects) |
+| 4 | **Citations** | Validate in-text citations against your `.bib` file |
 
 ### Understand the draft
 
 | # | Tab | What it does |
 |---|---|---|
-| 4 | **Stats** | Word count, readability, journal-target comparison |
-| 5 | **Structure** | Heading tree + missing-section suggestions |
+| 5 | **Stats** | Word count, readability, journal-target comparison |
+| 6 | **Structure** | Heading tree + missing-section suggestions |
 
 ### AI writing help
 
 | # | Tab | What it does |
 |---|---|---|
-| 6 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
-| 7 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
-| 8 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
+| 7 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
+| 8 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
+| 9 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
 
 ### Authenticity and style
 
@@ -66,20 +67,20 @@ Detector Literacy appears before Risk Profile, so the mechanism is explained bef
 
 | # | Tab | What it does |
 |---|---|---|
-| 9 | **Detector Literacy** | How AI detectors work, and where they fail |
-| 10 | **Risk Profile** | Does your draft share surface features with AI text? |
-| 11 | **Style Analysis** | Compare a draft to your own prior writing |
-| 12 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
-| 13 | **Voice Check** | Spot within-document stylistic shifts |
+| 10 | **Detector Literacy** | How AI detectors work, and where they fail |
+| 11 | **Risk Profile** | Does your draft share surface features with AI text? |
+| 12 | **Style Analysis** | Compare a draft to your own prior writing |
+| 13 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
+| 14 | **Voice Check** | Spot within-document stylistic shifts |
 
 ### Evidence and compliance
 
 | # | Tab | What it does |
 |---|---|---|
-| 14 | **Journal** | Auto-saved timestamped snapshots of your draft |
-| 15 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
-| 16 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
-| 17 | **Disclosure** | Generate venue-compliant AI-use statements |
+| 15 | **Journal** | Auto-saved timestamped snapshots of your draft |
+| 16 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
+| 17 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
+| 18 | **Disclosure** | Generate venue-compliant AI-use statements |
 
 ### Privacy and app
 
@@ -87,9 +88,9 @@ The sidebar footer also holds the **A-/A/A+ font-scale control** (0.9, 1.0, 1.15
 
 | # | Tab | What it does |
 |---|---|---|
-| 18 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
-| 19 | **Saved Work** | Opt-in local JSON persistence (off by default) |
-| 20 | **About** | Version, environment, credits |
+| 19 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
+| 20 | **Saved Work** | Opt-in local JSON persistence (off by default) |
+| 21 | **About** | Version, environment, credits |
 
 ## 4. Common workflows
 

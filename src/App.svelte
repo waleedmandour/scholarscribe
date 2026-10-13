@@ -4,6 +4,7 @@
   import type { IconName } from "./lib/icons";
   import Models from "./components/Models.svelte";
   import AITextCleaner from "./components/AITextCleaner.svelte";
+  import LanguageCheck from "./components/LanguageCheck.svelte";
   import CitationManager from "./components/CitationManager.svelte";
   import DocumentStats from "./components/DocumentStats.svelte";
   import StructureAnalyzer from "./components/StructureAnalyzer.svelte";
@@ -26,7 +27,7 @@
   import { api } from "./lib/api";
   import { openTour } from "./lib/onboarding";
 
-  type Tab = "models" | "cleaner" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "language" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -88,8 +89,11 @@
     // users look, right after the Models setup page)
     { id: "models", label: "Models", icon: "cube", group: "Get started" },
     { id: "about", label: "About", icon: "info", group: "Get started" },
-    // Prepare the draft
+    // Prepare the draft. Language Check sits directly after Text Cleaner so
+    // the natural order is: clean the text, check its language, then manage
+    // citations.
     { id: "cleaner", label: "Text Cleaner", icon: "eraser", group: "Prepare the draft" },
+    { id: "language", label: "Language Check", icon: "spellcheck", group: "Prepare the draft" },
     { id: "citations", label: "Citations", icon: "quote", group: "Prepare the draft" },
     // Understand the draft
     { id: "stats", label: "Stats", icon: "chart", group: "Understand the draft" },
@@ -212,7 +216,7 @@
         {/if}
       </div>
       <div class="dim" style="margin-top: 10px;">
-        v2.2.1 r4 · MIT · local-only
+        v2.2.1 r5 · MIT · local-only
       </div>
       <button
         class="walk-through-btn"
@@ -268,6 +272,8 @@
       <Models {ollamaOk} on:changed={refreshStatus} />
     {:else if active === "cleaner"}
       <AITextCleaner />
+    {:else if active === "language"}
+      <LanguageCheck />
     {:else if active === "citations"}
       <CitationManager />
     {:else if active === "stats"}

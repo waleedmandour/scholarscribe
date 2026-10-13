@@ -3,17 +3,18 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.1 r4 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r4_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
+[![Status: v2.2.1 r5 (pre-release)](https://img.shields.io/badge/Status-v2.2.1_r5_pre--release-orange.svg)](https://github.com/waleedmandour/scholarscribe/releases)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 20 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 21 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)*, turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts, never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner, 24 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 24.
+- **Check spelling, grammar, and style offline** *(new in v2.2.1 r5)*, the Language Check tab flags issues in your draft and proposes one click corrections, powered by the embedded harper engine. The Grammarly job with the opposite trust model: your text is analyzed in memory on your machine, never uploaded. Five English dialects, a personal dictionary, and per-rule settings.
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file, lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
@@ -90,11 +91,11 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r4 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r4 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r4 |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r4 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r4 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 r5 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 r5 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 r5 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 r5 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 r5 |
 
 Install with your platform's package manager:
 
@@ -131,7 +132,7 @@ If you're on a fresh Windows machine, `scripts/build-windows.ps1` will check for
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 20 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 21 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
@@ -195,6 +196,12 @@ You can also:
 
 1. **Extract & clean text**, extracts text and runs all enabled transformations. Loses formatting but applies every cleaner including cross-paragraph ones.
 2. **Clean & save as .docx (preserves format)**, modifies each `<w:t>` text run in place. Preserves all tables, images, hyperlinks, headers/footers, footnotes/endnotes, styles, theme, and track changes. Saves to a new `.docx` (default name `<original>-cleaned.docx`). Cross-paragraph operations (join broken lines, fix broken citations, remove page numbers) are skipped because they'd require restructuring the document.
+
+### Language Check tab
+
+**Offline proofreading with proposed corrections.** Paste text or import a `.txt`, `.md`, `.tex`, or `.docx` file, choose an English dialect (American, British, Canadian, Australian, Indian), and run the check. The engine is [harper](https://github.com/Automattic/harper) (Apache 2.0), embedded in the Rust backend and pinned to an exact version. Issues are grouped into Spelling, Grammar, and Style tabs with live counts; each card shows the message, the sentence context, the rule, and typed suggestions (replace, insert, remove). Corrections apply from the server side so offsets never drift, and the page re-checks automatically after each apply. Extras: a personal dictionary for names and technical terms, per rule on/off toggles with curated defaults, apply-all per category, and copy or `.txt` export of the corrected text.
+
+Checking runs in the app process: no helper program, no local socket, no new network hosts (enforced by the network-surface CI test), and nothing is written to disk unless you save it yourself. Honest limitation, stated in the app too: a rule based checker is deterministic but not complete; it can miss errors and flag correct academic wording, so ignore and dictionary tools are one click away. English only in this release.
 
 ### Citation Manager tab
 
@@ -473,7 +480,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.1 r4 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.1 r5 (pre-release), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 

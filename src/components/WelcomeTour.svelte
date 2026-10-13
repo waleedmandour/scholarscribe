@@ -5,7 +5,7 @@
   import type { IconName } from "../lib/icons";
 
   type TabId =
-    | "models" | "cleaner" | "citations" | "stats" | "structure"
+    | "models" | "cleaner" | "language" | "citations" | "stats" | "structure"
     | "abstract" | "risk" | "consistency" | "journal" | "appeal"
     | "fingerprint" | "coach" | "style" | "provenance" | "chat"
     | "disclosure" | "literacy" | "audit" | "saved" | "about";
@@ -29,7 +29,7 @@
       icon: "shield",
     },
     {
-      title: "20 tools at your service",
+      title: "21 tools at your service",
       icon: "layers",
     },
     {
@@ -49,6 +49,7 @@
       category: "Writing",
       items: [
         { id: "cleaner", name: "Text Cleaner", desc: "Fix 24 PDF/OCR/web artifacts" },
+        { id: "language", name: "Language Check", desc: "Offline spelling, grammar, style fixes" },
         { id: "coach",   name: "Writing Coach", desc: "Local-LLM paragraph coaching" },
         { id: "chat",    name: "Chat",          desc: "Local-only chat with guardrails" },
         { id: "abstract",name: "Abstract",      desc: "Generate a structured abstract" },
@@ -266,7 +267,7 @@
           <div class="tour-icon-big"><Icon name={steps[4].icon} size={30} /></div>
           <h2 id="tour-title" class="tour-title">{steps[4].title}</h2>
           <p class="tour-text" style="margin-bottom: 12px;">
-            The sidebar organizes 20 tools into 7 workflow phases. <strong>Click any cell
+            The sidebar organizes 21 tools into 7 workflow phases. <strong>Click any cell
             below to jump straight to that tab.</strong>
           </p>
           <div class="tour-grid">

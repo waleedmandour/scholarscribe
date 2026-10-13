@@ -19,6 +19,7 @@ mod docx_to_latex;
 mod google_docs;
 mod google_docs_commands;
 mod google_docs_net;
+mod language_check;
 mod ollama;
 mod persistence;
 mod plain_ref_parser;
@@ -47,6 +48,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(ollama::OllamaState::default())
         .manage(audit::AuditLog::default())
+        .manage(language_check::LanguageCheckState::default())
         .setup(|app| {
             log::info!(
                 "ScholarScribe v{} starting up. All processing is local.",
@@ -78,6 +80,15 @@ pub fn run() {
             commands::strict_clean_options,
             commands::clean_docx_file,
             commands::clean_docx_preserve_format,
+            language_check::language_check_run,
+            language_check::language_check_apply,
+            language_check::language_check_dictionary_list,
+            language_check::language_check_dictionary_add,
+            language_check::language_check_dictionary_remove,
+            language_check::language_check_settings_get,
+            language_check::language_check_settings_set,
+            language_check::language_check_import_file,
+            language_check::language_check_export_txt,
             commands::validate_citations,
             commands::convert_plain_to_bib,
             commands::validate_citations_inline,

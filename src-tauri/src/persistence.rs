@@ -12,6 +12,7 @@
 //! - The user can view, delete, or "open in file explorer" any saved data from
 //!   the Saved Work tab in the UI.
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -36,8 +37,23 @@ pub struct Settings {
     pub provenance_enabled: bool,
     /// Last-used theme: "light" | "dark" | "auto". Default: "auto".
     pub theme: String,
+    /// Language Check (v2.2.1 r5): last-used dialect name. One of the
+    /// supported harper dialect strings, e.g. "American".
+    #[serde(default = "default_language_check_dialect")]
+    pub language_check_dialect: String,
+    /// Language Check (v2.2.1 r5): per-rule overrides. Some(true/false) forces
+    /// a rule on or off, None falls back to the curated default. Preferences
+    /// like this persist unconditionally, mirroring how `theme` is stored;
+    /// the personal dictionary (user content) is only written to disk when
+    /// `persistence_enabled` is on.
+    #[serde(default)]
+    pub language_check_rules: BTreeMap<String, Option<bool>>,
     /// App version that wrote this settings file. Used for migrations.
     pub version: String,
+}
+
+fn default_language_check_dialect() -> String {
+    "American".to_string()
 }
 
 impl Default for Settings {
@@ -46,6 +62,8 @@ impl Default for Settings {
             persistence_enabled: false,
             provenance_enabled: false,
             theme: "auto".into(),
+            language_check_dialect: default_language_check_dialect(),
+            language_check_rules: BTreeMap::new(),
             version: env!("CARGO_PKG_VERSION").into(),
         }
     }
@@ -94,6 +112,17 @@ fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 fn drafts_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(data_dir(app)?.join(DRAFTS_DIR_NAME))
+}
+
+/// Path for the Language Check personal dictionary file (v2.2.1 r5).
+/// Returns None when persistence is disabled: the dictionary is user content,
+/// so it is only written to disk after the user opted in to persistence. The
+/// in-session dictionary keeps working either way (memory only).
+pub(crate) fn language_check_dictionary_path(app: &AppHandle) -> Result<Option<PathBuf>, String> {
+    if !settings_get(app.clone())?.persistence_enabled {
+        return Ok(None);
+    }
+    Ok(Some(data_dir(app)?.join("language-check-dictionary.json")))
 }
 
 fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {

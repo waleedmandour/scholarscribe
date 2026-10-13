@@ -228,6 +228,72 @@ export interface Settings {
   version: string;
 }
 
+// v2.2.1 r5: Language Check types. The engine is harper-core, embedded in
+// the Rust backend; spans are character offsets into the checked text.
+
+export type LcCategory = "spelling" | "grammar" | "style";
+
+export interface LcSuggestion {
+  kind: "replace_with" | "insert_after" | "remove";
+  text?: string;
+}
+
+export interface LcIssue {
+  id: number;
+  category: LcCategory;
+  lint_kind: string;
+  rule_id: string;
+  span_start: number;
+  span_end: number;
+  problem_text: string;
+  message: string;
+  description: string | null;
+  suggestions: LcSuggestion[];
+  priority: number;
+}
+
+export interface LcCounts {
+  spelling: number;
+  grammar: number;
+  style: number;
+  total: number;
+}
+
+export interface LcCheckResult {
+  issues: LcIssue[];
+  counts: LcCounts;
+  text_length: number;
+}
+
+export interface LcEdit {
+  span_start: number;
+  span_end: number;
+  suggestion: LcSuggestion;
+}
+
+export interface LcApplyResult {
+  corrected_text: string;
+  edits_applied: number;
+}
+
+export interface LcDictionary {
+  words: string[];
+  persisted: boolean;
+}
+
+export interface LcSettings {
+  dialect: string;
+  supported_dialects: string[];
+  rules: Record<string, boolean | null>;
+  overrides: number;
+  dictionary_persisted: boolean;
+}
+
+export interface LcImportedText {
+  source_path: string;
+  text: string;
+}
+
 export interface Draft {
   id: string;
   title: string;
@@ -623,6 +689,29 @@ export const api = {
       includeStyleAnalysis: includeStyleAnalysis ?? false,
       baselineText: baselineText ?? null,
     }),
+
+  // v2.2.1 r5: Language Check. Offline engine (harper-core) embedded in the
+  // Rust process. No network, no new hosts, nothing leaves the machine.
+  languageCheckRun: (text: string, dialect: string) =>
+    invoke<LcCheckResult>("language_check_run", { text, dialect }),
+  languageCheckApply: (text: string, edits: LcEdit[]) =>
+    invoke<LcApplyResult>("language_check_apply", { text, edits }),
+  languageCheckDictionaryList: () =>
+    invoke<LcDictionary>("language_check_dictionary_list"),
+  languageCheckDictionaryAdd: (word: string) =>
+    invoke<LcDictionary>("language_check_dictionary_add", { word }),
+  languageCheckDictionaryRemove: (word: string) =>
+    invoke<LcDictionary>("language_check_dictionary_remove", { word }),
+  languageCheckSettingsGet: () =>
+    invoke<LcSettings>("language_check_settings_get"),
+  languageCheckSettingsSet: (dialect: string | null, rules: Record<string, boolean | null> | null) =>
+    invoke<LcSettings>("language_check_settings_set", {
+      settings: { dialect, rules },
+    }),
+  languageCheckImportFile: (path: string) =>
+    invoke<LcImportedText>("language_check_import_file", { path }),
+  languageCheckExportTxt: (path: string, text: string) =>
+    invoke<string>("language_check_export_txt", { path, text }),
 
 };
 
