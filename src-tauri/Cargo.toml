@@ -30,7 +30,7 @@ env_logger = "0.11"
 uuid = { version = "1", features = ["v4"] }
 regex = "1"
 once_cell = "1"
-sysinfo = "0.32"
+sysinfo = "0.36"
 url = "2"
 # Only deflate is needed: ScholarScribe reads and writes OOXML (.docx) zips,
 # which are Stored or Deflated (Word never writes other methods). Default
