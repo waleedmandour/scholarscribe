@@ -41,7 +41,7 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 # Writing Provenance (v2.1.0), hash chain + Ed25519 signing + OOXML revisions
 sha2 = "0.10"
 ed25519-dalek = { version = "2", features = ["rand_core"] }
-quick-xml = "0.31"
+quick-xml = "0.38"
 # Language Check (v2.2.1 r5): offline, privacy-first grammar, spelling and
 # style lints. Pinned to an exact version on purpose: upgrades are deliberate
 # events reviewed against the upstream changelog (see the feature plan).
