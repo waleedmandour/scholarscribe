@@ -491,8 +491,11 @@
     </ul>
     <p class="muted" style="font-size: var(--font-sm); margin-top: 10px;">
       The conversion is deterministic and runs entirely on this device: no network calls, no LLM.
-      Images, equations, footnotes, and text boxes are not converted; compile the output with
-      pdflatex or xelatex and check the result before submission.
+      Images, equations, and text boxes are not converted; footnote and endnote paragraphs
+      (common in Chicago notes-bibliography and Vancouver-style manuscripts) are extracted
+      from word/footnotes.xml and word/endnotes.xml and appended under
+      <code>\section*&#123;Footnotes&#125;</code> / <code>\section*&#123;Endnotes&#125;</code> headings.
+      Compile the output with pdflatex or xelatex and check the result before submission.
     </p>
   </div>
 
