@@ -125,7 +125,12 @@
     try {
       manuscriptResult = await api.validateDocxManuscript(manuscriptPath, refStyle);
       report = manuscriptResult.validation;
-      const parts = [`Extracted ${manuscriptResult.entry_count} references from "${manuscriptResult.references_heading || "(no heading matched)}"`];
+      // Use single quotes for the inner fallback string so the template
+      // literal's ${...} interpolation doesn't confuse svelte-check
+      // (nested double quotes inside ${} make the parser think the
+      // literal text terminated early).
+      const headingLabel = manuscriptResult.references_heading || '(no heading matched)';
+      const parts = [`Extracted ${manuscriptResult.entry_count} references from "${headingLabel}"`];
       if (manuscriptResult.parse_warnings.length > 0) {
         parts.push(`${manuscriptResult.parse_warnings.length} parse warnings`);
       }
@@ -275,7 +280,10 @@
     lines.push(`Generated: ${new Date().toISOString()}`);
     if (refMode === "manuscript" && manuscriptResult) {
       lines.push(`Source manuscript: \`${manuscriptResult.source_path}\``);
-      lines.push(`References heading matched: "${manuscriptResult.references_heading || "(none)"}"`);
+      // Single-quote fallback for the heading (avoids nested-double-quote
+      // parsing issue inside ${...}).
+      const headingLabel = manuscriptResult.references_heading || '(none)';
+      lines.push(`References heading matched: "${headingLabel}"`);
       lines.push(`References extracted: ${manuscriptResult.entry_count}`);
     } else if (refMode === "paste" && convertResult) {
       lines.push(`Source: pasted plain-text references (${convertResult.entry_count} entries)`);
