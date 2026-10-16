@@ -1018,6 +1018,142 @@ pub async fn validate_citations_inline(
     Ok(result)
 }
 
+/// Args for the `validate_docx_manuscript` command (v2.2.1 r7). The
+/// user uploads their full manuscript (.docx) and the app extracts both
+/// the body text (for in-text citation scanning) and the references
+/// section (for BibTeX parsing and validation).
+#[derive(Debug, Deserialize)]
+pub struct ValidateDocxManuscriptArgs {
+    /// Path to the manuscript .docx file.
+    pub path: String,
+    /// Style hint for parsing the references section (APA, MLA, Chicago,
+    /// Vancouver, AMA, IEEE, or Plain for auto-detect). Auto-detect
+    /// (Plain) is the default in the UI.
+    pub style: crate::plain_ref_parser::PlainRefStyle,
+}
+
+/// Combined report for the manuscript-validation flow (v2.2.1 r7).
+/// Bundles together everything the UI needs to display the extraction
+/// results and offer the Export button: the body text (for "show what
+/// was scanned"), the raw references text (for "show what was
+/// extracted"), the parsed BibTeX (for download/copy), per-entry parse
+/// warnings, and the citation validation report.
+#[derive(Debug, serde::Serialize)]
+pub struct ManuscriptReport {
+    /// Source .docx file path.
+    pub source_path: String,
+    /// The manuscript body text (everything before the References
+    /// section). The in-text citation scanner was run against this.
+    pub body_text: String,
+    /// The raw text of the References / Bibliography / Works Cited
+    /// section as extracted from the .docx. The plain-text BibTeX
+    /// parser consumed this.
+    pub references_text: String,
+    /// The heading text that was matched (e.g., "References"). Empty
+    /// when no references-section heading was detected.
+    pub references_heading: String,
+    /// True when the extractor successfully split the body from the
+    /// references section. False when no heading was found — the
+    /// body_text contains the whole document and references_text is
+    /// empty. The UI should warn the user.
+    pub split_succeeded: bool,
+    /// The parsed BibTeX content, ready for download or copy.
+    pub bibtex: String,
+    /// Number of references parsed from the references section.
+    pub entry_count: usize,
+    /// Per-entry parse warnings (e.g., "could not extract year for
+    /// entry 3"). Empty when parsing is clean.
+    pub parse_warnings: Vec<String>,
+    /// The parsed BibTeX entries. Used by the UI for the
+    /// per-reference "Copy BibTeX" buttons.
+    pub entries: Vec<crate::citation_manager::BibEntry>,
+    /// The citation validation report (undefined citations, unused
+    /// references, citation counts per reference). Run by feeding the
+    /// body_text to `citation_manager::validate` along with the
+    /// parsed BibTeX.
+    pub validation: crate::citation_manager::CitationReport,
+}
+
+/// Validate a .docx manuscript end-to-end (v2.2.1 r7): extract the
+/// references section, parse it to BibTeX, then run the citation
+/// validator against the body. The result bundles everything the UI
+/// needs to display the audit and offer the Export button.
+#[tauri::command]
+pub async fn validate_docx_manuscript(
+    args: ValidateDocxManuscriptArgs,
+    audit: State<'_, audit::AuditLog>,
+) -> Result<ManuscriptReport, String> {
+    use crate::{citation_manager, manuscript_extractor, plain_ref_parser};
+
+    let path = PathBuf::from(&args.path);
+    if !path.exists() {
+        return Err(format!("Manuscript file not found: {}", args.path));
+    }
+    let in_ext = path
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
+    if in_ext != "docx" {
+        return Err(format!(
+            "Expected manuscript .docx, got .{}",
+            in_ext
+        ));
+    }
+
+    audit.record(
+        "file_read",
+        &args.path,
+        "manuscript references extraction + citation validation",
+        0,
+        0,
+    );
+
+    let path_for_task = path.clone();
+    let style = args.style;
+    let result = tokio::task::spawn_blocking(move || -> Result<ManuscriptReport, String> {
+        // Step 1: extract body text + references section from the .docx.
+        let extraction = manuscript_extractor::extract_manuscript_references(&path_for_task)?;
+
+        // Step 2: parse the references section to BibTeX using the
+        // user-selected style hint. When the style is Plain (auto-detect),
+        // the parser sniffs each reference's signature and dispatches to
+        // the right per-style parser (APA, MLA, Chicago, Vancouver, AMA,
+        // IEEE).
+        let convert_result = plain_ref_parser::convert_plain_to_bib(
+            &extraction.references_text,
+            style,
+        );
+
+        // Step 3: validate the body's in-text citations against the
+        // parsed BibTeX. This is the existing `citation_manager::validate`
+        // function; we feed it the body text (NOT the full manuscript,
+        // which would include the references section and create false
+        // "unused references") and the parsed BibTeX content.
+        let mut validation = citation_manager::validate(
+            &extraction.body_text,
+            &convert_result.bibtex,
+        );
+        validation.draft_path = Some(extraction.source_path.clone());
+        validation.bib_path = None; // BibTeX came from inline parsing, not a .bib file.
+
+        Ok(ManuscriptReport {
+            source_path: extraction.source_path,
+            body_text: extraction.body_text,
+            references_text: extraction.references_text,
+            references_heading: extraction.references_heading,
+            split_succeeded: extraction.split_succeeded,
+            bibtex: convert_result.bibtex,
+            entry_count: convert_result.entry_count,
+            parse_warnings: convert_result.warnings,
+            entries: convert_result.entries,
+            validation,
+        })
+    })
+    .await
+    .map_err(|e| format!("manuscript validation task failed: {}", e))??;
+    Ok(result)
+}
+
 #[tauri::command]
 pub async fn document_stats(text: String) -> Result<crate::document_stats::DocStats, String> {
     let result = tokio::task::spawn_blocking(move || crate::document_stats::analyze(&text))

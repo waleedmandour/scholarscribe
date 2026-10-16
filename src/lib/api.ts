@@ -397,8 +397,19 @@ export interface BibEntry {
 
 /** Supported plain-text reference styles for the paste-references mode
  * of the Citation Manager. The parser is heuristic and tolerates mixed
- * formats; the style hint helps disambiguate field boundaries. */
-export type PlainRefStyle = "apa" | "mla" | "chicago" | "vancouver" | "plain";
+ * formats; the style hint helps disambiguate field boundaries.
+ *
+ * v2.2.1 r7: added `ama` (American Medical Association) and `ieee`
+ * (Institute of Electrical and Electronics Engineers). Both have full
+ * style-specific heuristics in the Rust parser. */
+export type PlainRefStyle =
+  | "apa"
+  | "mla"
+  | "chicago"
+  | "vancouver"
+  | "ama"
+  | "ieee"
+  | "plain";
 
 /** Result of converting a plain-text reference list to BibTeX. */
 export interface ConvertPlainToBibResult {
@@ -431,6 +442,43 @@ export interface CitationReport {
   bib_parse_errors: string[];
   draft_path: string | null;
   bib_path: string | null;
+}
+
+/** v2.2.1 r7: Combined report from validating a .docx manuscript
+ * end-to-end. Bundles together everything the Citation Manager UI needs
+ * to display the audit results and offer the Export button. */
+export interface ManuscriptReport {
+  /** Source .docx file path. */
+  source_path: string;
+  /** The manuscript body text (everything before the References
+   * section). The in-text citation scanner was run against this. */
+  body_text: string;
+  /** The raw text of the References / Bibliography / Works Cited section
+   * as extracted from the .docx. The plain-text BibTeX parser consumed
+   * this. Useful for the "show raw extracted refs" UI affordance. */
+  references_text: string;
+  /** The heading text that was matched (e.g., "References"). Empty when
+   * no references-section heading was detected. */
+  references_heading: string;
+  /** True when the extractor successfully split the body from the
+   * references section. False when no heading was found — the body_text
+   * contains the whole document and references_text is empty. The UI
+   * should warn the user when this is false. */
+  split_succeeded: boolean;
+  /** The parsed BibTeX content, ready for download or copy. */
+  bibtex: string;
+  /** Number of references parsed from the references section. */
+  entry_count: number;
+  /** Per-entry parse warnings (e.g., "Entry 3: could not extract year").
+   * Empty when parsing is clean. */
+  parse_warnings: string[];
+  /** The parsed BibTeX entries. Used by the per-reference "Copy BibTeX"
+   * buttons in the citation-counts table. */
+  entries: BibEntry[];
+  /** The citation validation report (undefined citations, unused
+   * references, citation counts per reference). Run by feeding the
+   * body_text to the validator along with the parsed BibTeX. */
+  validation: CitationReport;
 }
 
 export interface JournalComparison {
@@ -579,6 +627,18 @@ export const api = {
   validateCitationsInline: (draftPath: string, bibContent: string) =>
     invoke<CitationReport>("validate_citations_inline", {
       args: { draft_path: draftPath, bib_content: bibContent },
+    }),
+  /** v2.2.1 r7: Validate a .docx manuscript end-to-end. Extracts the
+   * references section from the .docx, parses it to BibTeX using the
+   * given style hint (Plain = auto-detect, sniffs each reference's
+   * signature and dispatches to the right per-style parser including
+   * the new AMA and IEEE parsers), then runs the citation validator
+   * against the body. Returns a ManuscriptReport that bundles
+   * everything the UI needs for the audit display and the Export
+   * button (Download .bib, Copy BibTeX, Export Markdown report). */
+  validateDocxManuscript: (path: string, style: PlainRefStyle) =>
+    invoke<ManuscriptReport>("validate_docx_manuscript", {
+      args: { path, style },
     }),
   analyzeStructure: (path: string) =>
     invoke<StructureReport>("analyze_structure", { args: { path } }),
