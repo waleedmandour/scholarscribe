@@ -1026,10 +1026,14 @@ pub async fn validate_citations_inline(
 pub struct ValidateDocxManuscriptArgs {
     /// Path to the manuscript .docx file.
     pub path: String,
-    /// Style hint for parsing the references section (APA, MLA, Chicago,
-    /// Vancouver, AMA, IEEE, or Plain for auto-detect). Auto-detect
-    /// (Plain) is the default in the UI.
-    pub style: crate::plain_ref_parser::PlainRefStyle,
+    /// Style hint for parsing the references section. One of:
+    /// "apa", "mla", "chicago", "vancouver", "ama", "ieee", "plain"
+    /// (or "auto", an alias for "plain"). Converted to PlainRefStyle
+    /// via PlainRefStyle::from_str — we take a String here (not
+    /// PlainRefStyle directly) because PlainRefStyle only derives
+    /// Serialize, not Deserialize, matching the existing
+    /// ConvertPlainToBibArgs pattern.
+    pub style: String,
 }
 
 /// Combined report for the manuscript-validation flow (v2.2.1 r7).
@@ -1083,7 +1087,10 @@ pub async fn validate_docx_manuscript(
     args: ValidateDocxManuscriptArgs,
     audit: State<'_, audit::AuditLog>,
 ) -> Result<ManuscriptReport, String> {
-    use crate::{citation_manager, manuscript_extractor, plain_ref_parser};
+    use crate::{
+        citation_manager, manuscript_extractor, plain_ref_parser::PlainRefStyle,
+        plain_ref_parser,
+    };
 
     let path = PathBuf::from(&args.path);
     if !path.exists() {
@@ -1100,6 +1107,19 @@ pub async fn validate_docx_manuscript(
         ));
     }
 
+    // Convert the style string to PlainRefStyle. PlainRefStyle only
+    // derives Serialize, not Deserialize, so we take a String in the
+    // args (matching the existing ConvertPlainToBibArgs pattern) and
+    // convert here. Auto-detect ("plain" / "auto") sniffs each
+    // reference's signature and dispatches to the right per-style
+    // parser including the new AMA and IEEE parsers.
+    let style = PlainRefStyle::from_str(&args.style).ok_or_else(|| {
+        format!(
+            "Unknown style '{}'. Use apa, mla, chicago, vancouver, ama, ieee, or plain.",
+            args.style
+        )
+    })?;
+
     audit.record(
         "file_read",
         &args.path,
@@ -1109,7 +1129,6 @@ pub async fn validate_docx_manuscript(
     );
 
     let path_for_task = path.clone();
-    let style = args.style;
     let result = tokio::task::spawn_blocking(move || -> Result<ManuscriptReport, String> {
         // Step 1: extract body text + references section from the .docx.
         let extraction = manuscript_extractor::extract_manuscript_references(&path_for_task)?;
