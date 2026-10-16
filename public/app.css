@@ -151,11 +151,23 @@ button {
   color: var(--text);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  /* v2.2.1 r6: professional subtle elevation applied uniformly to every
+     button. Without this, the default .border + .bg-elev pairing reads
+     as flat against the page background, especially for non-primary
+     buttons that lacked any shadow at all. The two-layer composite
+     (a tight 1px contact shadow + a slightly wider 2px ambient)
+     matches the depth the .primary button already had, applied
+     consistently across all button variants. */
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 1px 1px rgba(16, 24, 40, 0.04);
   transition: background 0.14s ease, border 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
 }
 button:hover:not(:disabled) {
   background: var(--bg-elev-2);
   border-color: var(--text-dim);
+  /* v2.2.1 r6: lift on hover for interactive feedback. The transition
+     on box-shadow (defined above) makes the lift read as a soft motion
+     rather than a snap. */
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.16);
 }
 button:focus-visible,
 input:focus-visible + label,
@@ -166,12 +178,19 @@ input:focus-visible + label,
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  /* v2.2.1 r6: drop the shadow when disabled so the button reads as
+     inert and pressed-flat, not floating. */
+  box-shadow: none;
 }
 button.primary {
   background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+  /* v2.2.1 r6: .primary inherits the base button shadow for visual
+     consistency across all button variants. The previous hard-coded
+     0 1px 2px rgba(16, 24, 40, 0.12) was nearly identical in opacity
+     but applied only to .primary, leaving regular and .danger
+     buttons flat. Removed in favor of the inherited base shadow. */
 }
 button.primary:hover:not(:disabled) {
   background: var(--accent-hover);
@@ -180,6 +199,9 @@ button.primary:hover:not(:disabled) {
 button.danger {
   color: var(--danger);
   border-color: var(--danger);
+  /* v2.2.1 r6: .danger inherits the base button shadow too, so all
+     three variants (regular / .primary / .danger) share the same
+     tactile depth. */
 }
 button.danger:hover:not(:disabled) {
   background: var(--danger);
