@@ -20,6 +20,7 @@ mod google_docs;
 mod google_docs_commands;
 mod google_docs_net;
 mod language_check;
+mod manuscript_extractor;
 mod ollama;
 mod persistence;
 mod plain_ref_parser;
@@ -92,6 +93,7 @@ pub fn run() {
             commands::validate_citations,
             commands::convert_plain_to_bib,
             commands::validate_citations_inline,
+            commands::validate_docx_manuscript,
             commands::document_stats,
             commands::analyze_structure,
             commands::analyze_structure_text,

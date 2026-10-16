@@ -8,6 +8,196 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.1-r7] - 2026-10-17 (pre-release)
+
+Seventh pre-release revision of the v2.2.1 line. Per the project's
+versioning policy (docs/DECISIONS.md), the machine-readable version
+fields stay numeric `2.2.1` (Windows MSI constraint); the `r7` identity
+travels with the git tag `v2.2.1-r7` and the GitHub release name. The
+suffixed tag triggers the `tauri-action` release workflow in pre-release
+mode.
+
+### Added
+
+- **Manuscript-upload mode in the Citation Manager.** A third radio
+  option "Upload manuscript (.docx)" joins the existing "Load .bib
+  file" and "Paste references" modes. When the user picks a .docx
+  manuscript, the app extracts both the body text (for in-text
+  citation scanning) and the references section (for BibTeX parsing)
+  by identifying the "References" / "Bibliography" / "Works Cited" /
+  "Literature Cited" / "Reference List" / "List of references" heading
+  and splitting the text at that point. The parsed BibTeX is then
+  validated against the body using the existing
+  `citation_manager::validate` function. The user can review the
+  extracted references text (pre-parsing) in a collapsible block, the
+  parse warnings per entry, and the citation validation report. A
+  warning is shown when no references-section heading is detected (the
+  body and references were not split, so the validation may include
+  false "unused references"). The new module
+  `src-tauri/src/manuscript_extractor.rs` does the split; the new
+  Tauri command `validate_docx_manuscript` orchestrates the
+  end-to-end flow; the new `ManuscriptReport` type bundles everything
+  the UI needs for the audit display and the Export button.
+- **AMA and IEEE numeric reference styles.** Two new variants on the
+  `PlainRefStyle` enum (in `src-tauri/src/plain_ref_parser.rs`) with
+  full style-specific heuristics, not just labels:
+  - `Ama` (American Medical Association, used by JAMA and many medical
+    journals). Parses the `Year;Vol(Issue):Pages` signature at the end
+    of the reference, splits authors / title / journal on the AMA ". "
+    separator, and joins AMA's comma-separated author list with
+    BibTeX's ` and ` separator.
+  - `Ieee` (Institute of Electrical and Electronics Engineers, used by
+    all IEEE journals and conferences). Parses the bracketed `[N]`
+    prefix (already stripped by `split_references`), the quoted title
+    `"Title,"`, the labeled `vol.` / `no.` / `pp.` fields, and the
+    year at the end. Converts IEEE's initials-first author format
+    (`A. Author, B. Coauthor`) to BibTeX's last-name-first format
+    (`Author, A. and Coauthor, B.`) so the key generator extracts the
+    actual last name as the prefix, not an initial.
+  - The Plain (auto-detect) mode now sniffs each reference's signature
+    and dispatches to the right per-style parser — including AMA and
+    IEEE — so a mixed-format list still parses correctly. Sniffing:
+    if the reference has IEEE's labeled `vol./no./pp.` fields or a
+    quoted title, use IEEE; if it matches the `Year;Vol(Issue):Pages`
+    pattern, use AMA; otherwise use the generic heuristic.
+- **Export menu in the Citation Manager.** After validation, an
+  "Export options ▾" dropdown offers three actions:
+  - **Download .bib file** — saves the parsed BibTeX (from paste or
+    manuscript mode) to a `.bib` file the user can use with
+    LaTeX/BibTeX.
+  - **Copy BibTeX to clipboard** — same content, quick paste-into-
+    Overleaf.
+  - **Export validation report as Markdown** — generates a Markdown
+    file with the source, summary stats, undefined citations, unused
+    references, and per-reference citation counts. Suitable for
+    sharing with co-authors or attaching to a peer-review submission.
+  For `bib_file` mode, only the Markdown report option is offered
+  (the user already has a .bib file).
+- **Per-reference Copy BibTeX button.** Each row in the citation-counts
+  table now has a small "Copy" button that copies just that @entry's
+  BibTeX to the clipboard, mirroring the Rust
+  `entries_to_bibtex_string` function so the per-entry output matches
+  what the .bib download would contain for that single entry.
+- **Re-parse with style button.** When the user is in paste or
+  manuscript mode and auto-detect mangles a reference, they can pick a
+  different style from the dropdown and click "Re-parse with style" to
+  re-run the conversion without re-uploading the manuscript or
+  re-pasting the references. In manuscript mode this re-extracts and
+  re-validates; in paste mode it re-converts and re-validates against
+  the draft.
+
+### Changed
+
+- `AITextCleaner.svelte`'s PageHeader copy mentions the docx-to-LaTeX
+  footnotes extraction added in r6 — minor wording adjustment
+  (carried forward from r6).
+- Citation Manager's PageHeader copy now lists all three modes (Load
+  .bib, Paste references, Upload manuscript) and all seven styles
+  (APA, MLA, Chicago, Vancouver, AMA, IEEE, auto-detect).
+
+### Fixed
+
+- Carried forward from r6: the docx-to-LaTeX converter now extracts
+  footnotes and endnotes from `word/footnotes.xml` and
+  `word/endnotes.xml`, so references stored in footnote citations
+  (Chicago notes-bibliography, Vancouver with footnote citations) are
+  no longer silently dropped. See r6 release notes for the full
+  narrative.
+- Carried forward from r6: professional button shadows applied
+  uniformly to every button (base `button` selector + `.primary` +
+  `.danger`), and refined text alignment under page headings
+  (`max-width: 720px`, `line-height: 1.55`, `color: var(--text-muted)`,
+  `letter-spacing: 0.01em`, `text-align: left`).
+
+### Tests
+
+- Six new Rust tests in `src-tauri/src/plain_ref_parser.rs` covering
+  the AMA and IEEE parsers, the multi-initial author conversion, the
+  Plain auto-detect sniff dispatching, the AMA fallback path, and the
+  IEEE missing-quoted-title warning.
+- Four new Rust tests in `src-tauri/src/manuscript_extractor.rs`
+  covering the References / Bibliography / Works Cited / Literature
+  Cited / Reference List heading matches, trailing punctuation in the
+  heading, and the no-heading fallback path.
+
+## [2.2.1-r6] - 2026-10-17 (pre-release)
+
+Sixth pre-release revision of the v2.2.1 line. Per the project's
+versioning policy (docs/DECISIONS.md), the machine-readable version
+fields (package.json, tauri.conf.json, Cargo.toml, CITATION.cff) stay
+numeric `2.2.1` (Windows MSI constraint); the `r6` identity travels with
+the git tag `v2.2.1-r6` and the GitHub release name. The suffixed tag
+triggers the `tauri-action` release workflow in pre-release mode (per
+the convention a plain `vX.Y.Z` tag publishes a stable release, any
+suffix publishes a pre-release).
+
+### Fixed
+
+- **docx-to-LaTeX converter now extracts footnotes and endnotes.** A user
+  reported the converter was "only converting 5 references" of their
+  manuscript; an initial external review hypothesized a hardcoded `.take(5)`
+  cap that did not exist in the source. The actual root cause was more
+  subtle: `convert_docx_to_latex` only read `word/document.xml`, so any
+  reference stored in `word/footnotes.xml` (Chicago notes-bibliography,
+  Vancouver with footnote citations, any manuscript using Word's
+  "Insert Footnote" for citations) or `word/endnotes.xml` was silently
+  dropped, contradicting the README's "never silently dropped" promise.
+  If the user's body had 5 visible references and 25 lived in footnotes,
+  the output would contain exactly 5 — matching the reported symptom. The
+  fix reads all three OOXML parts with the same `parse_blocks` walker;
+  footnote and endnote paragraphs are appended under `\section*{Footnotes}`
+  and `\section*{Endnotes}` headings at the end of the body, and a per-part
+  warning is recorded so the user can verify the extraction against the
+  source document. The injected section headings are deliberately
+  unnumbered (`\section*` instead of `\section`) and are not counted in
+  `headings` so the existing UI counter still reflects source headings
+  only.
+
+### Added
+
+- Five new Rust regression tests in `src-tauri/src/docx_to_latex.rs`:
+  `converts_all_plain_paragraph_references` (10 plain-paragraph refs),
+  `converts_all_numbered_list_references` (12 numbered-list refs with
+  the realistic `<w:ilvl>` + `<w:numId>` children MS Word actually
+  emits), `extracts_footnote_references_not_just_document_xml` (5 body
+  + 15 footnote refs, asserts all 20 appear), `extracts_endnote_references`
+  (3 body + 8 endnote refs), and
+  `no_warnings_when_docx_has_no_footnotes_or_endnotes` (guards the
+  no-op path). The pre-existing four tests are unchanged.
+
+### Changed
+
+- **Professional button shadows across all pages.** The base `button`
+  rule in `public/app.css` previously had no `box-shadow` at all, so
+  non-primary buttons blended into the page background and were "not
+  quite visible to the user" (per the user's report). Only `.primary`
+  had a subtle `0 1px 2px rgba(16,24,40,0.12)` shadow, and `.danger`
+  had none, producing inconsistent tactile depth. This change applies a
+  uniform "subtle elevation" shadow to every button via the base
+  selector — a two-layer composite of a tight 1px contact shadow and
+  a slightly wider 2px ambient, both at low opacity. On hover the
+  shadow lifts to `0 2px 6px rgba(16,24,40,0.16)` for interactive
+  feedback (the existing `box-shadow` transition makes the lift read
+  as a soft motion). Disabled buttons drop the shadow entirely so they
+  read as inert. The previous hard-coded `.primary` box-shadow was
+  removed in favor of the inherited base shadow, so all three variants
+  (regular / .primary / .danger) now share the same depth.
+- **Refined text alignment under page headings.** `PageHeader.svelte`'s
+  `.lead` paragraph under each page's `<h1>` was a bare left-aligned
+  paragraph with no line-height or width guidance, so long descriptions
+  sprawled edge-to-edge and read as a wall of text. The `.lead` now uses
+  a refined left-align: `max-width: 720px` (45-80 character readability
+  band), `line-height: 1.55`, `color: var(--text-muted)` to
+  de-emphasize relative to the h1, and `letter-spacing: 0.01em` for a
+  quiet, academic feel. `text-align: left` is explicit so future theme
+  overrides don't accidentally inherit justify or center. Applied
+  consistently to every page that uses the `PageHeader` component, which
+  is all of them.
+- `AITextCleaner.svelte` result card copy: "footnotes... are not
+  converted" was no longer accurate after the docx-to-LaTeX fix;
+  replaced with a clear statement that footnote/endnote paragraphs are
+  extracted and appended under `Footnotes` / `Endnotes` section headings.
+
 ## [2.2.1] - 2026-10-13 (stable)
 
 Graduation of the v2.2.1 line from the r2 through r5 pre-releases to the
