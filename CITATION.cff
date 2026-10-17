@@ -25,8 +25,8 @@ keywords:
   - AI disclosure
 license: MIT
 repository-code: "https://github.com/waleedmandour/scholarscribe"
-version: 2.2.1
-date-released: "2026-09-29"
+version: 2.2.2
+date-released: "2026-10-17"
 preferred-citation:
   type: software
   title: "ScholarScribe: a privacy-first, local-LLM writing companion for researchers"
@@ -35,8 +35,8 @@ preferred-citation:
       given-names: Waleed
       email: "w.abumandour@squ.edu.om"
       affiliation: "Assistant Lecturer, Sultan Qaboos University"
-  version: 2.2.1
-  date-released: "2026-09-29"
+  version: 2.2.2
+  date-released: "2026-10-17"
   doi: 10.5281/zenodo.23324356
 identifiers:
   - description: "Versioned DOI for the v2.2.1 Zenodo record (the concept DOI for all versions is 10.5281/zenodo.20781043)"

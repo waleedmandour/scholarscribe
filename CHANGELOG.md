@@ -8,6 +8,102 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [2.2.2] - 2026-10-17 (stable)
+
+Graduation of the r6 + r7 pre-releases of the 2.2.1 line to the 2.2.2
+stable release. The machine-readable version fields (package.json,
+tauri.conf.json, Cargo.toml, CITATION.cff) are bumped to `2.2.2`; the
+plain tag `v2.2.2` (no `-rN` suffix) triggers the `tauri-action` release
+workflow in stable mode (prerelease=false), publishing the installers
+as the new latest release. The r6 and r7 pre-releases below describe
+everything shipped in this version.
+
+### Added (carried forward from r6 + r7)
+
+- **Manuscript-upload mode in the Citation Manager** *(r7)*: a third
+  radio option "Upload manuscript (.docx)" lets the user pick their
+  full manuscript; the new `manuscript_extractor` module identifies
+  the References / Bibliography / Works Cited / Literature Cited /
+  Reference List / List of references heading and splits the body from
+  the references section. The body is scanned for in-text citations;
+  the references section is parsed to BibTeX via `plain_ref_parser`;
+  both are validated via `citation_manager::validate`. The new Tauri
+  command `validate_docx_manuscript` orchestrates the flow; the new
+  `ManuscriptReport` type bundles everything the UI needs. The UI
+  shows the raw extracted references text in a collapsible block and
+  warns when no references-section heading is detected.
+- **AMA and IEEE numeric reference styles** *(r7)*: full
+  style-specific heuristics (not just labels). `parse_ama` extracts
+  the `Year;Vol(Issue):Pages` signature. `parse_ieee` extracts the
+  quoted title, labeled `vol./no./pp.` fields, and converts IEEE's
+  initials-first author format (`A. Author`) to BibTeX's
+  last-name-first format (`Author, A.`) so the key generator picks
+  up the actual last name. Plain (auto-detect) now sniffs each
+  reference's signature and dispatches to the right per-style
+  parser — so a mixed AMA + IEEE list still parses correctly.
+- **Export menu after validation** *(r7)*: a native `<details>`
+  dropdown offers Download `.bib` file, Copy BibTeX to clipboard, and
+  Export validation report as Markdown (undefined citations, unused
+  references, per-reference citation counts — suitable for sharing
+  with co-authors or attaching to a peer-review submission). For
+  `bib_file` mode, only the Markdown report option is offered.
+- **Per-reference Copy BibTeX button** *(r7)*: each row in the
+  citation-counts table has a small Copy button that copies just
+  that `@entry`'s BibTeX to the clipboard.
+- **Re-parse with style button** *(r7)*: re-run the conversion with
+  a different style without re-uploading the manuscript or
+  re-pasting the references.
+- 10 new Rust tests covering the AMA/IEEE parsers, the manuscript
+  extractor, the Plain sniff dispatching, the AMA fallback path, the
+  IEEE missing-quoted-title warning, the References / Bibliography /
+  Works Cited / Literature Cited heading matches, trailing
+  punctuation in the heading, and the no-heading fallback path.
+
+### Fixed (carried forward from r6)
+
+- **docx-to-LaTeX converter now extracts footnotes and endnotes.**
+  Previously `convert_docx_to_latex` only read `word/document.xml`,
+  so any reference stored in `word/footnotes.xml` (Chicago
+  notes-bibliography, Vancouver with footnote citations, any
+  manuscript using Word's "Insert Footnote" for citations) or
+  `word/endnotes.xml` was silently dropped, contradicting the
+  README's "never silently dropped" promise. The fix reads all
+  three OOXML parts with the same `parse_blocks` walker; footnote
+  and endnote paragraphs are appended under `\section*{Footnotes}`
+  and `\section*{Endnotes}` headings at the end of the body, and a
+  per-part warning is recorded. 5 new regression tests lock in the
+  property, including `extracts_footnote_references_not_just_document_xml`
+  (5 body + 15 footnote refs, asserts all 20 appear).
+
+### Changed (carried forward from r6)
+
+- **Professional button shadows across all pages**: the base `button`
+  rule in `public/app.css` now has a uniform "subtle elevation"
+  two-layer shadow applied to every button (regular, `.primary`,
+  `.danger`). On hover the shadow lifts to `0 2px 6px
+  rgba(16,24,40,0.16)` for interactive feedback. Disabled buttons
+  drop the shadow entirely. The previous hard-coded `.primary`
+  box-shadow was removed in favor of the inherited base shadow.
+- **Refined text alignment under page headings**:
+  `PageHeader.svelte`'s `.lead` paragraph now uses `max-width:
+  720px`, `line-height: 1.55`, `color: var(--text-muted)`,
+  `letter-spacing: 0.01em`, `text-align: left` (explicit). Applied
+  to every page that uses the `PageHeader` component.
+- `AITextCleaner.svelte`'s result card copy: "footnotes... are not
+  converted" was no longer accurate after the r6 docx-to-LaTeX fix;
+  replaced with a clear statement that footnote/endnote paragraphs
+  are extracted and appended under `Footnotes` / `Endnotes` section
+  headings.
+- README.md: status badge bumped to v2.2.2 (stable); install table
+  bumped to v2.2.2; install commands reference
+  `ScholarScribe_2.2.2_*` filenames; checksums example uses
+  `ScholarScribe_2.2.2_x64-setup.exe`; acknowledgments line
+  references v2.2.2; persistent identifier line references v2.2.2;
+  feature bullets for "Convert Word to LaTeX" and "Convert pasted
+  reference lists to BibTeX" expanded with the v2.2.2 changes
+  (footnote/endnote extraction, AMA + IEEE styles); new feature
+  bullet "Upload a full manuscript and extract its references" added.
+
 ## [2.2.1-r7] - 2026-10-17 (pre-release)
 
 Seventh pre-release revision of the v2.2.1 line. Per the project's

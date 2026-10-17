@@ -3,7 +3,7 @@
 > A privacy-first, local-LLM writing companion for researchers. Runs entirely on your device, no telemetry, no paid APIs, all inference local.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: v2.2.1 (stable)](https://img.shields.io/badge/Status-v2.2.1_stable-green.svg)](https://github.com/waleedmandour/scholarscribe/releases)
+[![Status: v2.2.2 (stable)](https://img.shields.io/badge/Status-v2.2.2_stable-green.svg)](https://github.com/waleedmandour/scholarscribe/releases)
 [![Platform: Cross-platform](https://img.shields.io/badge/Platform-Linux%20·%20Windows%20·%20macOS-blue.svg)]()
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -14,10 +14,10 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
 - **Clean messy text** with the AI Text Cleaner, 23 rule-based transformations (12 default + 11 strict) for PDF/web/OCR artifacts: broken hyphens, ligatures, mojibake, page numbers, broken citations, hidden chars, asterisks, markdown headings, ellipsis, bullets, BOM, non-breaking spaces, Unicode whitespace, and more. One-click "⚡ Strict clean" applies all 23.
-- **Convert Word to LaTeX** *(new in v2.2.1 r3)*, with a `.docx` loaded in the Text Cleaner, the "Convert to LaTeX (.tex)" action produces a compilable LaTeX article through a deterministic structural mapping: Title and Heading 1 to 6 styles become `\title`, `\section`, `\subsection`, `\subsubsection`, and `\paragraph`; bulleted paragraphs become `itemize` lists; bold and italic runs become `\textbf` and `\emph`; tables become `tabular` grids; special characters are LaTeX-escaped. Unknown styles and merged or nested table constructs are reported in a warnings card, never silently dropped. No LLM, no network: a pure, auditable local transformation.
-- **Convert pasted reference lists to BibTeX** *(new in v2.2.1 r4)*, paste references in your venue's style (APA 7th, MLA 9th, Chicago 17th, Vancouver, or plain with auto-detect) in the Citation Manager and ScholarScribe converts them to BibTeX, offers the `.bib` for download, and auto-validates the result against your draft. The heuristic parser tolerates mixed formats and flags entries where fields could not be extracted.
+- **Convert Word to LaTeX** *(improved in v2.2.2)*, with a `.docx` loaded in the Text Cleaner, the "Convert to LaTeX (.tex)" action produces a compilable LaTeX article through a deterministic structural mapping: Title and Heading 1 to 6 styles become `\title`, `\section`, `\subsection`, `\subsubsection`, and `\paragraph`; bulleted paragraphs become `itemize` lists; bold and italic runs become `\textbf` and `\emph`; tables become `tabular` grids; special characters are LaTeX-escaped. As of v2.2.2, the converter also extracts `word/footnotes.xml` and `word/endnotes.xml` so references stored in footnote citations (Chicago notes-bibliography, Vancouver with footnote citations, any Word "Insert Footnote" reference list) are no longer silently dropped — they appear under `\section*{Footnotes}` and `\section*{Endnotes}` headings at the end of the body, with a per-part warning in the result card. Unknown styles and merged or nested table constructs are reported in a warnings card, never silently dropped. No LLM, no network: a pure, auditable local transformation.
+- **Convert pasted reference lists to BibTeX** *(improved in v2.2.2)*, paste references in your venue's style (APA 7th, MLA 9th, Chicago 17th, Vancouver, **AMA**, **IEEE**, or plain with auto-detect) in the Citation Manager and ScholarScribe converts them to BibTeX, offers the `.bib` for download, and auto-validates the result against your draft. v2.2.2 adds full AMA (American Medical Association) and IEEE (Institute of Electrical and Electronics Engineers) numeric styles with style-specific heuristics, including IEEE's bracketed `[N]` prefix, quoted title, and labeled vol./no./pp. fields, and IEEE's initials-first author format automatically converted to BibTeX's last-name-first format. The Plain (auto-detect) mode now sniffs each reference's signature and dispatches to the right per-style parser, so a mixed-format list still parses correctly. The heuristic parser tolerates mixed formats and flags entries where fields could not be extracted.
 - **Check spelling, grammar, and style offline** *(new in v2.2.1 r5)*, the Language Check tab flags issues in your draft and proposes one click corrections, powered by the embedded harper engine. The Grammarly job with the opposite trust model: your text is analyzed in memory on your machine, never uploaded. Five English dialects, a personal dictionary, and per-rule settings.
-- **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
+- **Upload a full manuscript and extract its references** *(new in v2.2.2)*, in the Citation Manager, the third radio option "Upload manuscript (.docx)" lets you pick your full manuscript; the app identifies the References / Bibliography / Works Cited / Literature Cited / Reference List heading, splits the body from the references section, parses the references to BibTeX, and runs the citation validator against the body end-to-end. After validation, an "Export options ▾" dropdown offers Download `.bib`, Copy BibTeX to clipboard, and Export validation report as Markdown (undefined citations, unused references, per-reference citation counts — suitable for sharing with co-authors or attaching to a peer-review submission). Each row in the citation-counts table also has a per-reference Copy button to grab a single `@entry`'s BibTeX. A "Re-parse with style" button lets you re-run the conversion with a different style without re-uploading the manuscript.
 - **Validate citations** against your `.bib` file (or against a pasted reference list converted to BibTeX), lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
 - **Analyze document structure**, extract heading tree, get suggestions for missing sections (Introduction, Methods, Results, Discussion, Conclusion, etc.), spot short sections.
@@ -93,21 +93,21 @@ Grab the latest installer for your platform from the [Releases page](https://git
 
 | Platform | Installer | Status |
 |---|---|---|
-| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.1 |
-| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.1 |
-| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.1 |
-| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.1 |
-| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.1 |
+| **Windows** | `.msi` / `.exe` | ✅ Built for v2.2.2 |
+| **macOS** (Apple Silicon) | `.dmg` | ✅ Built for v2.2.2 |
+| **macOS** (Intel) | `.dmg` | ✅ Built for v2.2.2 |
+| **Linux** (Debian/Ubuntu) | `.deb` | ✅ Built for v2.2.2 |
+| **Linux** (any distro, portable) | `.AppImage` | ✅ Built for v2.2.2 |
 
 Install with your platform's package manager:
 
 ```bash
 # Linux (Debian/Ubuntu)
-sudo apt install ./ScholarScribe_2.2.1_amd64.deb
+sudo apt install ./ScholarScribe_2.2.2_amd64.deb
 
 # Linux (any distro): make the AppImage executable and run it
-chmod +x ScholarScribe_2.2.1_amd64.AppImage
-./ScholarScribe_2.2.1_amd64.AppImage
+chmod +x ScholarScribe_2.2.2_amd64.AppImage
+./ScholarScribe_2.2.2_amd64.AppImage
 
 # Windows / macOS: double-click the .msi / .exe / .dmg
 ```
@@ -142,10 +142,10 @@ Every release ships a `CHECKSUMS.txt` asset containing SHA-256 digests for every
 ```bash
 # Linux / macOS
 shasum -a 256 -c CHECKSUMS.txt 2>/dev/null | grep OK   # or compare a single file:
-shasum -a 256 ScholarScribe_2.2.1_x64-setup.exe
+shasum -a 256 ScholarScribe_2.2.2_x64-setup.exe
 
 # Windows (PowerShell)
-Get-FileHash .\ScholarScribe_2.2.1_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\ScholarScribe_2.2.2_x64-setup.exe -Algorithm SHA256
 ```
 
 Then compare the printed digest with the matching line in `CHECKSUMS.txt`. If they differ, re-download; if they still differ, please open an issue.
@@ -530,7 +530,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: bug reports and featu
 
 ## Acknowledgments
 
-ScholarScribe v2.2.1 (stable), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
+ScholarScribe v2.2.2 (stable), © 2026 **Dr. Waleed Mandour**, released under the MIT License.
 
 ### Developer
 
@@ -573,7 +573,7 @@ Their findings inform the application's ethical stance and its refusal to facili
 
 MIT © 2026 Dr. Waleed Mandour. See [LICENSE](LICENSE).
 
-**Persistent identifier (v2.2.1):** https://doi.org/10.5281/zenodo.23324356
+**Persistent identifier (v2.2.2):** https://doi.org/10.5281/zenodo.23324356
 
 **Versioned DOIs:** Each release of ScholarScribe gets its own Zenodo DOI. The concept DOI (all versions) is https://doi.org/10.5281/zenodo.20781043. Cite the specific version DOI above for reproducibility. See all versions at https://zenodo.org/doi/10.5281/zenodo.20781043.
 
