@@ -45,7 +45,7 @@ quick-xml = "0.31"
 # Language Check (v2.2.1 r5): offline, privacy-first grammar, spelling and
 # style lints. Pinned to an exact version on purpose: upgrades are deliberate
 # events reviewed against the upstream changelog (see the feature plan).
-harper-core = "=2.11.0"
+harper-core = "=2.13.0"
 # CSPRNG for signing-key generation
 getrandom = "0.2"
 # OS keychain (Windows Credential Manager / macOS Keychain / Linux Secret Service)
