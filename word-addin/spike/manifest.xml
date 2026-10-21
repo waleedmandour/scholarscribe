@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Word Assist spike manifest (Phase 0, feature/word-assist).
+
+  EXPERIMENT ONLY. This manifest intentionally uses http://localhost (plain,
+  no TLS) because observing whether Word on Windows accepts or rejects it is
+  spike observation (g). Per the owner's ruling 4a, NO design decision rests
+  on http being accepted; the production design targets HTTPS (see
+  docs/WORD_ASSIST_RECON.md Q2).
+
+  Port 38080 is the proposed default (docs/WORD_ASSIST_RECON.md Q1) and is
+  served by word-addin/spike/serve.mjs.
+
+  Sideload: Word > Insert > My Add-ins (triangle) > UPLOAD MY ADD-IN > pick
+  this file. See OBSERVATIONS.md step 0.
+-->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+
+  <Id>7c1f2c9e-0000-4a10-9d5e-2b6f8a1c3d77</Id>
+  <Version>0.0.1</Version>
+  <ProviderName>ScholarScribe (spike)</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="ScholarScribe Word Assist (spike)"/>
+  <Description DefaultValue="Phase 0 spike: offset units, annotation events, popup actions. Experiment only."/>
+  <IconUrl DefaultValue="http://localhost:38080/assets/icon-32.png"/>
+  <SupportUrl DefaultValue="https://github.com/waleedmandour/scholarscribe"/>
+
+  <AppDomains>
+    <AppDomain>http://localhost:38080</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <!-- Deliberately minimal: the spike must LOAD everywhere and probe
+           WordApi 1.5/1.6/1.7/1.8 support at runtime (observation f).
+           Declaring 1.7 here would block older builds entirely. -->
+      <Set Name="WordApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="http://localhost:38080/taskpane.html"/>
+  </DefaultSettings>
+
+  <!-- ReadWriteDocument: the spike inserts annotations and (experiment b)
+       attempts a replacement on popup action. -->
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GS.Title"/>
+            <Description resid="GS.Desc"/>
+            <LearnMoreUrl resid="GS.Url"/>
+          </GetStarted>
+          <FunctionFile resid="Commands.Url"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="Spike.Group1">
+                <Label resid="Spike.GroupLabel"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Spike.OpenPane">
+                  <Label resid="Spike.ButtonLabel"/>
+                  <Supertip>
+                    <Title resid="Spike.ButtonLabel"/>
+                    <Description resid="Spike.ButtonTip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>SpikePane</TaskpaneId>
+                    <SourceLocation resid="Spike.Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="http://localhost:38080/assets/icon-32.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="http://localhost:38080/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="http://localhost:38080/assets/icon-32.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GS.Title" DefaultValue="ScholarScribe spike"/>
+        <bt:Url id="GS.Desc" DefaultValue="Phase 0 spike task pane"/>
+        <bt:Url id="GS.Url" DefaultValue="https://github.com/waleedmandour/scholarscribe"/>
+        <bt:Url id="Commands.Url" DefaultValue="http://localhost:38080/commands.html"/>
+        <bt:Url id="Spike.Taskpane.Url" DefaultValue="http://localhost:38080/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Spike.GroupLabel" DefaultValue="Word Assist spike"/>
+        <bt:String id="Spike.ButtonLabel" DefaultValue="Spike pane"/>
+        <bt:String id="GS.Title" DefaultValue="ScholarScribe spike"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="Spike.ButtonTip" DefaultValue="Open the Phase 0 spike task pane."/>
+        <bt:String id="GS.Desc" DefaultValue="Offset units, events, popup actions. Experiment only."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
