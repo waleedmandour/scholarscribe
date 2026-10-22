@@ -36,7 +36,11 @@ function scanNpm(dir, depth) {
     if (existsSync(pkgJson)) {
       try {
         const pkg = JSON.parse(readFileSync(pkgJson, "utf8"));
-        add(pkg.name || entry, pkg.version || "?", pkg.license, "npm");
+        // A package.json without a name is a subpath folder inside a real
+        // package (e.g. nanoid/async), not a dependency — skip it so the
+        // inventory does not carry a phantom "async | ? | UNKNOWN" row.
+        if (!pkg.name) { /* subpath folder, covered by its parent */ }
+        else add(pkg.name, pkg.version || "?", pkg.license, "npm");
       } catch { /* skip malformed */ }
     }
     scanNpm(p, depth + 1);
