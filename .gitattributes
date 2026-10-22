@@ -1,0 +1,32 @@
+# ScholarScribe. Line-ending and diff policy (v0.1 work order A1).
+#
+# Goal: hash-checked and byte-embedded files must be byte-identical on
+# every OS. LF is forced for everything the Rust build embeds or hashes
+# (include_str!/include_bytes! assets, frozen fixtures, the golden set,
+# the word-addin client) so Windows checkouts cannot produce CRLF
+# variants that break checksum or "dist matches source" gates.
+# Nothing is renormalized retroactively: rules apply to the named paths.
+
+# Frozen evaluation / golden fixtures (hash-checked by tests).
+src-tauri/tests/assist/*.json text eol=lf
+src-tauri/tests/eval/*.jsonl text eol=lf
+src-tauri/tests/eval/*.md text eol=lf
+src-tauri/fixtures/** text eol=lf
+
+# Add-in client: served byte-for-byte by the listener and embedded in
+# the binary (include_str!). The manifest is fetched by Word.
+word-addin/dist/** text eol=lf
+word-addin/src/** text eol=lf
+word-addin/*.json text eol=lf
+
+# Embedded reference/network surfaces that CI compares as text.
+src/lib/references.json text eol=lf
+docs/NETWORK_SURFACE.json text eol=lf
+
+# Release-time artifact that must not churn by platform.
+THIRD_PARTY_LICENSES.md text eol=lf
+
+# Icons are binary; never let git touch them.
+*.png binary
+*.ico binary
+*.icns binary
