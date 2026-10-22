@@ -1,0 +1,210 @@
+{
+  "$comment": "Word Assist Phase 1a golden set. ~50 scholarly sentences across the classes the brief requires: citations, numbers, equations/LaTeX, URLs/DOIs, quotes, plain prose, plus RTL/Arabic and CJK and emoji cases. For every 'protected' sentence the engine must produce zero edits inside the protected content (Tier 1 must return it unchanged after validation); 'plain' sentences carry the grammar/style expectations the unit tests assert. This file is data for tests/assist_golden.rs, never compiled.",
+  "version": 1,
+  "sentences": [
+    {
+      "class": "citation",
+      "text": "Prior work (Smith, 2020) established that the effect is robust."
+    },
+    {
+      "class": "citation",
+      "text": "Several studies (Miller et al., 2019; Chen and Zhao, 2021) report similar findings."
+    },
+    {
+      "class": "citation",
+      "text": "As Jones (2018) argues, the model overpredicts in field settings."
+    },
+    {
+      "class": "citation",
+      "text": "The framework descends from [12] and [15-17]."
+    },
+    {
+      "class": "citation",
+      "text": "A survey by Kumar et al. (2022) covers 84 papers."
+    },
+    {
+      "class": "citation",
+      "text": "The measure follows Nakamura (2020a) and Nakamura (2020b)."
+    },
+    {
+      "class": "number",
+      "text": "We recruited 1,234 participants across 3 sites."
+    },
+    {
+      "class": "number",
+      "text": "Accuracy improved by 12.5% after tuning."
+    },
+    {
+      "class": "number",
+      "text": "The interval spans 3.5-7.2 units."
+    },
+    {
+      "class": "number",
+      "text": "Between 2020 and 2024, output doubled."
+    },
+    {
+      "class": "number",
+      "text": "The p-value was 0.031, well below 0.05."
+    },
+    {
+      "class": "latex",
+      "text": "We minimize $\\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2$ over the folds."
+    },
+    {
+      "class": "latex",
+      "text": "Let \\(\\alpha\\) denote the learning rate."
+    },
+    {
+      "class": "latex",
+      "text": "The bound tightens when \\[\\epsilon \\to 0\\]."
+    },
+    {
+      "class": "url",
+      "text": "Replication materials are at https://osf.io/abc123."
+    },
+    {
+      "class": "url",
+      "text": "The dataset carries DOI 10.5281/zenodo.23052647."
+    },
+    {
+      "class": "url",
+      "text": "See www.example.com/supplement for the appendix."
+    },
+    {
+      "class": "quote",
+      "text": "One reviewer called the chapter \"unusually careful\" in its framing."
+    },
+    {
+      "class": "quote",
+      "text": "The interview closed with \u201cwe simply ran out of time.\u201d"
+    },
+    {
+      "class": "mixed_protected",
+      "text": "Following Smith (2020), we report both 95% CIs and https://osf.io/xyz links."
+    },
+    {
+      "class": "mixed_protected",
+      "text": "The 2024 model reached 87.3% on the benchmark from [7]."
+    },
+    {
+      "class": "plain",
+      "text": "The results was surprising to the team."
+    },
+    {
+      "class": "plain",
+      "text": "Each of the participants were interviewed twice."
+    },
+    {
+      "class": "plain",
+      "text": "We analysed the data and then we write the paper."
+    },
+    {
+      "class": "plain",
+      "text": "The findings suggests that the hypothesis holds."
+    },
+    {
+      "class": "plain",
+      "text": "There is many reasons to prefer the second design."
+    },
+    {
+      "class": "plain",
+      "text": "The model do not converge without normalization."
+    },
+    {
+      "class": "plain",
+      "text": "Neither the reviewers nor the editor was aware of the identity."
+    },
+    {
+      "class": "plain",
+      "text": "The committee have approved the revised protocol."
+    },
+    {
+      "class": "plain",
+      "text": "Data were collected, cleaned, and it was analyzed by two raters."
+    },
+    {
+      "class": "plain",
+      "text": "This paper make three contributions to the literature."
+    },
+    {
+      "class": "plain",
+      "text": "The samples was stored at -80 degrees."
+    },
+    {
+      "class": "clean",
+      "text": "The method replicates across all three cohorts."
+    },
+    {
+      "class": "clean",
+      "text": "We thank the anonymous reviewers for their comments."
+    },
+    {
+      "class": "clean",
+      "text": "Ethical approval was obtained from the university board."
+    },
+    {
+      "class": "clean",
+      "text": "The interviewees consented to audio recording."
+    },
+    {
+      "class": "clean",
+      "text": "Sample sizes were determined by a power analysis."
+    },
+    {
+      "class": "arabic",
+      "text": "تُظهر النتائج أن الأثر إيجابي ومعنوي إحصائياً."
+    },
+    {
+      "class": "arabic",
+      "text": "وصل عدد المشاركين إلى 1,234 شخصاً في ثلاث مدن."
+    },
+    {
+      "class": "arabic",
+      "text": "وفقاً لسميث (2020)، فإن النموذج يعمل بشكل جيد."
+    },
+    {
+      "class": "cjk",
+      "text": "本研究采用混合方法设计，包括问卷调查与深度访谈。"
+    },
+    {
+      "class": "cjk",
+      "text": "结果显示，模型准确率提高了12.5%。"
+    },
+    {
+      "class": "emoji",
+      "text": "The workflow 🎓 finally worked after the 🚀 launch, which surprised us."
+    },
+    {
+      "class": "emoji",
+      "text": "Team 👨‍👩‍👧‍👦 dynamics mattered more than the tool itself."
+    },
+    {
+      "class": "edge",
+      "text": "The e.g. list included Dr. Lee, Prof. Ruiz, and 1.5 mg doses."
+    },
+    {
+      "class": "edge",
+      "text": "Rates rose to 1.234.567 units per 2024."
+    },
+    {
+      "class": "edge",
+      "text": "The NBSP character keeps words together in print."
+    },
+    {
+      "class": "edge",
+      "text": "Mixed bidi: العَرَبِيَّة text with (Smith, 2020) inline."
+    },
+    {
+      "class": "edge",
+      "text": "Compound ZWJ emoji 👩‍🔬 appear in some abstracts."
+    },
+    {
+      "class": "tier1_candidate",
+      "text": "The results was clear even without the outliers removed."
+    },
+    {
+      "class": "tier1_candidate",
+      "text": "We analysed the data and then we write the discussion."
+    }
+  ]
+}
