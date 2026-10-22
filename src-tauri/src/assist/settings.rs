@@ -53,12 +53,22 @@ impl AssistSettings {
         if s.word_assist_port == 0 {
             return Err("port 0 is not allowed for the Word Assist listener".into());
         }
+        // H8: Tier 1 stays OFF until the user explicitly picks a model.
+        // "Empty model = last used chat model" would enable model calls
+        // the user never named; the UI coerces the same way.
+        let tier1_enabled =
+            s.word_assist_tier1_enabled && !s.word_assist_tier1_model.trim().is_empty();
+        if s.word_assist_tier1_enabled && !tier1_enabled {
+            log::info!(
+                "Tier 1 requested but no model name is set; Tier 1 stays off until a model is picked"
+            );
+        }
         Ok(Self {
             port: s.word_assist_port,
             dialect: s.language_check_dialect.clone(),
             strictness,
             mask_mode: MaskMode::Filter, // D-4: S1 shipped, S2 kept for the Phase 4 arbitration
-            tier1_enabled: s.word_assist_tier1_enabled,
+            tier1_enabled,
             tier1_model: s.word_assist_tier1_model.clone(),
             experimental_languages: s
                 .word_assist_experimental_languages
@@ -1059,5 +1069,30 @@ mod tests {
         s.word_assist_strictness = "balanced".into();
         s.word_assist_port = 0;
         assert!(super::AssistSettings::from_persisted(&s).is_err());
+    }
+
+    /// H8: Tier 1 OFF until the user explicitly picks a model — a
+    /// persisted `tier1_enabled = true` with an empty model name is
+    /// coerced off (the "empty = last used chat model" shortcut is gone).
+    #[test]
+    fn tier1_requires_an_explicit_model_name() {
+        let mut s = crate::persistence::Settings::default();
+        s.word_assist_tier1_enabled = true;
+        s.word_assist_tier1_model = String::new();
+        let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
+        assert!(
+            !resolved.tier1_enabled,
+            "empty model must coerce Tier 1 OFF"
+        );
+        assert!(resolved.tier1_model.is_empty());
+
+        s.word_assist_tier1_model = "  ".into();
+        let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
+        assert!(!resolved.tier1_enabled, "whitespace model coerces OFF");
+
+        s.word_assist_tier1_model = "gemma3:4b".into();
+        let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
+        assert!(resolved.tier1_enabled, "named model keeps Tier 1 on");
+        assert_eq!(resolved.tier1_model, "gemma3:4b");
     }
 }

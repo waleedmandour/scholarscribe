@@ -60,6 +60,22 @@ Repeat step 3 with **Apply-on-action ON**: the pane deletes the annotation and
 logs whether the text had already changed — confirming the (b) result from the
 other side.
 
+## Hardening-round observations (H5/H8, added 2026-10-23)
+
+Run these with the SHIPPED listener (not serve.mjs): `cargo run` with
+`--features word-assist`, enable Word Assist in the app, then trust the
+CA as instructed by the Registration card.
+
+| ID | What to check | How | Expected candidates | Observed |
+|----|----------------|-----|---------------------|----------|
+| q | Name-constraint CA trust in Word's pane and Edge | Generate the TEST-ONLY CA (`cargo test --features word-assist generate_owner_test_ca -- --ignored --nocapture` → `target/word-assist-test-ca/`), install TEST-ca.pem into the CURRENT USER Trusted Root store MANUALLY (owner-run; nothing in the app writes the store), serve leaf-localhost.pem on the listener, open https://localhost:38080/addin/manifest.xml and the taskpane in Word's pane and in Edge | both load WITHOUT warnings (webview runtime honors name-constrained CAs) / Edge warns "CERT_COMMON_NAME_INVALID" or similar (constraints unsupported or leaf SAN mismatch) — record the exact UI wording | |
+| q2 | A leaf for ANOTHER name must FAIL under the same CA | Serve leaf-other-name.pem (CN/SAN other-name.test, signed by the same TEST CA) and open it | both runtimes refuse the cert (constraint enforcement works) / one accepts it → blast radius: a locally trusted CA holder could mint certs for other names; owner decision required | |
+| r | Does the webview resolve `localhost` to ::1 (IPv6) first? | Bind only 127.0.0.1 (the shipped listener does), open the pane; watch the request reach the listener. Then, for contrast, check `netstat -ano | findstr 38080` while Edge loads the pane and note whether any SYN went to [::1] before the IPv4 connection | connects over IPv4 only (localhost falls back to the A record; Host/Origin headers are unaffected — they carry the literal name `localhost`, which the listener pins exactly) / pane fails to load with a connection error → the listener must ALSO consider dual-stack or the add-in must use 127.0.0.1 explicitly (owner decision; would change the accepted Host/Origin values) | |
+
+Cleanup after (q)/(q2): remove "ScholarScribe TEST Word Assist Root CA
+(owner spike q)" from the Current User Trusted Root store. The TEST CA
+is NOT the production CA; never leave it trusted.
+
 ## When done
 
 1. Paste the full pane log and the serve.mjs request lines into this file (or

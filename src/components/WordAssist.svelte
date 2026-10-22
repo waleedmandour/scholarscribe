@@ -110,7 +110,15 @@
   async function persistSettings() {
     const s = await api.settingsGet();
     s.word_assist_strictness = strictness;
-    s.word_assist_tier1_enabled = tier1Enabled;
+    // H8: Tier 1 stays OFF until the user explicitly picks a model.
+    // An empty model name is not "last used chat model" any more — the
+    // engine coerces the same way (AssistSettings::from_persisted).
+    const modelPicked = tier1Model.trim() !== "";
+    s.word_assist_tier1_enabled = tier1Enabled && modelPicked;
+    if (tier1Enabled && !modelPicked) {
+      notice =
+        "Rewrite suggestions stay off until you enter a model name in the field below.";
+    }
     s.word_assist_tier1_model = tier1Model.trim();
     s.word_assist_port = port;
     s.word_assist_experimental_languages = { ...experimental };
@@ -318,7 +326,7 @@
         <p class="hint">{hintFor(strictness)}</p>
       </div>
 
-      <label for="wa-tier1">Rewrite suggestions (local model)</label>
+      <label for="wa-tier1">Rewrite suggestions (local model) · Experimental</label>
       <div>
         <label class="check">
           <input id="wa-tier1" type="checkbox" bind:checked={tier1Enabled} />
@@ -329,13 +337,16 @@
             class="text"
             type="text"
             bind:value={tier1Model}
-            placeholder="Model name, e.g. gemma3:4b (empty = last used chat model)"
+            placeholder="Model name, e.g. gemma3:4b (required)"
           />
           <p class="hint">
-            Each suggestion sends one sentence to your local Ollama daemon.
-            Every rewrite is checked against six validation rules before
-            Word ever sees it; rewrites that touch citations, numbers, URLs,
-            math or quotes are discarded.
+            <strong>Experimental.</strong> No precision evaluation exists
+            for this feature yet, so suggestions may be wrong. Tier 1
+            stays off until you pick a model by name. Each suggestion
+            sends one sentence to your local Ollama daemon. Every rewrite
+            is checked against six validation rules before Word ever sees
+            it; rewrites that touch citations, numbers, URLs, math or
+            quotes are discarded.
           </p>
         {/if}
       </div>
@@ -372,11 +383,13 @@
     <section class="card">
       <h2>Registration &amp; certificate</h2>
       <p class="hint">
-        Word needs two one-time consents: trust the local certificate
-        ScholarScribe generated (it is scoped to
-        <code>localhost</code>), and side-load the manifest. Nothing here
-        touches the system certificate store by itself — you perform the
-        install, and you can undo it at any time.
+        Word needs two one-time consents: trust the <strong>CA
+        certificate</strong> ScholarScribe generated (an ephemeral,
+        name-constrained root scoped to <code>localhost</code> — its
+        signing key was destroyed after issuing this install's leaf),
+        and side-load the manifest. Nothing here touches the system
+        certificate store by itself — you perform the install, and you
+        can undo it at any time.
       </p>
       <ol class="steps">
         {#each registration.instructions as step}
@@ -385,14 +398,14 @@
       </ol>
       <div class="row-gap">
         <button class="btn secondary" on:click={() => copy(registration!.cert_pem, "cert")}>
-          {copiedField === "cert" ? "Copied" : "Copy certificate (PEM)"}
+          {copiedField === "cert" ? "Copied" : "Copy CA certificate (PEM)"}
         </button>
         <button class="btn secondary" on:click={() => copy(registration!.manifest_url, "url")}>
           {copiedField === "url" ? "Copied" : "Copy manifest URL"}
         </button>
       </div>
       <details>
-        <summary>Certificate text</summary>
+        <summary>CA certificate text</summary>
         <pre class="cert">{registration.cert_pem}</pre>
       </details>
     </section>

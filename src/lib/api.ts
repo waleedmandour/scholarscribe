@@ -1034,8 +1034,12 @@ export interface WaAuditEntry {
 export interface WaRegistration {
   manifest_url: string;
   taskpane_url: string;
+  /** The CA certificate — the one the user trusts (H5). */
   cert_path: string;
   cert_pem: string;
+  /** The leaf: public, informational, never to be trusted directly. */
+  leaf_path: string;
+  leaf_pem: string;
   instructions: string[];
 }
 
