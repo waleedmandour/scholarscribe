@@ -170,6 +170,7 @@ pub fn run() {
             assist_commands::word_assist_new_pairing_code,
             assist_commands::word_assist_audit,
             assist_commands::word_assist_unpair,
+            assist_commands::word_assist_rotate_token,
             assist_commands::word_assist_registration,
             assist_commands::word_assist_disclosure_prefill,
         ])

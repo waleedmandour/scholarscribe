@@ -111,36 +111,69 @@ impl Default for Scheduler {
 
 /// Randomness for pairing codes and tokens. Implemented over
 /// `getrandom` (already in the tree for the provenance signing keys) so
-/// the feature adds no new dependency.
+/// the feature adds no new dependency. `getrandom::getrandom` IS the OS
+/// CSPRNG (getrandom(2) / BCryptGenRandom / SecRandomCopyBytes) — both the
+/// pairing code and the token are sourced from it.
 pub mod rand_compat {
-    /// CSPRNG fill. Panics only if the OS entropy source fails, which is
-    /// unrecoverable for a security token anyway.
-    pub fn fill_random_bytes(buf: &mut [u8]) {
-        getrandom::getrandom(buf).expect("OS CSPRNG unavailable");
+    /// CSPRNG fill. Fails only if the OS entropy source fails, which is
+    /// unrecoverable for a security token anyway (callers propagate).
+    pub fn fill_random_bytes(buf: &mut [u8]) -> Result<(), String> {
+        getrandom::getrandom(buf).map_err(|e| format!("OS CSPRNG unavailable: {e}"))
     }
 
     const ALPHABET: &[u8] = b"ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L
+    const CODE_LEN: usize = 6;
 
-    /// 6-character pairing code from an unambiguous alphabet.
-    pub fn random_pairing_code() -> Result<String, String> {
-        let mut bytes = [0u8; 6];
-        fill_random_bytes(&mut bytes);
-        let code: String = bytes
-            .iter()
-            .map(|b| {
-                let idx = (*b as usize) % ALPHABET.len();
-                ALPHABET[idx] as char
-            })
-            .collect();
-        Ok(code)
+    /// Map one random byte to an alphabet index WITHOUT modulo bias.
+    ///
+    /// 256 % 31 == 8, so a naive `b % 31` would make the first 8 letters
+    /// 9/256 likely and the rest 8/256. Instead, bytes >= 248 (= 31*8)
+    /// are REJECTED (redrawn). Each of the 31 indices is then hit by
+    /// exactly 8 byte values, so the mapping is exactly uniform. The
+    /// expected number of draws per character is 256/248 ≈ 1.03.
+    fn alphabet_index(b: u8, alphabet_len: usize) -> Option<usize> {
+        let bound = 256 - (256 % alphabet_len);
+        if (b as usize) < bound {
+            Some(b as usize % alphabet_len)
+        } else {
+            None
+        }
     }
 
-    /// 32-byte token, URL-safe base64-ish hex encoding (constant length).
+    /// 6-character pairing code from an unambiguous alphabet,
+    /// rejection-sampled so the digit mapping has no modulo bias (H1).
+    pub fn random_pairing_code() -> Result<String, String> {
+        let mut out = String::with_capacity(CODE_LEN);
+        while out.len() < CODE_LEN {
+            let mut buf = [0u8; 16];
+            fill_random_bytes(&mut buf)?;
+            for b in buf {
+                if let Some(i) = alphabet_index(b, ALPHABET.len()) {
+                    out.push(ALPHABET[i] as char);
+                    if out.len() == CODE_LEN {
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(out)
+    }
+
+    /// 32-byte token (256 bits), URL-safe hex encoding (constant length
+    /// 64, so the bearer compare can run constant-time on it).
     pub fn random_token() -> Result<String, String> {
         let mut bytes = [0u8; 32];
-        fill_random_bytes(&mut bytes);
+        fill_random_bytes(&mut bytes)?;
         let hex: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
         Ok(hex)
+    }
+
+    #[cfg(test)]
+    pub(crate) mod test_hooks {
+        /// Exposed for tests only: the pure byte→index mapping.
+        pub fn map(b: u8, alphabet_len: usize) -> Option<usize> {
+            super::alphabet_index(b, alphabet_len)
+        }
     }
 }
 
@@ -180,6 +213,33 @@ mod tests {
         assert!(!code.contains('O') && !code.contains('0') && !code.contains('I'));
         let token = random_token().expect("token");
         assert_eq!(token.len(), 64);
+    }
+
+    /// H1: the byte→index mapping must be EXACTLY uniform. 256 % 31 == 8,
+    /// so the 8 highest byte values must be rejected and every surviving
+    /// index must be hit by exactly 8 byte values. This is a deterministic
+    /// proof, not a statistical sample.
+    #[test]
+    fn pairing_code_mapping_has_no_modulo_bias() {
+        const LEN: usize = 31;
+        let mut counts = [0usize; LEN];
+        for b in 0..=255u8 {
+            match super::rand_compat::test_hooks::map(b, LEN) {
+                Some(i) => {
+                    assert!(i < LEN);
+                    counts[i] += 1;
+                }
+                None => assert!(b >= 248, "only the 8 highest bytes may be rejected"),
+            }
+        }
+        assert!(counts.iter().all(|&c| c == 8), "each index = 8 byte values");
+        // Bound edges: 247 accepted, 248 rejected (= 31*8).
+        assert!(super::rand_compat::test_hooks::map(247, LEN).is_some());
+        assert!(super::rand_compat::test_hooks::map(248, LEN).is_none());
+        // 256 drawn codes must all be 6 chars (rejection never deadlocks).
+        for _ in 0..256 {
+            assert_eq!(random_pairing_code().expect("code").len(), 6);
+        }
     }
 
     #[test]

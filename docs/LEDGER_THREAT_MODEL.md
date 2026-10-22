@@ -76,3 +76,46 @@ separate commit) and the chain reverted to plain SHA-256.
    export work.
 4. Clock skew affects `ts` ordering only; the chain does not depend on
    monotonic time.
+
+## 5. Token and pairing (hardening round H1/H2, 2026-10-23)
+
+Scope extended by the owner's hardening authorization to cover the
+listener's two other secrets: the pairing code and the paired-client
+bearer token.
+
+**Pairing code (H1).** 6 characters from a 31-symbol unambiguous
+alphabet (≈ 2^29.7 — strictly stronger than 6 decimal digits' 2^19.9),
+drawn from the OS CSPRNG (`getrandom`) with rejection sampling so the
+byte→index mapping is exactly uniform (256 % 31 == 8; the 8 highest
+byte values are redrawn; every index is hit by exactly 8 byte values —
+proven by test `pairing_code_mapping_has_no_modulo_bias`, not sampled).
+The code is one-time, burns on success, and carries a GLOBAL budget of
+5 wrong attempts (everything arrives from loopback, so per-IP budgets
+are meaningless); the 5th failure burns the code. A new code requires
+the explicit user action in the Word Assist tab, gated by a cooldown
+that starts at 30 s and doubles per burn, capped at 30 min. A
+route-specific limiter (10 req/60 s) sits on `/v1/pair` in addition to
+the global 120/60 s budget. Audit events record success, failure and
+lockout — never the code value itself.
+
+**Paired-client token (H2).** 32 CSPRNG bytes, hex-encoded on the wire.
+The engine persists ONLY `SHA-256(token)` + created_at / last_used /
+label — keychain first (`scholarscribe`/`word-assist-client-token-v1`),
+0600 file fallback in the app data dir on unix (audited), none on
+Windows (keychain only). The plaintext token exists in exactly two
+places: the /v1/pair response at issue time, and the add-in's
+`localStorage`. **The owner ACCEPTED plaintext-in-localStorage** (same-
+user trust boundary): any process that can read Word's webview profile
+already runs as the user and could equally read the app's own memory;
+nothing local is escalated by it. Revocation wipes memory + keychain +
+file; rotation = revoke + fresh pairing code (the token is never pushed,
+so this is the exact rotation shape); disabling the feature rotates
+(revokes) the token. Sliding expiry: 30 days since last use, then the
+record is revoked wherever it is next seen.
+
+**What this does NOT defend against (honest limits).** A1 (same-user
+malware) can read the token hash, the add-in's localStorage token, and
+can use the token against the loopback listener while the app runs —
+the trust boundary is the OS user, by design (D-3/4c). The sliding
+expiry bounds the window if the profile is exfiltrated, but a stolen
+*live* token is valid until revoked; there is no second factor.

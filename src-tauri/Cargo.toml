@@ -65,6 +65,13 @@ tokio-rustls = { version = "0.26", optional = true, default-features = false, fe
 rustls = { version = "0.23", optional = true, default-features = false, features = ["ring", "logging", "std", "tls12"] }
 rustls-pki-types = { version = "1", optional = true }
 rcgen = { version = "0.14", optional = true }
+# H5: x509 assertions on the generated CA/leaf (parse the certs and
+# assert CA flag, pathlen, name constraints, EKU, SANs, validity).
+# Already in Cargo.lock as rcgen's own optional dep at this exact
+# version — declared directly only for the feature build; the default
+# build still resolves neither crate (CI: word-assist-gates "default
+# build excludes rcgen/x509-parser" step).
+x509-parser = { version = "=0.18.1", optional = true }
 # NOTE (owner ruling E-4, 2026-10-23): the ledger is a plain SHA-256 hash
 # chain with the chain head signed at export via the provenance signing
 # path. hmac was briefly introduced for the ledger chain and REMOVED —
@@ -95,4 +102,5 @@ word-assist = [
   "dep:rustls",
   "dep:rustls-pki-types",
   "dep:rcgen",
+  "dep:x509-parser",
 ]

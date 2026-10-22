@@ -63,8 +63,12 @@ pub struct AssistAuditEntry {
 pub struct AssistRegistration {
     pub manifest_url: String,
     pub taskpane_url: String,
+    /// H5: the CA certificate — the ONE cert the user trusts. Path + PEM.
     pub cert_path: String,
     pub cert_pem: String,
+    /// The leaf (public, informational; never to be trusted directly).
+    pub leaf_path: String,
+    pub leaf_pem: String,
     pub instructions: Vec<String>,
 }
 
@@ -144,15 +148,20 @@ pub async fn word_assist_enable(
     }
 
     // Session hygiene: a fresh listener starts unpaired.
-    state
-        .clear_session()
-        .map_err(|e| format!("session reset: {e}"))?;
     *state.settings.lock().map_err(|e| e.to_string())? = Some(settings.clone());
 
     let dir = assist_data_dir(&app)?;
     // The ledger is a commitment: if it cannot be opened (broken chain),
     // the enable FAILS rather than running unrecorded.
     state.attach_ledger(&dir)?;
+    // H2: attach token persistence and restore any saved pairing (an
+    // app restart must not force a re-pair). Enable still clears the
+    // in-memory session FIRST (clear_session no longer touches the
+    // persisted record), so restore runs after it.
+    state
+        .clear_session()
+        .map_err(|e| format!("session reset: {e}"))?;
+    state.attach_token_store(&dir)?;
     match crate::assist::server::start(settings, std::sync::Arc::clone(&state), dir).await {
         Ok(handle) => {
             let port = handle.port;
@@ -188,7 +197,8 @@ pub async fn word_assist_enable(_app: AppHandle) -> Result<AssistEnableOutcome, 
     Err(feature_absent())
 }
 
-/// Stop the listener and wipe the session.
+/// Stop the listener and wipe the session. H2 rotate-on-disable: the
+/// persisted token is revoked, so the next session always re-pairs.
 #[cfg(feature = "word-assist")]
 #[tauri::command]
 pub async fn word_assist_disable(
@@ -198,6 +208,8 @@ pub async fn word_assist_disable(
     listener.stop();
     state.scheduler.abort_in_flight();
     state.cache.clear();
+    // H2: rotate on feature disable = the stored token dies here.
+    state.revoke_token()?;
     state.clear_session()?;
     *state.settings.lock().map_err(|e| e.to_string())? = None;
     state
@@ -207,7 +219,7 @@ pub async fn word_assist_disable(
     state.audit.record(
         "assist_listener",
         "127.0.0.1",
-        "word assist listener stopped; session wiped",
+        "word assist listener stopped; session wiped; token rotated (revoked)",
         0,
         0,
     );
@@ -242,11 +254,7 @@ pub async fn word_assist_status(
             ),
         }
     };
-    let pairing_active = state
-        .pairing
-        .lock()
-        .map(|g| g.as_ref().map(|p| p.is_valid()).unwrap_or(false))
-        .unwrap_or(false);
+    let pairing_active = state.pairing.has_live_code();
     Ok(AssistStatus {
         running,
         port,
@@ -321,13 +329,32 @@ pub async fn word_assist_audit() -> Result<Vec<AssistAuditEntry>, String> {
     Ok(Vec::new())
 }
 
-/// "Unpair everything": wipe token + pairing without stopping the listener.
+/// "Unpair everything": revoke the token (memory + persisted record) and
+/// drop any live pairing code without stopping the listener (H2 revoke).
 #[cfg(feature = "word-assist")]
 #[tauri::command]
 pub async fn word_assist_unpair(
     state: tauri::State<'_, std::sync::Arc<crate::assist::settings::AssistState>>,
 ) -> Result<(), String> {
+    state.revoke_token()?;
     state.clear_session()
+}
+
+/// H2 rotate: revoke the current token and hand back a fresh pairing
+/// code so the user can re-pair. The token is NEVER pushed — the add-in
+/// only ever receives it through pairing — so this is the exact shape a
+/// rotation can take without new add-in surfaces.
+#[cfg(feature = "word-assist")]
+#[tauri::command]
+pub async fn word_assist_rotate_token(
+    state: tauri::State<'_, std::sync::Arc<crate::assist::settings::AssistState>>,
+) -> Result<String, String> {
+    if !state.is_running() {
+        return Err("Word Assist is not running. Enable it first.".into());
+    }
+    state.rotate_token()?;
+    state.clear_session()?;
+    state.new_pairing_code()
 }
 
 /// Counts-only aggregate of the assist ledger for the Disclosure
@@ -378,9 +405,17 @@ pub async fn word_assist_unpair() -> Result<(), String> {
     Err(feature_absent())
 }
 
-/// Registration info for the manual side-load flow (Phase 3 keeps the
-/// trust-store write consent-gated; this command only reads the generated
-/// certificate and returns copy/paste instructions).
+/// Stub for builds without the feature.
+#[cfg(not(feature = "word-assist"))]
+#[tauri::command]
+pub async fn word_assist_rotate_token() -> Result<String, String> {
+    Err(feature_absent())
+}
+
+/// Registration info for the manual side-load flow. H5: the user trusts
+/// the CA certificate (ephemeral, name-constrained), never the leaf. This
+/// command only reads the generated certificates and returns copy/paste
+/// instructions; nothing writes a trust store.
 #[cfg(feature = "word-assist")]
 #[tauri::command]
 pub async fn word_assist_registration(
@@ -393,19 +428,25 @@ pub async fn word_assist_registration(
         .map_err(|e| e.to_string())?
         .ok_or("Word Assist is not running. Enable it first.")?;
     let dir = assist_data_dir(&app)?;
-    let cert_path = dir.join("word-assist-cert.der");
-    let der = std::fs::read(&cert_path)
-        .map_err(|e| format!("read assist certificate: {e} (enable Word Assist first)"))?;
+    let ca_path = dir.join("word-assist-ca.der");
+    let leaf_path = dir.join("word-assist-cert.der");
+    let ca_der = std::fs::read(&ca_path)
+        .map_err(|e| format!("read assist CA certificate: {e} (enable Word Assist first)"))?;
+    let leaf_der = std::fs::read(&leaf_path).unwrap_or_default();
     Ok(AssistRegistration {
         manifest_url: format!("https://localhost:{port}/addin/manifest.xml"),
         taskpane_url: format!("https://localhost:{port}/addin/taskpane.html"),
-        cert_path: cert_path.display().to_string(),
-        cert_pem: pem_encode(&der),
+        cert_path: ca_path.display().to_string(),
+        cert_pem: pem_encode(&ca_der),
+        leaf_path: leaf_path.display().to_string(),
+        leaf_pem: if leaf_der.is_empty() { String::new() } else { pem_encode(&leaf_der) },
         instructions: vec![
-            "Windows: double-click the certificate file, 'Install Certificate', scope 'Current User', store 'Trusted Root Certification Authorities'.".into(),
+            "Trust the CA certificate ('ScholarScribe Word Assist Root CA (ephemeral)'), NOT the leaf: the CA is name-constrained to localhost / 127.0.0.1 and its signing key was destroyed after issuing your leaf.".into(),
+            "Windows: double-click the CA certificate file, 'Install Certificate', scope 'Current User', store 'Trusted Root Certification Authorities'.".into(),
             "Or: certmgr.msc > Trusted Root Certification Authorities > Import.".into(),
             format!("Sideload: Word > Insert > My Add-ins / Get Add-ins > 'Upload My Add-in' > {}", format!("https://localhost:{port}/addin/manifest.xml")),
-            "Removal: delete 'ScholarScribe Word Assist (localhost)' from Manage User Certificates > Trusted Root Certification Authorities, and remove the add-in from My Add-ins.".into(),
+            "Renewal: the CA + leaf are regenerated when they expire (CA 3 years, leaf 1 year); re-trust the NEW CA — this re-asks your consent.".into(),
+            "Removal: delete 'ScholarScribe Word Assist Root CA (ephemeral)' from Manage User Certificates > Trusted Root Certification Authorities, and remove the add-in from My Add-ins.".into(),
         ],
     })
 }
