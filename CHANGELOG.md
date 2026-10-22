@@ -43,9 +43,11 @@ artifact of the feature compiles only with the feature enabled.
   requirement set (1.6/1.7/1.8), annotations with popup suggestions,
   a suppression watermark for self-edits, and a list-mode fallback for
   hosts without the annotation API.
-- HMAC-chained JSONL ledger (`assist/ledger.rs`): accepted/rejected
+- SHA-256 hash-chained JSONL ledger (`assist/ledger.rs`): accepted/rejected
   counts keyed by hashes - never text - with chain verification on open
-  and a counts-only Disclosure Assistant pre-fill.
+  and a counts-only Disclosure Assistant pre-fill. No MAC, no local key
+  (ruling E-4); the chain head is signed at export via the provenance
+  signing path.
 - Golden set (`src-tauri/tests/assist/golden.json`, ~50 scholarly
   sentences) asserting protected content is never flagged, the dev
   profile emits grammar only, Arabic/CJK gate correctly, and ASCII

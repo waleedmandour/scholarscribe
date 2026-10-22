@@ -47,7 +47,7 @@ CDN (never carries document text; ruling D-6's `addin-webview` class).
 | `assist/server.rs` | Loopback TLS listener (hyper 1 + tokio-rustls, ring provider); auth, Origin/Host pinning, body cap, rate limit; serves `/v1/*` and the add-in pages |
 | `assist/scheduler.rs` | Single-flight Tier 1 (newest wins, stale discard, per-paragraph budget); pairing-code/token CSPRNG helpers |
 | `assist/settings.rs` | Runtime state: resolved settings, pairing, rate limiter, assist audit log |
-| `assist/ledger.rs` | HMAC-chained JSONL ledger (Phase 3); counts and hashes, never text |
+| `assist/ledger.rs` | SHA-256 hash-chained JSONL ledger (Phase 3; E-4: no MAC); counts and hashes, never text |
 | `assist_commands.rs` | Tauri command surface (always compiled; stubs without the feature) |
 | `word-addin/dist/` | Production add-in: manifest, task pane client (probe + annotations + popup actions + list-mode fallback) |
 
@@ -108,14 +108,16 @@ simply does not appear):
 
 ## 6. Ledger (Phase 3)
 
-`<data>/word-assist/ledger.jsonl`, append-only, HMAC-SHA256-chained with
-a per-install key (`word-assist-ledger-v1` in the keychain, 0600 file
-fallback). Entries carry sequence, timestamp, engine version, kind
-(accepted / rejected / failed / paired), paragraph-id hash, issue id,
-rule id, category, span offsets, replacement length, and the add-in's
-pre-edit paragraph hash — **hashes and counts, never text**
-(PROVENANCE_SPEC §0.3). The chain is verified on every open; a broken
-chain disables the feature rather than running unrecorded. The
+`<data>/word-assist/ledger.jsonl`, append-only, SHA-256 hash-chained
+(each entry's canonical form includes its predecessor's hash; genesis
+zeros). NO MAC and NO local key — owner ruling E-4: a key stored on the
+same machine stops nothing that the chain plus an export-time signature
+does not (see `docs/LEDGER_THREAT_MODEL.md`). Entries carry sequence,
+timestamp, engine version, kind (accepted / rejected / failed / paired),
+paragraph-id hash, issue id, rule id, category, span offsets, replacement
+length, and the add-in's pre-edit paragraph hash — **hashes and counts,
+never text** (PROVENANCE_SPEC §0.3). The chain is verified on every open;
+a broken chain disables the feature rather than running unrecorded. The
 Disclosure Assistant pre-fill (`word_assist_disclosure_prefill`) turns
 the ledger into a counts-only sentence the user may paste into a
 disclosure statement; it makes no quality claims and never mentions
@@ -144,9 +146,13 @@ degrades to a list-mode panel with per-suggestion Apply buttons; nothing
 hard-fails on older hosts. The offset ADAPTER (`toCritique`) is the
 single place to adjust when the owner's spike run (experiment (a) in
 `word-addin/spike/OBSERVATIONS.md`) pins down Word's exact critique
-units. Self-edits are absorbed by a suppression watermark so the
-accept→apply→event loop cannot oscillate (risk R3), plus the server-side
-per-paragraph Tier 1 budget.
+units. **Self-edit suppression (C4) is NOT wired yet**: the watermark
+mechanism (`isSelfEvent`, `SELF_EVENT_GRACE_MS`) exists in
+`taskpane.js` but the paragraph-event handler currently schedules an
+unconditional debounced re-check; the server-side per-paragraph Tier 1
+budget is what stops oscillation today. Wiring the watermark plus
+simulated-event tests is a Phase 4 gate item (see
+`docs/WORD_ASSIST_ASSUMPTIONS.md`, rows C4/E).
 
 ## 9. Testing
 
@@ -171,6 +177,8 @@ per-paragraph Tier 1 budget.
    then), benchmarked against an enlarged golden set.
 3. Trust-store consent: the Phase 3 registration flow stays manual until
    the owner explicitly approves an in-app write (ruling D-5).
-4. Third-party license refresh on the release line
-   (`scripts/generate-third-party-licenses.mjs` — new crates: rcgen,
-   hmac and their X.509/HMAC stacks, all MIT OR Apache-2.0).
+4. Third-party license refresh on the release line — **release blocker**:
+   `THIRD_PARTY_LICENSES.md` must be regenerated from a complete registry
+   on the release machine (`scripts/generate-third-party-licenses.mjs` —
+   new crates: rcgen and its X.509 stack, all MIT OR Apache-2.0; hmac was
+   removed per E-4 and must not reappear).
