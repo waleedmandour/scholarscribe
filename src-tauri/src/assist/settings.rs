@@ -99,8 +99,9 @@ pub struct AssistState {
     pub rate: RateLimiter,
     /// Assist-surface audit log (see module docs).
     pub audit: AuditLog,
-    /// HMAC-chained ledger (Phase 3), attached when the feature is
-    /// enabled (the data dir is only known at the command layer).
+    /// Hash-chained ledger (Phase 3; E-4: no MAC, no local key), attached
+    /// when the feature is enabled (the data dir is only known at the
+    /// command layer).
     pub ledger: Mutex<Option<super::ledger::AssistLedger>>,
     /// Shared Ollama client for Tier 1.
     pub ollama: std::sync::Arc<crate::ollama::OllamaState>,
@@ -140,7 +141,7 @@ impl AssistState {
     }
 
     /// Attach the Phase 3 ledger (enable path). A ledger that fails to
-    /// open (broken chain, unreadable key) disables the feature: the
+    /// open (broken chain) disables the feature: the
     /// record is a commitment, and half-keeping it is worse than not
     /// keeping it.
     pub fn attach_ledger(&self, dir: &std::path::Path) -> Result<(), String> {

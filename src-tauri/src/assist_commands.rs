@@ -150,8 +150,8 @@ pub async fn word_assist_enable(
     *state.settings.lock().map_err(|e| e.to_string())? = Some(settings.clone());
 
     let dir = assist_data_dir(&app)?;
-    // The ledger is a commitment: if it cannot be opened (broken chain,
-    // unreadable key), the enable FAILS rather than running unrecorded.
+    // The ledger is a commitment: if it cannot be opened (broken chain),
+    // the enable FAILS rather than running unrecorded.
     state.attach_ledger(&dir)?;
     match crate::assist::server::start(settings, std::sync::Arc::clone(&state), dir).await {
         Ok(handle) => {

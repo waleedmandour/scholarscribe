@@ -65,10 +65,11 @@ tokio-rustls = { version = "0.26", optional = true, default-features = false, fe
 rustls = { version = "0.23", optional = true, default-features = false, features = ["ring", "logging", "std", "tls12"] }
 rustls-pki-types = { version = "1", optional = true }
 rcgen = { version = "0.14", optional = true }
-# Phase 3 ledger: HMAC-SHA256 chain over assist events (ruling D-2 approved
-# hmac for this phase; it has no transitive deps beyond digest, already in
-# the tree via sha2).
-hmac = { version = "0.12", optional = true }
+# NOTE (owner ruling E-4, 2026-10-23): the ledger is a plain SHA-256 hash
+# chain with the chain head signed at export via the provenance signing
+# path. hmac was briefly introduced for the ledger chain and REMOVED —
+# see docs/LEDGER_THREAT_MODEL.md for why a locally stored MAC key adds
+# nothing over the chain + export signature.
 
 # Pin time to a version compatible with cookie 0.18.1.
 # time 0.3.52 introduced a breaking change to Parsed::parse() (added a
@@ -94,5 +95,4 @@ word-assist = [
   "dep:rustls",
   "dep:rustls-pki-types",
   "dep:rcgen",
-  "dep:hmac",
 ]

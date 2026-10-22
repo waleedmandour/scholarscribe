@@ -1,36 +1,31 @@
 //! Word Assist ledger (Phase 3).
 //!
-//! An append-only, HMAC-chained JSONL record of what the assist surfaced
-//! and what the user accepted, following the PROVENANCE_SPEC §0.3/§11
-//! pattern: **hashes and counts, never text**. The ledger exists so the
-//! user can later show *that* assistance happened (and how much) — for a
-//! disclosure statement or an integrity conversation — without ever
+//! An append-only, SHA-256-hash-chained JSONL record of what the assist
+//! surfaced and what the user accepted, following the PROVENANCE_SPEC
+//! §0.3/§11 pattern: **hashes and counts, never text**. The ledger exists
+//! so the user can later show *that* assistance happened (and how much) —
+//! for a disclosure statement or an integrity conversation — without ever
 //! storing the manuscript content itself.
 //!
 //! - File: `<data>/word-assist/ledger.jsonl`, created on first append.
-//! - Key: a per-install 32-byte secret in the OS keychain
-//!   (`scholarscribe` / `word-assist-ledger-v1`), falling back to a 0600
-//!   file next to the ledger when the keychain is unavailable (disclosed
-//!   either way, same policy as the TLS key).
-//! - Chain: `hmac_n = HMAC-SHA256(key, canonical_entry_n || prev_hmac)`.
-//!   `verify()` walks the file and re-derives every link; a broken chain
-//!   is surfaced, never silently truncated.
+//! - Chain: `hash_n = SHA-256(canonical_entry_n)`, where the canonical
+//!   serialization *includes* `prev_hash` (genesis: all zeros). `verify()`
+//!   walks the file and re-derives every link; a broken chain is surfaced,
+//!   never silently truncated.
+//! - NO MAC, NO LOCAL KEY (owner ruling E-4, restated 2026-10-23): a key
+//!   stored on the same machine protects nothing against an adversary who
+//!   can already rewrite the file — see `docs/LEDGER_THREAT_MODEL.md`.
+//!   Tamper *evidence* comes from the chain; tamper *resistance* for an
+//!   exported snapshot comes from signing the chain head with the existing
+//!   provenance signing key at export time (the export surface itself is a
+//!   Phase 4 gate item — nothing signs at rest today).
 //! - The ledger only grows while the feature is enabled; disable() stops
 //!   writes but keeps the file (it is the user's record).
 
-use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use std::io::BufRead;
-#[allow(unused_imports)] // Write is used under cfg(unix) and in doc examples
-use std::io::Write as _;
-use std::path::{Path, PathBuf};
-
-type HmacSha256 = Hmac<Sha256>;
-
-const KEYCHAIN_SERVICE: &str = "scholarscribe";
-const KEYCHAIN_USER: &str = "word-assist-ledger-v1";
-const KEY_FILE: &str = "word-assist-ledger-key";
+use std::path::Path;
 
 /// One ledger row. Text-free by construction: paragraph ids are hashed,
 /// suggestions are counted, not stored.
@@ -54,12 +49,12 @@ pub struct LedgerEntry {
     pub replacement_len: usize,
     /// Pre-edit paragraph hash as reported by the add-in ("-" when absent).
     pub paragraph_text_hash: String,
-    /// HMAC of the previous entry (genesis: all zeros).
-    pub prev_hmac: String,
-    /// HMAC-SHA256 over the canonical serialization of this entry
-    /// (everything above, in field order, tab-joined) under the per-install
-    /// key.
-    pub hmac: String,
+    /// Hash of the previous entry (genesis: all zeros).
+    pub prev_hash: String,
+    /// SHA-256 over the canonical serialization of this entry (everything
+    /// above, in field order, tab-joined — `prev_hash` included, so each
+    /// link commits to its predecessor).
+    pub hash: String,
 }
 
 const GENESIS: &str = "0000000000000000000000000000000000000000000000000000000000000000";
@@ -79,99 +74,30 @@ pub fn canonical_entry(e: &LedgerEntry) -> String {
         e.applied_end,
         e.replacement_len,
         e.paragraph_text_hash,
-        e.prev_hmac,
+        e.prev_hash,
     )
 }
 
-fn compute_hmac(key: &[u8], e: &LedgerEntry) -> String {
-    let mut mac = HmacSha256::new_from_slice(key).expect("hmac key length");
-    mac.update(canonical_entry(e).as_bytes());
-    hex(&mac.finalize().into_bytes())
+fn compute_hash(e: &LedgerEntry) -> String {
+    let digest = Sha256::digest(canonical_entry(e).as_bytes());
+    hex(&digest)
 }
 
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// Load or create the per-install ledger key. Keychain first, 0600 file
-/// fallback (same disclosure policy as the TLS key).
-fn ensure_key(data_dir: &Path) -> Result<Vec<u8>, String> {
-    std::fs::create_dir_all(data_dir).map_err(|e| format!("create assist dir: {e}"))?;
-    let key_path = data_dir.join(KEY_FILE);
-    if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_USER) {
-        if let Ok(stored) = entry.get_password() {
-            if let Some(bytes) = unhex(stored.trim()) {
-                return Ok(bytes);
-            }
-        }
-    }
-    if key_path.exists() {
-        let stored =
-            std::fs::read_to_string(&key_path).map_err(|e| format!("read ledger key file: {e}"))?;
-        if let Some(bytes) = unhex(stored.trim()) {
-            return Ok(bytes);
-        }
-        return Err("ledger key file is corrupt".into());
-    }
-    let mut key = vec![0u8; 32];
-    super::scheduler::rand_compat::fill_random_bytes(&mut key);
-    let hexkey = hex(&key);
-    let stored_in_keychain = match keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_USER) {
-        Ok(entry) => entry.set_password(&hexkey).is_ok(),
-        Err(_) => false,
-    };
-    if !stored_in_keychain {
-        use std::io::Write as _;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut f = std::fs::File::create(&key_path)
-                .map_err(|e| format!("create ledger key file: {e}"))?;
-            f.write_all(hexkey.as_bytes())
-                .map_err(|e| format!("write ledger key file: {e}"))?;
-            std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600))
-                .map_err(|e| format!("restrict ledger key file: {e}"))?;
-        }
-        #[cfg(not(unix))]
-        {
-            std::fs::write(&key_path, hexkey.as_bytes())
-                .map_err(|e| format!("write ledger key file: {e}"))?;
-        }
-    }
-    log::info!(
-        "Word Assist ledger key created (in {})",
-        if stored_in_keychain {
-            "OS keychain"
-        } else {
-            "app data (0600)"
-        }
-    );
-    Ok(key)
-}
-
-fn unhex(s: &str) -> Option<Vec<u8>> {
-    if s.len() % 2 != 0 || s.len() != 64 {
-        return None;
-    }
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
-        .collect()
-}
-
 /// The open ledger. Appends are serialized through the mutex by the caller
 /// (AssistState owns one instance behind a Mutex).
 pub struct AssistLedger {
-    path: PathBuf,
-    key: Vec<u8>,
+    path: std::path::PathBuf,
     next_seq: u64,
-    last_hmac: String,
+    last_hash: String,
     count: usize,
 }
 
 impl std::fmt::Debug for AssistLedger {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // The key is secret; never derive Debug over it.
         f.debug_struct("AssistLedger")
             .field("path", &self.path)
             .field("next_seq", &self.next_seq)
@@ -185,31 +111,30 @@ impl AssistLedger {
     /// file is fine; a present file is verified up front so a tampered
     /// ledger is reported at open time, not at the worst moment later.
     pub fn open(data_dir: &Path) -> Result<Self, String> {
-        let key = ensure_key(data_dir)?;
+        std::fs::create_dir_all(data_dir).map_err(|e| format!("create assist dir: {e}"))?;
         let path = data_dir.join("ledger.jsonl");
         let mut ledger = Self {
             path,
-            key,
             next_seq: 0,
-            last_hmac: GENESIS.to_string(),
+            last_hash: GENESIS.to_string(),
             count: 0,
         };
         if ledger.path.exists() {
             let (next, last, count) = ledger.scan_and_verify()?;
             ledger.next_seq = next;
-            ledger.last_hmac = last;
+            ledger.last_hash = last;
             ledger.count = count;
         }
         Ok(ledger)
     }
 
-    /// Read the whole file, verify the chain, return (next_seq, last_hmac,
+    /// Read the whole file, verify the chain, return (next_seq, last_hash,
     /// entry_count).
     fn scan_and_verify(&self) -> Result<(u64, String, usize), String> {
         let file = std::fs::File::open(&self.path).map_err(|e| format!("open ledger: {e}"))?;
         let reader = std::io::BufReader::new(file);
         let mut expected_prev = GENESIS.to_string();
-        let mut last_hmac = GENESIS.to_string();
+        let mut last_hash = GENESIS.to_string();
         let mut count = 0usize;
         for (line_no, line) in reader.lines().enumerate() {
             let line = line.map_err(|e| format!("read ledger: {e}"))?;
@@ -218,26 +143,26 @@ impl AssistLedger {
             }
             let entry: LedgerEntry = serde_json::from_str(&line)
                 .map_err(|e| format!("ledger line {}: {e}", line_no + 1))?;
-            if entry.prev_hmac != expected_prev {
+            if entry.prev_hash != expected_prev {
                 return Err(format!(
-                    "ledger chain broken at entry {} (sequence {}): prev_hmac mismatch",
+                    "ledger chain broken at entry {} (sequence {}): prev_hash mismatch",
                     line_no + 1,
                     entry.seq
                 ));
             }
-            let expect = compute_hmac(&self.key, &entry);
-            if expect != entry.hmac {
+            let expect = compute_hash(&entry);
+            if expect != entry.hash {
                 return Err(format!(
-                    "ledger chain broken at entry {} (sequence {}): hmac mismatch",
+                    "ledger chain broken at entry {} (sequence {}): hash mismatch",
                     line_no + 1,
                     entry.seq
                 ));
             }
-            expected_prev = entry.hmac.clone();
-            last_hmac = entry.hmac;
+            expected_prev = entry.hash.clone();
+            last_hash = entry.hash;
             count += 1;
         }
-        Ok((count as u64, last_hmac, count))
+        Ok((count as u64, last_hash, count))
     }
 
     /// Append one event. `paragraph_id` is hashed here so no call site can
@@ -276,10 +201,10 @@ impl AssistLedger {
             } else {
                 paragraph_text_hash.chars().take(12).collect()
             },
-            prev_hmac: self.last_hmac.clone(),
-            hmac: String::new(),
+            prev_hash: self.last_hash.clone(),
+            hash: String::new(),
         };
-        entry.hmac = compute_hmac(&self.key, &entry);
+        entry.hash = compute_hash(&entry);
 
         use std::io::Write as _;
         let mut file = std::fs::OpenOptions::new()
@@ -290,7 +215,7 @@ impl AssistLedger {
         let line = serde_json::to_string(&entry).map_err(|e| format!("serialize ledger: {e}"))?;
         writeln!(file, "{line}").map_err(|e| format!("append ledger: {e}"))?;
 
-        self.last_hmac = entry.hmac.clone();
+        self.last_hash = entry.hash.clone();
         self.next_seq += 1;
         self.count += 1;
         Ok(entry)
@@ -298,6 +223,14 @@ impl AssistLedger {
 
     pub fn count(&self) -> usize {
         self.count
+    }
+
+    /// The hash of the most recent entry (genesis zeros when empty). This
+    /// is the value a verifier pins when the chain head is signed at
+    /// export: an exported snapshot is evidence iff its head hash matches
+    /// a signature from the provenance signing key.
+    pub fn chain_head(&self) -> String {
+        self.last_hash.clone()
     }
 
     /// Aggregate view for the Disclosure Assistant pre-fill (counts only).
@@ -378,6 +311,8 @@ mod tests {
                 .append("rejected", "p1", "issue-3", "Other", "grammar", 0, 0, 0, "")
                 .expect("append 3");
             assert_eq!(ledger.count(), 3);
+            // The chain head is the last entry's hash, not the genesis value.
+            assert_ne!(ledger.chain_head(), super::GENESIS);
         }
         // Re-open: verification must pass and counting must continue.
         let mut ledger = AssistLedger::open(&dir).expect("reopen");
@@ -413,7 +348,7 @@ mod tests {
         let tampered = raw.replacen("\"issue-1\"", "\"issue-9\"", 1);
         std::fs::write(&path, tampered).expect("write");
         let err = AssistLedger::open(&dir).expect_err("tampered ledger must fail");
-        assert!(err.contains("hmac mismatch"), "got: {err}");
+        assert!(err.contains("hash mismatch"), "got: {err}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -432,11 +367,28 @@ mod tests {
             applied_end: 2,
             replacement_len: 2,
             paragraph_text_hash: "-".into(),
-            prev_hmac: super::GENESIS.into(),
-            hmac: String::new(),
+            prev_hash: super::GENESIS.into(),
+            hash: String::new(),
         };
         let c = canonical_entry(&e);
         assert_eq!(c.matches('\t').count(), 12);
         assert!(!c.contains("sentence text"));
+    }
+
+    #[test]
+    fn chain_links_commit_to_their_predecessor() {
+        // The second entry's canonical form must embed the first entry's
+        // hash — the property that makes the chain re-derivable.
+        let dir = tmpdir("links");
+        let mut ledger = AssistLedger::open(&dir).expect("open");
+        let first = ledger
+            .append("accepted", "p1", "i1", "R", "grammar", 0, 1, 2, "")
+            .expect("append 1");
+        let second = ledger
+            .append("accepted", "p2", "i2", "R", "grammar", 0, 1, 2, "")
+            .expect("append 2");
+        assert_eq!(second.prev_hash, first.hash);
+        assert_eq!(ledger.chain_head(), second.hash);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
