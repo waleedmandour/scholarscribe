@@ -266,14 +266,26 @@ async fn handle(
         _ => return Ok(error_response(StatusCode::BAD_REQUEST, "unexpected Host")),
     }
 
-    // /v1/* auth model (health is the only open route and leaks nothing
-    // beyond the engine version).
-    if path.starts_with("/v1/") && path != "/v1/health" {
+    // /v1/* auth model: health is open (it leaks the engine version and
+    // paired state only); pair is authenticated by the one-time pairing
+    // code; everything else needs Origin pin + bearer.
+    if route_requires_bearer(&path) {
         if let Err(msg) = check_origin(&req, &settings) {
             return Ok(error_response(StatusCode::FORBIDDEN, msg));
         }
         if let Err(msg) = check_bearer(&req, &state) {
             return Ok(error_response(StatusCode::UNAUTHORIZED, msg));
+        }
+    } else if path == "/v1/pair" {
+        // Pair skips the bearer but not the Origin pin: an unpaired client
+        // must be able to reach /v1/pair (that is the whole point of
+        // pairing), and the pairing code is the secret that authenticates
+        // it. Before this explicit branch the pair route demanded a bearer
+        // token no unpaired client can have, which made first-time pairing
+        // impossible. Same-origin GETs may omit Origin, which is why health
+        // (GET) stays outside both checks.
+        if let Err(msg) = check_origin(&req, &settings) {
+            return Ok(error_response(StatusCode::FORBIDDEN, msg));
         }
     }
 
@@ -312,6 +324,14 @@ async fn handle(
         _ => error_response(StatusCode::NOT_FOUND, "not found"),
     };
     Ok(resp)
+}
+
+/// Route classification for the /v1 auth model: health (version only)
+/// and pair (authenticated by the one-time pairing code) skip the bearer;
+/// everything else under /v1 requires it. Pair still goes through the
+/// Origin pin in `handle` — this predicate only decides the bearer step.
+fn route_requires_bearer(path: &str) -> bool {
+    path.starts_with("/v1/") && path != "/v1/health" && path != "/v1/pair"
 }
 
 fn check_origin(req: &Request<Incoming>, settings: &AssistSettings) -> Result<(), &'static str> {
@@ -387,7 +407,6 @@ async fn pair(req: Request<Incoming>, state: Arc<AssistState>) -> Response<RespB
                 body.len() as u64,
                 0,
             );
-            state.ledger_record("paired", "", "-", "-", "-", 0, 0, 0, "");
             json_response(StatusCode::OK, &serde_json::json!({ "token": token }))
         }
         Ok(false) => error_response(
@@ -596,7 +615,7 @@ async fn accepted(req: Request<Incoming>, state: Arc<AssistState>) -> Response<R
         return error_response(StatusCode::BAD_REQUEST, "malformed accepted payload");
     };
     // Hashes and counts, never text (PROVENANCE_SPEC §0.3). The audit
-    // trail feeds the Privacy Audit view; the HMAC-chained ledger (Phase
+    // trail feeds the Privacy Audit view; the hash-chained ledger (Phase
     // 3) is the user's own record of assistance for disclosures.
     state.ledger_record(
         "accepted",
@@ -797,5 +816,15 @@ mod tests {
     #[test]
     fn hex_round_trip() {
         assert_eq!(hex_encode(&[0x00, 0xff]), "00ff");
+    }
+
+    #[test]
+    fn pair_route_is_bearer_exempt_but_v1_routes_are_not() {
+        assert!(!super::route_requires_bearer("/v1/health"));
+        assert!(!super::route_requires_bearer("/v1/pair"));
+        assert!(super::route_requires_bearer("/v1/check"));
+        assert!(super::route_requires_bearer("/v1/accepted"));
+        assert!(!super::route_requires_bearer("/addin/taskpane.html"));
+        assert!(!super::route_requires_bearer("/v2/whatever"));
     }
 }
