@@ -136,3 +136,19 @@ jobs:
       - name: cargo check default build (feature stays opt-in)
         working-directory: src-tauri
         run: cargo check
+      # H7: the DEFAULT config must resolve neither feature-only crate.
+      # cargo tree -i exits non-zero when nothing matches, so success here
+      # means "not found". Deliberately NOT checking hyper/rustls: they
+      # are in the default tree through reqwest and Tauri.
+      - name: "default build excludes rcgen and x509-parser (H7)"
+        working-directory: src-tauri
+        run: |
+          if cargo tree -i rcgen; then
+            echo "::error::rcgen resolved in the DEFAULT build — the word-assist feature is leaking"
+            exit 1
+          fi
+          if cargo tree -i x509-parser; then
+            echo "::error::x509-parser resolved in the DEFAULT build — the word-assist feature is leaking"
+            exit 1
+          fi
+          echo "H7 OK: neither rcgen nor x509-parser resolves in the default config"
