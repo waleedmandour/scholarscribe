@@ -40,6 +40,31 @@
       "enforced_in_security_md": true
     },
     {
+      "host": "localhost:38080",
+      "class": "runtime-inbound",
+      "process": "scholarscribe",
+      "trigger": "Word Assist loopback listener (feature word-assist): serves the add-in pages and the /v1 check API to Word's task pane on this machine only. Port is user-configurable in the Word Assist settings; 38080 is the shipped default",
+      "opt_in": "yes; the listener starts only after the Word Assist disclosure dialog is accepted, and stops when the feature is disabled",
+      "sends_user_text": "never leaves the machine; text moves between Word and ScholarScribe over the loopback TLS connection",
+      "code": [
+        "src-tauri/src/assist/server.rs",
+        "src-tauri/src/assist_commands.rs"
+      ],
+      "enforced_in_security_md": true
+    },
+    {
+      "host": "appsforoffice.microsoft.com",
+      "class": "addin-webview",
+      "process": "word-addin (Word's webview, not the ScholarScribe process)",
+      "trigger": "The Word Assist task pane loads the office.js library from Microsoft's CDN. This is the add-in's single external fetch and it never carries document text (ruling D-6)",
+      "opt_in": "yes; disclosed in the Word Assist enable dialog and in the add-in's own footer",
+      "code": [
+        "word-addin/dist/taskpane.html",
+        "src-tauri/src/assist/server.rs (add-in CSP allowlist)"
+      ],
+      "enforced_in_security_md": true
+    },
+    {
       "host": "registry.ollama.ai",
       "class": "runtime-daemon",
       "process": "ollama-daemon",
@@ -323,6 +348,17 @@
       "opt_in": "user click",
       "code": [
         "src-tauri/src/document_stats.rs"
+      ],
+      "enforced_in_security_md": false
+    },
+    {
+      "host": "example.org",
+      "class": "parse-only",
+      "process": "none",
+      "trigger": "Test fixture string in the Word Assist validator tests (a URL the six-rule validator must refuse to alter); never fetched",
+      "opt_in": "n/a",
+      "code": [
+        "src-tauri/src/assist/validate.rs"
       ],
       "enforced_in_security_md": false
     }

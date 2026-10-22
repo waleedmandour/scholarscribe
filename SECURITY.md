@@ -32,6 +32,8 @@ ScholarScribe distinguishes **which process opens the connection**. Both classes
 | `https://www.googleapis.com/drive/v3` | Drive revision list and revision download | Only after the user explicitly connects a Google Doc (opt-in) |
 | `https://docs.google.com/feeds/download/documents/export/Export` | Fallback plain-text revision export | Only as a fallback in the same opt-in flow |
 | `http://127.0.0.1:{random port}` (inbound listener) | Loopback receiver for the OAuth redirect | Only during the same opt-in flow |
+| `https://localhost:38080` (inbound listener, 127.0.0.1 only; port user-configurable) | Word Assist loopback listener (feature `word-assist`): serves the add-in pages and the `/v1` check API to Word's task pane over TLS with a per-install self-signed certificate scoped to `localhost` | Only after the Word Assist disclosure dialog is accepted; one click stops it and wipes the pairing |
+| `https://appsforoffice.microsoft.com` (fetched by Word's webview, not by ScholarScribe) | The Word Assist task pane loads the office.js library from Microsoft's CDN; this fetch never carries document text | Only while the Word Assist pane is open in Word |
 
 **Connections made by the Ollama daemon at the user's request** (the app only tells the local daemon what to fetch; these hosts are contacted by the daemon, not by ScholarScribe):
 
@@ -61,6 +63,7 @@ The following are **not** security issues for this project:
 
 - Local Ollama client: `src-tauri/src/ollama.rs` and `src-tauri/src/abstract_generator.rs`
 - Google Docs bridge (the only outbound HTTPS besides Ollama): `src-tauri/src/google_docs_net.rs`, wired by `src-tauri/src/google_docs_commands.rs`
+- Word Assist loopback listener (inbound, opt-in): `src-tauri/src/assist/server.rs`, wired by `src-tauri/src/assist_commands.rs`; the add-in pages it serves live in `word-addin/dist/`
 - Tauri CSP restricting the webview to loopback Ollama: `src-tauri/tauri.conf.json`
 - Tauri capabilities: `src-tauri/capabilities/default.json` (only `core`, `dialog`, and `shell` defaults; no http or fs permissions)
 

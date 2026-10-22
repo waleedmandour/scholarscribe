@@ -9,6 +9,12 @@
 
 mod abstract_generator;
 mod appeal_letter;
+/// Word Assist pure engine (Phase 1a, feature `word-assist`). Public for
+/// the integration tests (`tests/assist_golden.rs`) and the 1b server
+/// layer; compiled out of the default build entirely.
+#[cfg(feature = "word-assist")]
+pub mod assist;
+mod assist_commands;
 mod audit;
 mod citation_manager;
 mod commands;
@@ -43,12 +49,27 @@ pub fn run() {
         .format_timestamp_secs()
         .init();
 
-    tauri::Builder::default()
+    // Word Assist shared state: managed only when the feature compiles in.
+    // The listener itself never starts here — it starts on the enable
+    // command, behind the UI's disclosure dialog (ruling 5).
+    #[cfg(feature = "word-assist")]
+    let assist_state = std::sync::Arc::new(assist::settings::AssistState::new(
+        std::sync::Arc::new(ollama::OllamaState::default()),
+    ));
+
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .manage(ollama::OllamaState::default())
         .manage(audit::AuditLog::default())
-        .manage(language_check::LanguageCheckState::default())
+        .manage(language_check::LanguageCheckState::default());
+
+    #[cfg(feature = "word-assist")]
+    let builder = builder
+        .manage(std::sync::Arc::clone(&assist_state))
+        .manage(assist_commands::AssistListener::default());
+
+    builder
         .setup(|app| {
             log::info!(
                 "ScholarScribe v{} starting up. All processing is local.",
@@ -140,6 +161,17 @@ pub fn run() {
             google_docs_commands::google_disconnect,
             google_docs_commands::google_import_doc,
             google_docs_commands::google_export_zip,
+            // Word Assist (feature/word-assist). The paths resolve in every
+            // build; without the feature the commands are stubs that report
+            // the feature is absent (see assist_commands.rs).
+            assist_commands::word_assist_enable,
+            assist_commands::word_assist_disable,
+            assist_commands::word_assist_status,
+            assist_commands::word_assist_new_pairing_code,
+            assist_commands::word_assist_audit,
+            assist_commands::word_assist_unpair,
+            assist_commands::word_assist_registration,
+            assist_commands::word_assist_disclosure_prefill,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");

@@ -52,6 +52,24 @@ getrandom = "0.2"
 # for the signing key seed and the Google OAuth refresh token.
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 
+# Word Assist (feature/word-assist) listener stack. hyper/hyper-util/
+# http-body-util/tokio-rustls/rustls/rustls-pki-types are ALREADY in
+# Cargo.lock as reqwest's transitive deps at these exact versions
+# (verified in recon §7); declaring them directly adds no crate. rcgen is
+# the one genuinely new dependency (owner ruling D-2, MIT OR Apache-2.0,
+# pure Rust). All optional: the default build pulls none of them.
+hyper = { version = "1", optional = true, default-features = false, features = ["http1", "server"] }
+hyper-util = { version = "0.1", optional = true, default-features = false, features = ["http1", "tokio"] }
+http-body-util = { version = "0.1", optional = true }
+tokio-rustls = { version = "0.26", optional = true, default-features = false, features = ["ring"] }
+rustls = { version = "0.23", optional = true, default-features = false, features = ["ring", "logging", "std", "tls12"] }
+rustls-pki-types = { version = "1", optional = true }
+rcgen = { version = "0.14", optional = true }
+# Phase 3 ledger: HMAC-SHA256 chain over assist events (ruling D-2 approved
+# hmac for this phase; it has no transitive deps beyond digest, already in
+# the tree via sha2).
+hmac = { version = "0.12", optional = true }
+
 # Pin time to a version compatible with cookie 0.18.1.
 # time 0.3.52 introduced a breaking change to Parsed::parse() (added a
 # required `defaults: Option<Parsed>` argument) in a patch release, which
@@ -63,3 +81,18 @@ time = { version = "=0.3.36", features = ["parsing", "formatting"] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+# Word Assist (feature/word-assist): as-you-type assist for Microsoft Word.
+# Off by default; every artifact of the feature is gated on this flag so the
+# default build stays byte-for-byte the pre-feature build. New crates
+# introduced by the feature: rcgen only (D-2); the rest is the in-tree
+# hyper/rustls stack (recon §7 option A).
+word-assist = [
+  "dep:hyper",
+  "dep:hyper-util",
+  "dep:http-body-util",
+  "dep:tokio-rustls",
+  "dep:rustls",
+  "dep:rustls-pki-types",
+  "dep:rcgen",
+  "dep:hmac",
+]
