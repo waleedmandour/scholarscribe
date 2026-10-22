@@ -1,0 +1,171 @@
+# ScholarScribe. Word Assist release workflow — DRAFT (v0.1 work order A5).
+#
+# NOT WIRED TO ANYTHING the owner has not seen: this file is additive, and
+# the owner reviews it before the first real tag push. The app's own
+# release.yml is untouched; its trigger (`v*`) cannot fire from a
+# word-assist tag.
+#
+# Trigger: tags word-assist-v* (default posture: word-assist-v0.1.0), or
+# workflow_dispatch with dry_run=true (default) — dry-run builds and
+# uploads ARTIFACTS ONLY, no release, no publish, proving the pipeline
+# before Stage C.
+#
+# Builds: Windows x64 + macOS arm64 + macOS x64 (native on macos-15-intel,
+# no cross-compile), all with --features word-assist, UNSIGNED (owner
+# default: no code signing; SmartScreen/Gatekeeper warnings are expected
+# and documented).
+#
+# Permissions: workflow-level read-only; `contents: write` exists ONLY on
+# the publish job, and only when dry_run is false.
+#
+# Assets: renamed with OS and architecture, plus SHA256SUMS and SBOMs
+# (CycloneDX for npm and cargo).
+
+name: Word Assist Release (draft)
+
+on:
+  push:
+    tags:
+      - "word-assist-v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build and upload artifacts only (no release)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  TAURI_CONFIG_OVERLAY: src-tauri/tauri.wordassist.conf.json
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+          - os: macos-latest
+            platform: macos
+            arch: arm64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable (pinned action)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-rel-wa-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-cargo-rel-wa-
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify frontend type-checks and add-in dist integrity
+        run: |
+          npm run check
+          npm test
+
+      - name: Build Tauri app with the word-assist feature (unsigned)
+        run: npm run tauri build -- --features word-assist --config ${{ env.TAURI_CONFIG_OVERLAY }}
+
+      - name: Stage renamed assets (OS + architecture in the name)
+        shell: bash
+        run: |
+          mkdir -p staging
+          # Tauri writes bundles under target/release/bundle. Copy every
+          # installer with a deterministic name; keep the original ext.
+          find src-tauri/target/release/bundle -type f \( -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 |
+            while IFS= read -r -d '' f; do
+              base=$(basename "$f")
+              ext="${base##*.}"
+              case "$base" in
+                *.app.tar.gz) ext="app.tar.gz" ;;
+              esac
+              cp "$f" "staging/Word-Assist-${GITHUB_REF_NAME#refs/tags/}-${{ matrix.platform }}-${{ matrix.arch }}.$ext"
+            done
+          ls -la staging/
+
+      - name: Generate cargo SBOM
+        working-directory: src-tauri
+        run: |
+          cargo install cargo-cyclonedx --locked --quiet
+          cargo cyclonedx --format json --features word-assist
+          mv ./scholarscribe.cdx.json ../staging/sbom-word-assist-${{ matrix.platform }}-${{ matrix.arch }}.cdx.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: word-assist-${{ matrix.platform }}-${{ matrix.arch }}
+          path: staging/
+          if-no-files-found: error
+
+  publish:
+    # Publishes ONLY on a tag push (never in dry-run). This is the single
+    # job holding contents: write.
+    if: startsWith(github.ref, 'refs/tags/word-assist-v') && inputs.dry_run != true
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: Generate npm SBOM (platform-independent, once)
+        run: |
+          npm ci --no-audit --no-fund
+          npx --yes @cyclonedx/cyclonedx-npm --omit dev --output-file artifacts/sbom-npm.cdx.json
+
+      - name: Compute SHA256SUMS
+        shell: bash
+        run: |
+          cd artifacts
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 |
+            xargs -0 sha256sum > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create the pre-release and upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Word Assist ${GITHUB_REF_NAME#refs/tags/} (Preview)" \
+            --notes "PREVIEW: Word Assist v0.1 release candidate assets. Unsigned build; see docs/RELEASE_PLAN_v0.1.md for what is and is not validated per platform. Windows SmartScreen / macOS Gatekeeper will warn because the binaries are unsigned." \
+            --prerelease
+          gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber
+
+      - name: Dry-run notice
+        if: inputs.dry_run == true
+        run: echo "::notice::Dry run: artifacts uploaded to this workflow run only; no release was created."
