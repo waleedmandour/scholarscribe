@@ -106,8 +106,9 @@ pub struct AssistState {
     pub clock: Arc<dyn Clock>,
     /// The sentence cache (Tier 0 + Tier 1 verdicts, hash-keyed).
     pub cache: SentenceCache,
-    /// Single-flight Tier 1 scheduler.
-    pub scheduler: super::scheduler::Scheduler,
+    /// Single-flight Tier 1 scheduler (Arc: spawned tasks outlive the
+    /// call and re-check currency for the stale-hash discard).
+    pub scheduler: Arc<super::scheduler::Scheduler>,
     /// Sliding-window request budget for the listener.
     pub rate: RateLimiter,
     /// Assist-surface audit log (see module docs).
@@ -530,13 +531,20 @@ impl AssistState {
             pair_rate: RateLimiter::new(PAIR_ROUTE_MAX, PAIR_ROUTE_WINDOW),
             clock,
             cache: SentenceCache::new(super::cache::DEFAULT_SENTENCE_CACHE_CAPACITY),
-            scheduler: super::scheduler::Scheduler::new(),
+            scheduler: Arc::new(super::scheduler::Scheduler::new()),
             rate: RateLimiter::new(RATE_MAX, RATE_WINDOW),
             audit: AuditLog::default(),
             ledger: Mutex::new(None),
             ollama,
             tier1_base_url_override: Mutex::new(None),
         }
+    }
+
+    /// Same as `new` with the default Ollama client. Exists so the E2E
+    /// integration tests (outside the crate) can build state without a
+    /// public handle on the private `ollama` module.
+    pub fn new_default() -> Self {
+        Self::new(std::sync::Arc::new(crate::ollama::OllamaState::default()))
     }
 
     /// Attach the token persistence layer (enable path). Immediately
@@ -850,7 +858,7 @@ mod tests {
     use std::time::Duration;
 
     fn test_state() -> AssistState {
-        AssistState::new(Arc::new(crate::ollama::OllamaState::default()))
+        AssistState::new_default()
     }
 
     /// Serializes the tests that touch the shared OS keychain entry, so

@@ -257,6 +257,11 @@ pub async fn start_with_limits(
     // to it. With an explicit port this is a no-op.
     settings.port = listener.local_addr().map_err(|e| e.to_string())?.port();
 
+    // The handler snapshots the session settings from the shared state
+    // (enable() sets them too; this keeps the resolved port coherent and
+    // lets the E2E harness drive start_with_limits directly).
+    *state.settings.lock().expect("settings lock") = Some(settings.clone());
+
     log::info!(
         "Word Assist listening on https://127.0.0.1:{0} (origin https://localhost:{0})",
         settings.port
@@ -707,6 +712,10 @@ async fn check(
                         state: Arc::clone(&state),
                     }),
                     model,
+                    // The scheduler owns the stale-hash discard (1b
+                    // ruling): a superseded result never reaches this
+                    // callback, so the cache can only ever see the
+                    // newest verdict.
                     move |raw| on_tier1_result(state_for_result, sentence_text, raw),
                 );
                 if !submitted {
@@ -752,6 +761,8 @@ async fn check(
 /// Cache update after a Tier 1 call: parse (rule 1), validate (rules 2-6),
 /// diff, store. Runs on the blocking pool thread; never panics into Word.
 fn on_tier1_result(state: Arc<AssistState>, sentence_text: String, raw: Result<String, String>) {
+    // The scheduler guarantees freshness: a superseded result is dropped
+    // there (Scheduler::stale_drops) and never reaches this function.
     let tier1 = match raw {
         Err(reason) => {
             state.ledger_record("failed", "", "tier1", "tier1", "-", 0, 0, 0, "");

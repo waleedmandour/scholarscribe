@@ -32,6 +32,9 @@ pub struct Scheduler {
     /// paragraph_id -> calls used so far (session-lifetime budget).
     budgets: Mutex<std::collections::HashMap<String, u32>>,
     budget_counter: AtomicU64,
+    /// Late results from superseded requests, discarded instead of
+    /// written to the cache (1b ruling "newest wins, stale-hash discard").
+    stale_drops: AtomicU64,
 }
 
 /// Cap of Tier 1 calls per paragraph per session (oscillation guard, R3).
@@ -43,15 +46,20 @@ impl Scheduler {
             in_flight: Mutex::new(None),
             budgets: Mutex::new(std::collections::HashMap::new()),
             budget_counter: AtomicU64::new(0),
+            stale_drops: AtomicU64::new(0),
         }
     }
 
     /// Submit a Tier 1 rewrite. Returns `true` when the call was started,
     /// `false` when it was refused (budget exhausted). Any previous
     /// in-flight call is aborted first: one in flight, newest wins.
+    /// Takes `&Arc<Self>` because the spawned task outlives the call and
+    /// must re-check the scheduler's current request when its result
+    /// lands (stale-hash discard); an owned Arc guarantees the scheduler
+    /// outlives the task in every configuration, tests included.
     #[allow(clippy::too_many_arguments)]
     pub fn submit(
-        &self,
+        self: &Arc<Self>,
         sentence_hash: String,
         sentence: String,
         _paragraph_id: String,
@@ -73,11 +81,24 @@ impl Scheduler {
         }
 
         let hash = sentence_hash.clone();
+        let task_hash = sentence_hash.clone();
+        let this = Arc::clone(self);
         let handle = tokio::task::spawn_blocking(move || {
             // The actual model call happens on the blocking pool; the
             // abort handles the "newest wins" cancellation.
             let result = caller.call(&model, &sentence);
-            on_result(result);
+            // 1b ruling — stale-hash discard: an aborted spawn_blocking
+            // task still runs to completion on its thread, so the ABORT
+            // alone cannot keep a superseded verdict out of the cache.
+            // Before invoking the callback, re-check that this request
+            // is still the current one; if a newer request replaced it,
+            // the result is counted and DROPPED (on_result never runs,
+            // so the cache is never touched with a stale verdict).
+            if this.current_hash().is_some_and(|h| h == task_hash) {
+                on_result(result);
+            } else {
+                this.stale_drops.fetch_add(1, Ordering::Relaxed);
+            }
         });
         *self.in_flight.lock().expect("scheduler lock") = Some((hash, handle.abort_handle()));
         true
@@ -87,6 +108,26 @@ impl Scheduler {
         if let Some((_, handle)) = self.in_flight.lock().expect("scheduler lock").take() {
             handle.abort();
         }
+    }
+
+    /// The sentence hash of the CURRENT (newest) request, if any. A
+    /// late-arriving result whose request hash no longer matches is STALE
+    /// and must be discarded, not written to the cache (1b ruling:
+    /// "newest wins, stale-hash discard"). An aborted `spawn_blocking`
+    /// task still runs to completion on its thread, so the discard check
+    /// — not the abort — is what keeps a superseded verdict out of the
+    /// cache.
+    pub fn current_hash(&self) -> Option<String> {
+        self.in_flight
+            .lock()
+            .expect("scheduler lock")
+            .as_ref()
+            .map(|(h, _)| h.clone())
+    }
+
+    /// How many late results have been discarded as stale.
+    pub fn stale_drops(&self) -> u64 {
+        self.stale_drops.load(Ordering::Relaxed)
     }
 
     pub fn is_busy(&self) -> bool {
@@ -246,7 +287,7 @@ mod tests {
     fn one_in_flight_newest_wins() {
         let rt = runtime();
         rt.block_on(async {
-            let sched = Scheduler::new();
+            let sched = Arc::new(Scheduler::new());
             let caller = Arc::new(SlowCaller {
                 calls: AtomicUsize::new(0),
             });
@@ -287,7 +328,7 @@ mod tests {
     fn budget_caps_calls() {
         let rt = runtime();
         rt.block_on(async {
-            let sched = Scheduler::new();
+            let sched = Arc::new(Scheduler::new());
             let caller = Arc::new(SlowCaller {
                 calls: AtomicUsize::new(0),
             });
