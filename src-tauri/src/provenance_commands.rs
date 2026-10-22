@@ -44,7 +44,7 @@ fn keyring_entry() -> Result<keyring::Entry, String> {
 }
 
 /// Load the signing key from the keychain, creating it on first use.
-fn load_or_create_signing_key() -> Result<SigningKey, String> {
+pub(crate) fn load_or_create_signing_key() -> Result<SigningKey, String> {
     let entry = keyring_entry()?;
     match entry.get_password() {
         Ok(seed_hex) => {

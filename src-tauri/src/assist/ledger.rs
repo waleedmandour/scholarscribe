@@ -228,13 +228,21 @@ impl AssistLedger {
     /// The hash of the most recent entry (genesis zeros when empty). This
     /// is the value a verifier pins when the chain head is signed at
     /// export: an exported snapshot is evidence iff its head hash matches
-    /// a signature from the provenance signing key.
+    /// a signature from the provenance signing key. (A3 integration: the
+    /// export signs this SHA-256 head; the pre-hardening HMAC pair form
+    /// is gone — hardening wins on the ledger scheme.)
     pub fn chain_head(&self) -> String {
         self.last_hash.clone()
     }
 
     /// Aggregate view for the Disclosure Assistant pre-fill (counts only).
+    /// An absent ledger file is an empty record, not an error — a fresh
+    /// install must be able to open the Disclosure Assistant (found via
+    /// A3's export tests).
     pub fn aggregate(&self) -> Result<LedgerAggregate, String> {
+        if !self.path.exists() {
+            return Ok(LedgerAggregate::default());
+        }
         let file = std::fs::File::open(&self.path).map_err(|e| format!("open ledger: {e}"))?;
         let reader = std::io::BufReader::new(file);
         let mut agg = LedgerAggregate::default();
@@ -268,7 +276,7 @@ impl AssistLedger {
 }
 
 /// Counts-only aggregate (PROVENANCE_SPEC §0.3: numbers, never text).
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct LedgerAggregate {
     pub accepted: u64,
     pub rejected: u64,

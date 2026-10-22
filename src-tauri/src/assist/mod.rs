@@ -31,6 +31,7 @@ pub mod cache;
 pub mod diff;
 pub mod engine;
 pub mod eval;
+pub mod export;
 pub mod ledger;
 pub mod mask;
 pub mod offsets;

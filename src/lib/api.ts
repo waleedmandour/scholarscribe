@@ -619,6 +619,10 @@ export const api = {
   wordAssistRegistration: () => invoke<WaRegistration>("word_assist_registration"),
   wordAssistExportManifest: (path: string) =>
     invoke<string>("word_assist_export_manifest", { path }),
+  wordAssistLedgerExport: (path: string) =>
+    invoke<string>("word_assist_ledger_export", { path }),
+  wordAssistLedgerVerifyExport: (path: string) =>
+    invoke<string>("word_assist_ledger_verify_export", { path }),
   wordAssistDisclosurePrefill: () => invoke<WaDisclosurePrefill>("word_assist_disclosure_prefill"),
   persistenceEnable: () => invoke<void>("persistence_enable"),
   persistenceDisable: () => invoke<void>("persistence_disable"),

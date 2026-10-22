@@ -546,6 +546,34 @@ pub fn sign_manifest(m: &ProvenanceManifest, key: &SigningKey) -> String {
     format!("ed25519:{}", hex(&sig.to_bytes()))
 }
 
+/// Sign an arbitrary canonical payload with the given signing key.
+/// Returns the same `ed25519:{hex}` format as manifest signatures (A3:
+/// the language_assist.json export uses the provenance signing path so
+/// the same author key covers both documents).
+pub fn sign_payload(payload: &[u8], key: &SigningKey) -> String {
+    let sig = key.sign(payload);
+    format!("ed25519:{}", hex(&sig.to_bytes()))
+}
+
+/// Verify an arbitrary payload against an `ed25519:{hex}` signature
+/// string. Ok(true) when valid, Ok(false) when not, Err on malformed
+/// input (bad hex, wrong length).
+pub fn verify_payload(
+    payload: &[u8],
+    signature: &str,
+    verifying_key: &VerifyingKey,
+) -> Result<bool, String> {
+    let hex_sig = signature
+        .strip_prefix("ed25519:")
+        .ok_or("signature is not in ed25519:{hex} form")?;
+    let sig_bytes = decode_hex(hex_sig).map_err(|e| format!("bad signature hex: {e}"))?;
+    if sig_bytes.len() != 64 {
+        return Err("signature must be 64 bytes".into());
+    }
+    let sig = Signature::from_bytes(&sig_bytes.try_into().unwrap());
+    Ok(verifying_key.verify(payload, &sig).is_ok())
+}
+
 /// Verify a manifest's signature against the public key recorded in its own
 /// fingerprint (the caller passes the actual `VerifyingKey`; binding between
 /// fingerprint and key is checked by the caller via `key_fingerprint`).

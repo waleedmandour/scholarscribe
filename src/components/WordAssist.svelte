@@ -7,7 +7,7 @@
   // only external fetch the add-in itself makes is the office.js library
   // from Microsoft's CDN (it never carries document text).
   import { onMount } from "svelte";
-  import { save } from "@tauri-apps/plugin-dialog";
+  import { save, open } from "@tauri-apps/plugin-dialog";
   import PageHeader from "./PageHeader.svelte";
   import Icon from "./Icon.svelte";
   import { api } from "../lib/api";
@@ -229,6 +229,38 @@
     }
   }
 
+  async function exportLedger() {
+    error = "";
+    notice = "";
+    try {
+      const path = await save({
+        title: "Export signed assist ledger",
+        defaultPath: "language_assist.json",
+        filters: [{ name: "Signed ledger export", extensions: ["json"] }],
+      });
+      if (!path) return; // user cancelled
+      notice = await api.wordAssistLedgerExport(path);
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
+  async function verifyLedgerExport() {
+    error = "";
+    notice = "";
+    try {
+      const path = await open({
+        title: "Verify a language_assist.json export",
+        multiple: false,
+        filters: [{ name: "Signed ledger export", extensions: ["json"] }],
+      });
+      if (!path || Array.isArray(path)) return;
+      notice = await api.wordAssistLedgerVerifyExport(path);
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
   async function applySettings() {
     busy = true;
     error = "";
@@ -444,7 +476,19 @@
         <button class="btn secondary" on:click={() => copy(prefill!.note, "note")}>
           {copiedField === "note" ? "Copied" : "Copy sentence"}
         </button>
+        <button class="btn secondary" on:click={exportLedger}>
+          Export signed ledger…
+        </button>
+        <button class="btn secondary" on:click={verifyLedgerExport}>
+          Verify exported ledger…
+        </button>
       </div>
+      <p class="hint">
+        The export is a signed counts-and-hashes document
+        (language_assist.json) — no document text. It is signed with the
+        same device key as your provenance exports; the bundled HTML
+        verifier does not check this file (use “Verify exported ledger”).
+      </p>
     </section>
   {/if}
 

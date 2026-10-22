@@ -357,6 +357,56 @@ pub async fn word_assist_rotate_token(
     state.new_pairing_code()
 }
 
+/// Export the assist ledger aggregate + chain head as a signed
+/// `language_assist.json` (A3), signed through the existing provenance
+/// ed25519 key (OS keychain). Counts, hashes and keys only - never
+/// document text. The verifier limitation is stated inside the file
+/// itself (EXPORT_NOTE) and in the docs.
+#[cfg(feature = "word-assist")]
+#[tauri::command]
+pub async fn word_assist_ledger_export(app: AppHandle, path: String) -> Result<String, String> {
+    let dir = assist_data_dir(&app)?;
+    let key = crate::provenance_commands::load_or_create_signing_key()?;
+    let json = crate::assist::export::build_export(&dir, &key)?;
+    let target = std::path::PathBuf::from(&path);
+    if target.parent().map(|p| !p.exists()).unwrap_or(false) {
+        return Err("target folder does not exist".into());
+    }
+    std::fs::write(&target, json).map_err(|e| format!("write export: {e}"))?;
+    Ok(format!("signed ledger export written: {path}"))
+}
+
+/// Verify an exported `language_assist.json` (A3). Returns a human-
+/// readable verdict; the structured result is the bool (true = the
+/// embedded signature verifies against the embedded key).
+#[cfg(feature = "word-assist")]
+#[tauri::command]
+pub async fn word_assist_ledger_verify_export(path: String) -> Result<String, String> {
+    let bytes = std::fs::read_to_string(&path).map_err(|e| format!("read export: {e}"))?;
+    match crate::assist::export::verify_export(&bytes)? {
+        true => Ok(format!(
+            "VALID: {path} is signed by the key it embeds (fingerprint matches) and the bytes are unchanged since signing. Note: this does not re-derive the ledger chain; the exporting device holds the provenance signing key."
+        )),
+        false => Ok(format!(
+            "INVALID: {path} failed signature verification (the aggregate was altered after signing, or the signature does not belong to the embedded key)."
+        )),
+    }
+}
+
+/// Stub for builds without the feature.
+#[cfg(not(feature = "word-assist"))]
+#[tauri::command]
+pub async fn word_assist_ledger_export(_app: AppHandle, _path: String) -> Result<String, String> {
+    Err(feature_absent())
+}
+
+/// Stub for builds without the feature.
+#[cfg(not(feature = "word-assist"))]
+#[tauri::command]
+pub async fn word_assist_ledger_verify_export(_path: String) -> Result<String, String> {
+    Err(feature_absent())
+}
+
 /// Counts-only aggregate of the assist ledger for the Disclosure
 /// Assistant pre-fill (Phase 3). Numbers, never text.
 #[cfg(feature = "word-assist")]

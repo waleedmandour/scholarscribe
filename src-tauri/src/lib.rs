@@ -174,6 +174,8 @@ pub fn run() {
             assist_commands::word_assist_registration,
             assist_commands::word_assist_export_manifest,
             assist_commands::word_assist_disclosure_prefill,
+            assist_commands::word_assist_ledger_export,
+            assist_commands::word_assist_ledger_verify_export,
         ])
         .run(tauri::generate_context!())
         .expect("error while running ScholarScribe");
