@@ -226,6 +226,14 @@ export interface Settings {
   persistence_enabled: boolean;
   theme: string;
   version: string;
+  // Word Assist (feature/word-assist). Additive, optional on the wire:
+  // older settings.json files simply lack the keys.
+  word_assist_enabled?: boolean;
+  word_assist_port?: number;
+  word_assist_strictness?: string;
+  word_assist_tier1_enabled?: boolean;
+  word_assist_tier1_model?: string;
+  word_assist_experimental_languages?: Record<string, boolean>;
 }
 
 // v2.2.1 r5: Language Check types. The engine is harper-core, embedded in
@@ -601,6 +609,15 @@ export const api = {
   documentStats: (text: string) => invoke<DocStats>("document_stats", { text }),
   settingsGet: () => invoke<Settings>("settings_get"),
   settingsSet: (settings: Settings) => invoke<void>("settings_set", { settings }),
+  // Word Assist (feature/word-assist)
+  wordAssistStatus: () => invoke<WaStatus>("word_assist_status"),
+  wordAssistEnable: () => invoke<WaEnableOutcome>("word_assist_enable"),
+  wordAssistDisable: () => invoke<void>("word_assist_disable"),
+  wordAssistNewPairingCode: () => invoke<string>("word_assist_new_pairing_code"),
+  wordAssistAudit: () => invoke<WaAuditEntry[]>("word_assist_audit"),
+  wordAssistUnpair: () => invoke<void>("word_assist_unpair"),
+  wordAssistRegistration: () => invoke<WaRegistration>("word_assist_registration"),
+  wordAssistDisclosurePrefill: () => invoke<WaDisclosurePrefill>("word_assist_disclosure_prefill"),
   persistenceEnable: () => invoke<void>("persistence_enable"),
   persistenceDisable: () => invoke<void>("persistence_disable"),
   persistenceStatus: () => invoke<boolean>("persistence_status"),
@@ -983,5 +1000,52 @@ export interface GoogleImportAnalysis {
   document_hash: string;
   total_chars_added: number;
   total_chars_removed: number;
+  note: string;
+}
+
+// Word Assist (feature/word-assist). The listener runs inside the app on
+// 127.0.0.1; these wrappers only talk to the local Tauri bridge. See
+// src/components/WordAssist.svelte and docs/WORD_ASSIST_SPEC.md.
+
+export interface WaStatus {
+  running: boolean;
+  port: number;
+  paired: boolean;
+  strictness: string;
+  tier1_enabled: boolean;
+  engine: string;
+  pairing_active: boolean;
+  feature_compiled: boolean;
+}
+
+export interface WaEnableOutcome {
+  ok: boolean;
+  port: number;
+  error: string | null;
+}
+
+export interface WaAuditEntry {
+  timestamp: number;
+  kind: string;
+  target: string;
+  detail: string;
+}
+
+export interface WaRegistration {
+  manifest_url: string;
+  taskpane_url: string;
+  cert_path: string;
+  cert_pem: string;
+  instructions: string[];
+}
+
+export interface WaDisclosurePrefill {
+  accepted: number;
+  rejected: number;
+  sessions: number;
+  grammar: number;
+  spelling: number;
+  clarity: number;
+  rewrites: number;
   note: string;
 }

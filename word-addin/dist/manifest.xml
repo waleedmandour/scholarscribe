@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ScholarScribe Word Assist add-in manifest (production, Phase 2). -->
+<!-- Served by the ScholarScribe engine itself at /addin/manifest.xml so -->
+<!-- the SourceLocation always matches the configured port. HTTPS only: -->
+<!-- sideload requirements (experiment 4a) rule out http:// in shipping. -->
+<!-- {PORT} is substituted by the engine when the file is served; the file -->
+<!-- on disk always reads 38080 (the default). -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>3f4c8d61-9a27-4b5e-b2c8-01d3e5f7a9b4</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>ScholarScribe</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="ScholarScribe Word Assist"/>
+  <Description DefaultValue="As-you-type grammar and clarity assist for academic writing. Runs locally through ScholarScribe on this machine; your text never leaves your computer."/>
+  <IconUrl DefaultValue="https://localhost:{PORT}/addin/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:{PORT}/addin/icon-32.png"/>
+  <SupportUrl DefaultValue="https://github.com/waleedmandour/scholarscribe"/>
+  <AppDomains>
+    <AppDomain>https://localhost:{PORT}</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="WordApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:{PORT}/addin/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

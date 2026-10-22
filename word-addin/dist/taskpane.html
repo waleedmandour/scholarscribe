@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ScholarScribe Word Assist</title>
+  <!-- office.js from the Microsoft CDN: the single external fetch the -->
+  <!-- add-in ever makes, and it never carries document text (ruling 5, -->
+  <!-- class addin-webview in docs/NETWORK_SURFACE.json). -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" crossorigin="anonymous"></script>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: "Segoe UI", -apple-system, sans-serif;
+      font-size: 13px; margin: 0; color: #1a1a1a; background: #fafafa;
+    }
+    header { padding: 12px 14px; background: #23407a; color: #fff; }
+    header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+    header .sub { font-size: 11px; opacity: .85; margin-top: 2px; }
+    main { padding: 12px 14px; }
+    .status { padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
+    .status.ok { background: #e6f4e8; color: #1d5a26; }
+    .status.warn { background: #fdf3dd; color: #7a5a12; }
+    .status.err { background: #fbe9e7; color: #8a2c1d; }
+    .card { background: #fff; border: 1px solid #e3e3e3; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .card h2 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; color: #555; }
+    input[type=text] {
+      width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid #ccc;
+      border-radius: 6px; font-size: 15px; letter-spacing: .3em; text-transform: uppercase;
+    }
+    button {
+      font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid #23407a;
+      background: #23407a; color: #fff; cursor: pointer; margin-top: 8px;
+    }
+    button.secondary { background: #fff; color: #23407a; }
+    button:disabled { opacity: .5; cursor: default; }
+    .issue { border-top: 1px solid #eee; padding: 9px 0; }
+    .issue .cat { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #776; }
+    .issue .cat.grammar { color: #7a4b12; }
+    .issue .cat.spelling { color: #7a1212; }
+    .issue .cat.clarity { color: #125a7a; }
+    .issue .problem { font-weight: 600; margin: 3px 0; }
+    .issue .message { color: #444; margin-bottom: 6px; }
+    .chip {
+      display: inline-block; margin: 2px 4px 0 0; padding: 4px 9px; font-size: 12px;
+      background: #eef3fb; border: 1px solid #c6d5ee; border-radius: 999px; cursor: pointer;
+    }
+    .chip:hover { background: #dfe9f8; }
+    .chip.rewrite { background: #eef7ef; border-color: #bcdcc2; }
+    .tier1 { background: #f4f8f4; border-radius: 6px; padding: 7px 9px; margin-top: 6px; font-size: 12px; }
+    ul#log { font-size: 11px; color: #666; max-height: 130px; overflow-y: auto; padding-left: 18px; margin: 6px 0 0; }
+    .hidden { display: none; }
+    footer { padding: 8px 14px; font-size: 10px; color: #999; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ScholarScribe Word Assist</h1>
+    <div class="sub" id="sub">local, on this machine only</div>
+  </header>
+  <main>
+    <div id="status" class="status warn">Starting…</div>
+
+    <div id="pairingCard" class="card hidden">
+      <h2>Pair with ScholarScribe</h2>
+      <p>Open ScholarScribe → Word Assist tab, and enter the 6-character pairing code it shows.</p>
+      <input type="text" id="pairCode" maxlength="6" autocomplete="off" placeholder="●●●●●●" />
+      <div><button id="pairBtn">Pair</button></div>
+    </div>
+
+    <div id="fallbackCard" class="card hidden">
+      <h2>Suggestions (list mode)</h2>
+      <p class="message" style="color:#666;font-size:11px">
+        Word annotations are unavailable here, so suggestions appear as a list.
+        Use Apply to place the fix at the flagged position in the paragraph.
+      </p>
+      <div id="fallbackList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Diagnostics</h2>
+      <div id="caps">requirement sets: …</div>
+      <ul id="log"></ul>
+      <button id="recheckBtn" class="secondary">Re-check document</button>
+      <button id="unpairBtn" class="secondary hidden">Unpair</button>
+    </div>
+  </main>
+  <footer>ScholarScribe Word Assist · engine <span id="engineVersion">?</span> · text stays on this machine</footer>
+  <script src="taskpane.js"></script>
+</body>
+</html>

@@ -5,7 +5,7 @@
   import type { IconName } from "../lib/icons";
 
   type TabId =
-    | "models" | "cleaner" | "language" | "citations" | "stats" | "structure"
+    | "models" | "cleaner" | "language" | "wordassist" | "citations" | "stats" | "structure"
     | "abstract" | "risk" | "consistency" | "journal" | "appeal"
     | "fingerprint" | "coach" | "style" | "provenance" | "chat"
     | "disclosure" | "literacy" | "audit" | "saved" | "about";
@@ -50,6 +50,7 @@
       items: [
         { id: "cleaner", name: "Text Cleaner", desc: "Fix 24 PDF/OCR/web artifacts" },
         { id: "language", name: "Language Check", desc: "Offline spelling, grammar, style fixes" },
+        { id: "wordassist", name: "Word Assist", desc: "As-you-type feedback in Word (opt-in)" },
         { id: "coach",   name: "Writing Coach", desc: "Local-LLM paragraph coaching" },
         { id: "chat",    name: "Chat",          desc: "Local-only chat with guardrails" },
         { id: "abstract",name: "Abstract",      desc: "Generate a structured abstract" },

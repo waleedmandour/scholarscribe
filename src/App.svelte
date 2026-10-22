@@ -23,11 +23,12 @@
   import PrivacyAudit from "./components/PrivacyAudit.svelte";
   import SavedWork from "./components/SavedWork.svelte";
   import About from "./components/About.svelte";
+  import WordAssist from "./components/WordAssist.svelte";
   import WelcomeTour from "./components/WelcomeTour.svelte";
   import { api } from "./lib/api";
   import { openTour } from "./lib/onboarding";
 
-  type Tab = "models" | "cleaner" | "language" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about";
+  type Tab = "models" | "cleaner" | "language" | "citations" | "stats" | "structure" | "abstract" | "risk" | "consistency" | "journal" | "appeal" | "fingerprint" | "coach" | "style" | "provenance" | "chat" | "disclosure" | "literacy" | "audit" | "saved" | "about" | "wordassist";
   let active: Tab = "models";
   let ollamaOk = false;
   let checking = true;
@@ -95,6 +96,7 @@
     { id: "cleaner", label: "Text Cleaner", icon: "eraser", group: "Prepare the draft" },
     { id: "language", label: "Language Check", icon: "spellcheck", group: "Prepare the draft" },
     { id: "citations", label: "Citations", icon: "quote", group: "Prepare the draft" },
+    { id: "wordassist", label: "Word Assist", icon: "plug", group: "Prepare the draft" },
     // Understand the draft
     { id: "stats", label: "Stats", icon: "chart", group: "Understand the draft" },
     { id: "structure", label: "Structure", icon: "layers", group: "Understand the draft" },
@@ -274,6 +276,8 @@
       <AITextCleaner />
     {:else if active === "language"}
       <LanguageCheck />
+    {:else if active === "wordassist"}
+      <WordAssist />
     {:else if active === "citations"}
       <CitationManager />
     {:else if active === "stats"}
