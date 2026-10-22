@@ -116,6 +116,46 @@ impl NetLimits {
 
 pub const ADDIN_CSP: &str = "default-src 'none'; script-src 'self' https://appsforoffice.microsoft.com; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'";
 
+/// The add-in's ES-module files (A2), route → embedded bytes. taskpane.js
+/// is the entry; the rest are the pure-logic modules it imports. The table
+/// is the single source of truth for what the listener serves: a module
+/// added to word-addin/src must be added here (the dist-integrity CI check
+/// fails when a built module is missing from this table).
+static ADDIN_MODULE_FILES: &[(&str, &str)] = &[
+    (
+        "/addin/taskpane.js",
+        include_str!("../../../word-addin/dist/taskpane.js"),
+    ),
+    (
+        "/addin/core.js",
+        include_str!("../../../word-addin/dist/core.js"),
+    ),
+    (
+        "/addin/keys.js",
+        include_str!("../../../word-addin/dist/keys.js"),
+    ),
+    (
+        "/addin/timing.js",
+        include_str!("../../../word-addin/dist/timing.js"),
+    ),
+    (
+        "/addin/watermark.js",
+        include_str!("../../../word-addin/dist/watermark.js"),
+    ),
+    (
+        "/addin/apply.js",
+        include_str!("../../../word-addin/dist/apply.js"),
+    ),
+    (
+        "/addin/fallback.js",
+        include_str!("../../../word-addin/dist/fallback.js"),
+    ),
+    (
+        "/addin/errors.js",
+        include_str!("../../../word-addin/dist/errors.js"),
+    ),
+];
+
 fn json_response(status: StatusCode, value: &impl Serialize) -> Response<RespBody> {
     let body = serde_json::to_vec(value).unwrap_or_else(|_| b"{}".to_vec());
     let mut resp = body_response(hyper::body::Bytes::from(body));
@@ -439,13 +479,26 @@ async fn handle(
                 .to_vec(),
             Some(ADDIN_CSP),
         ),
-        (&hyper::Method::GET, "/addin/taskpane.js") => static_response(
-            "text/javascript; charset=utf-8",
-            include_str!("../../../word-addin/dist/taskpane.js")
-                .as_bytes()
-                .to_vec(),
-            None,
-        ),
+        // The add-in client compiles to ES modules (A2): taskpane.js plus
+        // one file per pure module. ESM is supported by every webview the
+        // add-in runs in (Windows: Edge WebView2/Chromium; macOS: Safari
+        // WKWebView; docs verified 2026-10-23). Only the files in the
+        // table exist; path variants fall through to the 404 arm.
+        (&hyper::Method::GET, path)
+            if ADDIN_MODULE_FILES.iter().any(|(route, _)| *route == path) =>
+        {
+            // include_str! needs literal paths, so the table maps each
+            // route to its embedded bytes; find the entry again here.
+            let idx = ADDIN_MODULE_FILES
+                .iter()
+                .position(|(route, _)| *route == path)
+                .expect("route matched the guard above");
+            static_response(
+                "text/javascript; charset=utf-8",
+                ADDIN_MODULE_FILES[idx].1.as_bytes().to_vec(),
+                None,
+            )
+        }
         (&hyper::Method::GET, "/addin/icon-32.png") => static_response(
             "image/png",
             include_bytes!("../../../word-addin/dist/icon-32.png").to_vec(),

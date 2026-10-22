@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "outDir": ".test-out",
+    "rootDir": ".",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "lib": ["ES2022"],
+    "types": [],
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": false,
+    "newLine": "LF"
+  },
+  "files": [
+    "src/office.d.ts",
+    "src/core.ts",
+    "src/keys.ts",
+    "src/timing.ts",
+    "src/watermark.ts",
+    "src/apply.ts",
+    "src/fallback.ts",
+    "src/errors.ts",
+    "test/node-shims.d.ts",
+    "test/office-mock.ts",
+    "test/offsets.test.ts",
+    "test/units.test.ts",
+    "test/apply.test.ts",
+    "test/flow.test.ts"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": [],
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": false,
+    "removeComments": false,
+    "declaration": false,
+    "newLine": "LF"
+  },
+  "files": [
+    "src/office.d.ts",
+    "src/core.ts",
+    "src/keys.ts",
+    "src/timing.ts",
+    "src/watermark.ts",
+    "src/apply.ts",
+    "src/fallback.ts",
+    "src/errors.ts",
+    "src/taskpane.ts"
+  ]
+}

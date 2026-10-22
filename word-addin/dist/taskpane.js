@@ -1,4 +1,4 @@
-// ScholarScribe Word Assist — production task pane client (Phase 2).
+// ScholarScribe Word Assist — production task pane client (A2 port).
 //
 // Serve model: this file is served BY the ScholarScribe engine from the
 // same origin as the /v1 API, so `window.location.origin` IS the engine
@@ -6,548 +6,565 @@
 // same-origin fetches; the only cross-origin resource is office.js itself
 // (CDN, never carries document text — ruling 5 / addin-webview class).
 //
-// Runtime requirements are probed, never assumed (recon V2/V5, spike
-// experiments (f)/(a)): WordApi 1.6 = onParagraphChanged, 1.7 =
-// annotations, 1.8 = popup actions. Anything missing degrades to list
-// mode; nothing hard-fails.
+// A2 structure: every pure decision (offsets, keys, debounce/stale
+// discard, suppression watermark, apply planning, mode selection, error
+// wording) lives in a dedicated module under word-addin/src/ and is unit-
+// tested with Node's test runner. This file is the only module that
+// touches Office.js, Word.js and the DOM, so the mock-driven tests cover
+// everything except the host calls themselves.
 //
-// Offset units: the engine speaks UTF-16 code units on the wire (JS string
-// semantics). The ADAPTER below is the single place that builds Word
-// annotation payloads, so if the owner's spike run (experiment (a)) shows
-// Word.Critique measures differently, only that helper changes.
+// Offset units: the engine speaks UTF-16 code units on the wire (JS
+// string semantics). The toCritique adapter below is the single place
+// that builds Word annotation payloads; its unit mode is the
+// OFFSET_UNIT_MODE constant in core.ts (spike (a) flips a config, not a
+// rewrite).
 //
-// TS users: this file is plain JavaScript with @ts-check + JSDoc (the
-// repo has no build step for the add-in; adding a bundler for one file
-// was rejected in favor of editor-time strictness — recorded in
-// docs/DECISIONS.md).
-// @ts-check
-"use strict";
-
-/** @typedef {{ id: string, category: "grammar"|"spelling"|"clarity", rule_id: string,
- *   start: number, end: number, start_utf16: number, end_utf16: number,
- *   problem_text: string, message: string,
- *   suggestions: Array<{kind: string, text?: string}> }} AssistIssue */
-/** @typedef {{ start: number, end: number, text: string,
- *   issues: AssistIssue[] }} Tier0Sentence */
-/** @typedef {{ sentences: Tier0Sentence[],
- *   language_status: {status: string, script?: string},
- *   tier1?: Array<any> }} CheckResponse */
-
+// Build: `npm run addin:build` (tsc, UMD, single file — word-addin/dist/
+// taskpane.js, byte-identical output for the same inputs; CI compares the
+// committed dist against a fresh build). TypeScript is already a repo
+// devDependency; no bundler was added (recorded in docs/DECISIONS.md).
+import { OffsetMap, OFFSET_UNIT_MODE } from "./core.js";
+import { paragraphKeyByPosition, paragraphFingerprint } from "./keys.js";
+import { Cooldown, Debouncer, Epoch, RepollBudget } from "./timing.js";
+import { Watermark } from "./watermark.js";
+import { planInlineEdit, planTier1Edits } from "./apply.js";
+import { capsLine, hasLiveWatching, selectMode, usesAnnotations, } from "./fallback.js";
+import { errorStatus, healthStatus, unsupportedLanguage } from "./errors.js";
+// ------------------------------------------------------------- constants
 const ENGINE_ORIGIN = window.location.origin; // served by the engine
-const DEBOUNCE_MS = 1200;        // typing quiet period before a check
-const REPOLL_MS = 1500;          // waiting for Tier 1 pending verdicts
-const REPOLL_MAX = 3;            // Tier 1 re-poll budget per check
-const SELF_EVENT_GRACE_MS = 2000;// suppression watermark window (C4)
-const CHECK_COOLDOWN_MS = 400;   // min gap between full-document checks
-
-const els = {
-  status: document.getElementById("status"),
-  pairingCard: document.getElementById("pairingCard"),
-  pairCode: document.getElementById("pairCode"),
-  pairBtn: document.getElementById("pairBtn"),
-  fallbackCard: document.getElementById("fallbackCard"),
-  fallbackList: document.getElementById("fallbackList"),
-  caps: document.getElementById("caps"),
-  log: document.getElementById("log"),
-  recheckBtn: document.getElementById("recheckBtn"),
-  unpairBtn: document.getElementById("unpairBtn"),
-  engineVersion: document.getElementById("engineVersion"),
-};
-
-/** @type {string | null} */ let token = null;
-/** @type {boolean} */ let annotationsOk = false;
-/** @type {boolean} */ let popupOk = false;
-/** @type {boolean} */ let paragraphEventsOk = false;
-/** @type {Map<string, string>} */ let lastKnownText = new Map(); // paraKey -> text
-/** @type {number | null} */ let debounceTimer = null;
-/** @type {boolean} */ let checking = false;
-/** @type {number} */ let lastCheckAt = 0;
-/** @type {Array<{start:number, end:number, kind:"self"}>} */ let watermark = [];
-/** @type {Array<{paraId:string, sentenceStart:number, issue:AssistIssue}>} */ let liveIssues = [];
-
-// ---------------------------------------------------------------- utils
-
-/** @param {string} msg */
+const DEBOUNCE_MS = 1200; // typing quiet period before a check
+const REPOLL_MS = 1500; // waiting for Tier 1 pending verdicts
+const REPOLL_MAX = 3; // Tier 1 re-poll budget per check
+const SELF_EVENT_GRACE_MS = 2000; // suppression watermark window
+const CHECK_COOLDOWN_MS = 400; // min gap between full-document checks
+const HEALTH_POLL_MS = 30000;
+/** Non-null typed element lookup; every id is guaranteed by
+ *  taskpane.html and checked once at boot (a missing element is a build
+ *  bug, not a runtime condition). */
+function requireEl(id) {
+    const el = document.getElementById(id);
+    if (el === null)
+        throw new Error("taskpane.html is missing element #" + id);
+    return el;
+}
+// ------------------------------------------------------------------ state
+let token = null;
+let mode = "manual-list";
+let checking = false;
+/** paragraph key → fingerprint (key + text hash); fingerprints map to the
+ *  text itself. Two entries per paragraph, one lookup each way. */
+const lastKnownText = new Map();
+const debounce = new Debouncer(DEBOUNCE_MS);
+const cooldown = new Cooldown(CHECK_COOLDOWN_MS);
+/** Epoch per paragraph: bumped whenever new text is observed, so a Tier 1
+ *  re-poll for text that has since changed is discarded, never rendered. */
+const paragraphEpoch = new Map();
+const watermark = new Watermark(SELF_EVENT_GRACE_MS);
+/** Issues still live in the pane, for popup-action correlation. */
+let liveIssues = [];
+// ----------------------------------------------------------------- utils
 function log(msg) {
-  const li = document.createElement("li");
-  li.textContent = new Date().toTimeString().slice(0, 8) + " " + msg;
-  els.log.appendChild(li);
-  while (els.log.childElementCount > 40) els.log.removeChild(els.log.firstChild);
+    const logEl = requireEl("log");
+    const li = document.createElement("li");
+    li.textContent = new Date().toTimeString().slice(0, 8) + " " + msg;
+    logEl.appendChild(li);
+    while (logEl.childElementCount > 40)
+        logEl.removeChild(logEl.firstChild);
 }
-
-/**
- * @param {"ok"|"warn"|"err"} kind
- * @param {string} msg
- */
-function setStatus(kind, msg) {
-  els.status.className = "status " + kind;
-  els.status.textContent = msg;
+function setStatus(state) {
+    const statusEl = requireEl("status");
+    statusEl.className = "status " + state.kind;
+    statusEl.textContent = state.message;
 }
-
-/** FNV-1a over a JS string (UTF-16 units) — cheap paragraph fingerprint. */
-function fnv1a(str) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16);
-}
-
-/** @returns {Promise<any>} parsed JSON or throws Error(message from body) */
+/** @returns parsed JSON or throws Error(message from body) */
 async function api(path, opts) {
-  const res = await fetch(ENGINE_ORIGIN + path, opts);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(body && body.error ? body.error : "HTTP " + res.status);
-  }
-  return body;
-}
-
-function authHeaders() {
-  return { Authorization: "Bearer " + (token || ""), "Content-Type": "application/json" };
-}
-
-// ---------------------------------------------------------------- pairing
-
-async function loadToken() {
-  try { token = window.localStorage.getItem("scholarscribe-assist-token"); } catch { token = null; }
-}
-
-async function pair(code) {
-  const body = await api("/v1/pair", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
-  token = body.token;
-  try { window.localStorage.setItem("scholarscribe-assist-token", token); } catch { /* private mode */ }
-  log("paired");
-  await refreshHealth();
-  startWatching();
-}
-
-// ---------------------------------------------------------------- health
-
-let healthTimer = null;
-async function refreshHealth() {
-  try {
-    const h = await api("/v1/health");
-    if (els.engineVersion) els.engineVersion.textContent = h.engine || "?";
-    if (!token) {
-      setStatus("warn", "Not paired. Enter the pairing code from ScholarScribe.");
-      els.pairingCard.classList.remove("hidden");
-      return;
+    const res = await fetch(ENGINE_ORIGIN + path, opts);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const err = body && typeof body === "object" && "error" in body
+            ? String(body.error)
+            : "HTTP " + res.status;
+        throw new Error(err);
     }
-    setStatus("ok", h.paired
-      ? "Connected to ScholarScribe (" + (h.strictness || "dev") + ")."
-      : "Paired session expired — pair again.");
-    els.pairingCard.classList.toggle("hidden", h.paired);
-    els.unpairBtn.classList.toggle("hidden", !h.paired);
-  } catch (e) {
-    setStatus("err", "ScholarScribe is not reachable (" + e.message + "). Is the app running with Word Assist enabled?");
-  }
+    return body;
 }
-
-// ---------------------------------------------------------------- caps
-
-function probeCapabilities() {
-  const supported = (v) => Office.context.requirements.isSetSupported("WordApi", v);
-  paragraphEventsOk = supported(1.6);
-  annotationsOk = supported(1.7);
-  popupOk = supported(1.8);
-  els.caps.textContent =
-    "WordApi 1.6 (paragraph events): " + (paragraphEventsOk ? "yes" : "NO") +
-    " · 1.7 (annotations): " + (annotationsOk ? "yes" : "NO — list mode") +
-    " · 1.8 (popup actions): " + (popupOk ? "yes" : "NO — list mode");
-  els.fallbackCard.classList.toggle("hidden", annotationsOk && popupOk);
-  log("caps probed");
+function authHeaders() {
+    return {
+        Authorization: "Bearer " + (token || ""),
+        "Content-Type": "application/json",
+    };
 }
-
+// --------------------------------------------------------------- pairing
+async function loadToken() {
+    try {
+        token = window.localStorage.getItem("scholarscribe-assist-token");
+    }
+    catch {
+        token = null; // private mode: pair per session
+    }
+}
+async function pair(code) {
+    const body = (await api("/v1/pair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+    }));
+    if (typeof body.token !== "string" || body.token.length === 0) {
+        throw new Error("engine returned no token");
+    }
+    token = body.token;
+    try {
+        window.localStorage.setItem("scholarscribe-assist-token", token);
+    }
+    catch {
+        /* private mode: session-only pairing */
+    }
+    log("paired");
+    await refreshHealth();
+    startWatching();
+}
+// ---------------------------------------------------------------- health
+async function refreshHealth() {
+    const engineVersionEl = document.getElementById("engineVersion");
+    try {
+        const h = (await api("/v1/health", {}));
+        if (engineVersionEl)
+            engineVersionEl.textContent = h.engine || "?";
+        const pairingCard = requireEl("pairingCard");
+        const unpairBtn = requireEl("unpairBtn");
+        if (!token) {
+            setStatus({ kind: "warn", message: "Not paired. Enter the pairing code from ScholarScribe." });
+            pairingCard.classList.remove("hidden");
+            return;
+        }
+        setStatus(healthStatus(h.paired === true, h.strictness));
+        pairingCard.classList.toggle("hidden", h.paired === true);
+        unpairBtn.classList.toggle("hidden", h.paired !== true);
+    }
+    catch (e) {
+        setStatus(errorStatus("health", e));
+    }
+}
 // ---------------------------------------------------------------- checks
-
-/** Whole-document check: enumerate paragraphs, hash, diff, POST. */
-async function checkDocument(force) {
-  if (!token || checking) return;
-  const now = Date.now();
-  if (!force && now - lastCheckAt < CHECK_COOLDOWN_MS) return;
-  lastCheckAt = now;
-  checking = true;
-  try {
-    await Word.run(async (ctx) => {
-      const paras = ctx.document.body.paragraphs;
-      paras.load("items");
-      await ctx.sync();
-      /** @type {string[]} */
-      const texts = [];
-      for (const p of paras.items) {
-        const t = p.insertText("", "End"); // no-op trick is fragile; use p.text
-        texts.push(p.text || "");
-      }
-      await ctx.sync();
-      // For each paragraph whose text changed since last known, check it.
-      for (let i = 0; i < paras.items.length; i++) {
-        const text = texts[i] || "";
-        const key = "p" + i;
-        const prev = lastKnownText.get(key);
-        if (prev === text) continue;
-        lastKnownText.set(key, text);
-        if (text.trim().length === 0) continue;
-        await checkParagraph(key, text);
-      }
-    });
-  } catch (e) {
-    log("check failed: " + e.message);
-  } finally {
-    checking = false;
-  }
+function epochFor(paragraphId) {
+    let e = paragraphEpoch.get(paragraphId);
+    if (!e) {
+        e = new Epoch();
+        paragraphEpoch.set(paragraphId, e);
+    }
+    return e;
 }
-
+/** Whole-document check: enumerate paragraphs, fingerprint, POST changed. */
+async function checkDocument(force) {
+    if (!token || checking)
+        return;
+    const now = Date.now();
+    if (!force && !cooldown.admit(now))
+        return;
+    checking = true;
+    try {
+        await Word.run(async (ctx) => {
+            const paras = ctx.document.body.paragraphs;
+            paras.load("items");
+            await ctx.sync();
+            for (let i = 0; i < paras.items.length; i++) {
+                const text = paras.items[i]?.text || "";
+                const key = paragraphKeyByPosition(i);
+                const fingerprint = paragraphFingerprint(key, text);
+                // Skip unchanged paragraphs: the fingerprint carries key + text
+                // hash, so a paragraph reordering is observed, not silently
+                // matched by position.
+                if (lastKnownText.get("k:" + key) === fingerprint)
+                    continue;
+                lastKnownText.set("k:" + key, fingerprint);
+                lastKnownText.set(fingerprint, text);
+                if (text.trim().length === 0)
+                    continue;
+                await checkParagraph(key, text);
+            }
+        });
+    }
+    catch (e) {
+        log(errorStatus("check", e).message);
+    }
+    finally {
+        checking = false;
+    }
+}
+/** Remember post-edit text so the next fingerprint diff sees it. */
+function rememberText(paragraphId, text) {
+    const fingerprint = paragraphFingerprint(paragraphId, text);
+    lastKnownText.set("k:" + paragraphId, fingerprint);
+    lastKnownText.set(fingerprint, text);
+}
+/** The paragraph text behind the most recent observation. */
+function lastKnownTextFor(paragraphId) {
+    const fingerprint = lastKnownText.get("k:" + paragraphId);
+    return fingerprint ? lastKnownText.get(fingerprint) || "" : "";
+}
 /** POST one paragraph; render tier0 + tier1 verdicts. */
 async function checkParagraph(paragraphId, text) {
-  /** @type {CheckResponse} */
-  const resp = await api("/v1/check", {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ paragraph_id: paragraphId, text, has_focus: true }),
-  });
-  liveIssues = liveIssues.filter((li) => li.paraId !== paragraphId);
-
-  if (resp.language_status && resp.language_status.status === "unsupported") {
-    setStatus("warn", "Language not supported yet (" + (resp.language_status.script || "?") +
-      "). You can enable it experimentally in ScholarScribe → Word Assist.");
-    return;
-  }
-
-  /** @type {AssistIssue[]} */
-  const issues = [];
-  for (const s of resp.sentences || []) {
-    for (const issue of s.issues) {
-      issues.push(issue);
-      liveIssues.push({ paraId: paragraphId, sentenceStart: s.start, issue });
+    const seen = epochFor(paragraphId).bump();
+    const resp = (await api("/v1/check", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ paragraph_id: paragraphId, text, has_focus: true }),
+    }));
+    // Stale discard: if the paragraph changed (or another check for it
+    // started) while this request was in flight, drop the result.
+    if (!epochFor(paragraphId).isCurrent(seen)) {
+        log("stale result discarded for " + paragraphId);
+        return;
     }
-    const t1 = s.tier1;
-    if (t1 && t1.state === "ready") renderTier1(paragraphId, s, t1);
-  }
-
-  if (annotationsOk && popupOk) {
-    await renderAnnotations(paragraphId, issues);
-  } else {
-    renderFallback(paragraphId, issues);
-  }
-
-  const pending = (resp.sentences || []).some((s) => s.tier1 && s.tier1.state === "pending");
-  if (pending) {
-    setTimeout(() => repoll(paragraphId, text), REPOLL_MS);
-  }
+    liveIssues = liveIssues.filter((li) => li.paraId !== paragraphId);
+    if (resp.language_status && resp.language_status.status === "unsupported") {
+        setStatus(unsupportedLanguage(resp.language_status.script));
+        return;
+    }
+    const issues = [];
+    const budget = new RepollBudget(REPOLL_MAX, REPOLL_MS);
+    let pending = false;
+    for (const s of resp.sentences || []) {
+        for (const issue of s.issues) {
+            issues.push(issue);
+            liveIssues.push({ paraId: paragraphId, sentenceStart: s.start, issue });
+        }
+        const t1 = s.tier1;
+        if (t1 && t1.state === "ready" && t1.suggestion) {
+            renderTier1(paragraphId, s.start, { ...t1, state: "ready" });
+        }
+        if (t1 && t1.state === "pending")
+            pending = true;
+    }
+    if (usesAnnotations(mode)) {
+        await renderAnnotations(paragraphId, issues);
+    }
+    else {
+        renderFallback(paragraphId, issues);
+    }
+    if (pending) {
+        const delay = budget.admit();
+        if (delay !== null) {
+            setTimeout(() => {
+                repoll(paragraphId, text).catch(() => {
+                    /* logged inside */
+                });
+            }, delay);
+        }
+        else {
+            log("Tier 1 still pending after " + REPOLL_MAX + " re-polls; surfaces on the next check");
+        }
+    }
 }
-
-/** Re-post the same paragraph to pick up Tier 1 verdicts (cheap: tier0 is cached server-side). */
+/** Re-post the same paragraph to pick up Tier 1 verdicts (tier0 is cached
+ *  server-side). The re-poll re-bumps the epoch through checkParagraph,
+ *  so only the newest observation can render. */
 async function repoll(paragraphId, text) {
-  if (!token) return;
-  try {
-    await checkParagraph(paragraphId, text);
-  } catch (e) {
-    log("re-poll failed: " + e.message);
-  }
+    if (!token)
+        return;
+    try {
+        await checkParagraph(paragraphId, text);
+    }
+    catch (e) {
+        log(errorStatus("repoll", e).message);
+    }
 }
-
 // ------------------------------------------------- annotations (1.7/1.8)
-
 /**
  * ADAPTER: builds the Word.Critique payload for one issue (spike-verified
- * shape: { start, length, colorScheme, popupOptions? }). start/length are
- * UTF-16 code units relative to the PARAGRAPH start (JS semantics); if the
- * owner's spike report (experiment (a)) proves Word measures differently,
- * this is the only function that changes.
+ * shape: { start, length, colorScheme, popupOptions? }). Under the default
+ * OFFSET_UNIT_MODE="utf16", start/length are UTF-16 code units relative to
+ * the PARAGRAPH start (JS semantics); if the owner's spike report
+ * (experiment (a)) proves Word measures scalar values instead, flipping
+ * OFFSET_UNIT_MODE is the whole change.
  */
-function toCritique(issue, paragraphBase) {
-  const start = paragraphBase + issue.start_utf16;
-  /** @type {any} */
-  const critique = {
-    start,
-    length: issue.end_utf16 - issue.start_utf16,
-    colorScheme: issue.category === "grammar" ? "Red" : "Blue",
-  };
-  if (popupOk) {
-    critique.popupOptions = {
-      suggestions: (issue.suggestions || [])
-        .filter((s) => s.kind !== "remove")
-        .map((s) => s.text || "")
-        .filter((t) => t.length > 0)
-        .slice(0, 3),
+function toCritique(issue, paragraphText, popupOk) {
+    let start = issue.start_utf16;
+    let length = issue.end_utf16 - issue.start_utf16;
+    if (OFFSET_UNIT_MODE === "scalar") {
+        const map = new OffsetMap(paragraphText);
+        start = map.scalarToUtf16(issue.start);
+        length = map.scalarToUtf16(issue.end) - map.scalarToUtf16(issue.start);
+    }
+    const critique = {
+        start,
+        length,
+        colorScheme: issue.category === "grammar" ? "Red" : "Blue",
     };
-  }
-  return critique;
+    if (popupOk) {
+        critique.popupOptions = {
+            suggestions: (issue.suggestions || [])
+                .filter((s) => s.kind !== "remove")
+                .map((s) => s.text || "")
+                .filter((t) => t.length > 0)
+                .slice(0, 3),
+        };
+    }
+    return critique;
 }
-
 /** Render issues as Word annotations (1.7). Any failure falls back to list mode. */
 async function renderAnnotations(paragraphId, issues) {
-  if (!issues.length) return;
-  const paraText = lastKnownText.get(paragraphId) || "";
-  try {
-    await Word.run(async (ctx) => {
-      const paras = ctx.document.body.paragraphs;
-      paras.load("items");
-      await ctx.sync();
-      for (const p of paras.items) {
-        if ((p.text || "") !== paraText) continue;
-        const critiques = issues.map((i) => toCritique(i, 0));
-        // Spike-verified call (experiment (c)/(j)): paragraph-scoped.
-        p.insertAnnotations(critiques);
-        await ctx.sync();
-        log("annotations rendered: " + critiques.length);
+    if (!issues.length)
         return;
-      }
-      log("paragraph not found for annotations; using list mode");
-      renderFallback(paragraphId, issues);
-    });
-  } catch (e) {
-    log("annotation render failed (" + e.message + "); using list mode");
-    renderFallback(paragraphId, issues);
-  }
+    const paraText = lastKnownTextFor(paragraphId);
+    try {
+        await Word.run(async (ctx) => {
+            const paras = ctx.document.body.paragraphs;
+            paras.load("items");
+            await ctx.sync();
+            for (const p of paras.items) {
+                if ((p.text || "") !== paraText)
+                    continue;
+                const critiques = issues.map((i) => toCritique(i, paraText, mode === "annotations"));
+                // Spike-verified call (experiments (c)/(j)): paragraph-scoped.
+                p.insertAnnotations(critiques);
+                await ctx.sync();
+                log("annotations rendered: " + critiques.length);
+                return;
+            }
+            log("paragraph not found for annotations; using list mode");
+            renderFallback(paragraphId, issues);
+        });
+    }
+    catch (e) {
+        log(errorStatus("annotation", e).message + "; using list mode");
+        renderFallback(paragraphId, issues);
+    }
 }
-
 /** Popup actions (1.8): apply the chosen suggestion, report, re-check. */
 async function attachPopupHandler() {
-  if (!popupOk) return;
-  try {
-    await Word.run(async (ctx) => {
-      await ctx.document.onAnnotationPopupAction.add(async (args) => {
-        log("popup action: " + JSON.stringify(args));
-        const li = liveIssues.find((x) => args && String(args.id).endsWith(x.issue.id));
-        const suggestion = args && args.critiqueSuggestion;
-        if (li && suggestion) {
-          await applyInlineEdit(li.paraId, li.issue, { kind: "replaceWith", text: String(suggestion) });
-        }
-      });
-      await ctx.sync();
-      log("popup handler attached");
-    });
-  } catch (e) {
-    log("popup handler unavailable (" + e.message + "); list mode stays available");
-  }
+    if (mode !== "annotations")
+        return;
+    try {
+        await Word.run(async (ctx) => {
+            ctx.document.onAnnotationPopupAction.add(async (args) => {
+                log("popup action: " + JSON.stringify(args));
+                const li = liveIssues.find((x) => args && String(args.id).endsWith(x.issue.id));
+                const suggestion = args && args.critiqueSuggestion;
+                if (li && suggestion) {
+                    await applyInlineEdit(li.paraId, li.issue, { kind: "replaceWith", text: suggestion });
+                }
+            });
+            await ctx.sync();
+            log("popup handler attached");
+        });
+    }
+    catch (e) {
+        log(errorStatus("annotation", e).message + "; list mode stays available");
+    }
 }
-
 // ------------------------------------------------------- fallback (list)
-
 function renderFallback(paragraphId, issues) {
-  els.fallbackList.textContent = "";
-  if (!issues.length) {
-    els.fallbackList.textContent = "No issues in the changed paragraph.";
-    return;
-  }
-  for (const issue of issues) {
-    const div = document.createElement("div");
-    div.className = "issue";
-    const cat = document.createElement("div");
-    cat.className = "cat " + issue.category;
-    cat.textContent = issue.category;
-    const problem = document.createElement("div");
-    problem.className = "problem";
-    problem.textContent = "“" + issue.problem_text + "”";
-    const msg = document.createElement("div");
-    msg.className = "message";
-    msg.textContent = issue.message;
-    div.appendChild(cat); div.appendChild(problem); div.appendChild(msg);
-    for (const sug of issue.suggestions || []) {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = sug.kind === "remove" ? "Remove" : (sug.text || "");
-      chip.onclick = () => applyInlineEdit(paragraphId, issue, sug);
-      div.appendChild(chip);
+    const listEl = requireEl("fallbackList");
+    listEl.textContent = "";
+    if (!issues.length) {
+        listEl.textContent = "No issues in the changed paragraph.";
+        return;
     }
-    els.fallbackList.appendChild(div);
-  }
-  els.fallbackCard.classList.remove("hidden");
+    for (const issue of issues) {
+        const div = document.createElement("div");
+        div.className = "issue";
+        const cat = document.createElement("div");
+        cat.className = "cat " + issue.category;
+        cat.textContent = issue.category;
+        const problem = document.createElement("div");
+        problem.className = "problem";
+        problem.textContent = "“" + issue.problem_text + "”";
+        const msg = document.createElement("div");
+        msg.className = "message";
+        msg.textContent = issue.message;
+        div.appendChild(cat);
+        div.appendChild(problem);
+        div.appendChild(msg);
+        for (const sug of issue.suggestions || []) {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            chip.textContent = sug.kind === "remove" ? "Remove" : sug.text || "";
+            chip.onclick = () => {
+                applyInlineEdit(paragraphId, issue, sug).catch((e) => log(errorStatus("apply", e).message));
+            };
+            div.appendChild(chip);
+        }
+        listEl.appendChild(div);
+    }
+    requireEl("fallbackCard").classList.remove("hidden");
 }
-
-/** List-mode apply: replace the flagged range inside the paragraph text. */
+/** List-mode apply: plan → write → watermark → report → re-check. */
 async function applyInlineEdit(paragraphId, issue, suggestion) {
-  const text = lastKnownText.get(paragraphId) || "";
-  const startU16 = issue.start_utf16;
-  const endU16 = issue.end_utf16;
-  const replacement = suggestion.kind === "remove" ? "" : (suggestion.text || "");
-  const next = text.slice(0, startU16) + replacement + text.slice(endU16);
-  watermark.push({ start: startU16, end: startU16 + replacement.length, at: Date.now(), kind: "self" });
-  try {
-    await Word.run(async (ctx) => {
-      // Find the paragraph by matching its current text, then rewrite it.
-      const paras = ctx.document.body.paragraphs;
-      paras.load("items");
-      await ctx.sync();
-      for (const p of paras.items) {
-        if ((p.text || "") === text) {
-          p.insertText(next, "Replace");
-          break;
-        }
-      }
-      await ctx.sync();
-    });
-    lastKnownText.set(paragraphId, next);
-    await api("/v1/accepted", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({
-        paragraph_id: paragraphId,
-        issue_id: issue.id,
-        rule_id: issue.rule_id,
-        category: issue.category,
-        applied_start: startU16,
-        applied_end: endU16,
-        replacement_len: replacement.length,
-        paragraph_text_hash: fnv1a(text),
-      }),
-    });
-    log("accepted: " + issue.id);
-    checkDocument(true);
-  } catch (e) {
-    log("apply failed: " + e.message);
-  }
-}
-
-// ------------------------------------------------------------- tier 1
-
-function renderTier1(paragraphId, sentence, t1) {
-  if (!t1.suggestion) return;
-  const sug = t1.suggestion;
-  const box = document.createElement("div");
-  box.className = "tier1";
-  const label = document.createElement("div");
-  label.textContent = "Rewrite available" + (sug.explanation ? " — " + sug.explanation : "");
-  const chip = document.createElement("span");
-  chip.className = "chip rewrite";
-  chip.textContent = "Apply rewrite";
-  chip.onclick = () => applyTier1Edits(paragraphId, sentence, sug);
-  box.appendChild(label);
-  box.appendChild(chip);
-  els.fallbackCard.classList.remove("hidden");
-  els.fallbackList.appendChild(box);
-}
-
-/** Apply a Tier 1 rewrite: right-to-left word edits, then re-check. */
-async function applyTier1Edits(paragraphId, sentence, sug) {
-  const paraText = lastKnownText.get(paragraphId) || "";
-  // Sentence-relative scalar edits → paragraph-relative UTF-16 edits.
-  const sentenceU16Start = paraText.slice(0, sentence.start).length;
-  const edits = (sug.edits || []).slice().sort((a, b) => b.start - a.start);
-  const map = new OffsetMap(paraText);
-  let next = paraText;
-  /** @type {Array<[number, number]>} */ let applied = [];
-  for (const e of edits) {
-    const s = sentenceU16Start + map.scalarToUtf16(e.start);
-    const en = sentenceU16Start + map.scalarToUtf16(e.end);
-    next = next.slice(0, s) + e.replacement + next.slice(en);
-    applied.push([s, s + e.replacement.length]);
-  }
-  watermark.push({ start: Math.min(...applied.map((a) => a[0]), Infinity), end: Math.max(...applied.map((a) => a[1]), 0), at: Date.now(), kind: "self" });
-  try {
-    await Word.run(async (ctx) => {
-      const paras = ctx.document.body.paragraphs;
-      paras.load("items");
-      await ctx.sync();
-      for (const p of paras.items) {
-        if ((p.text || "") === paraText) {
-          p.insertText(next, "Replace");
-          break;
-        }
-      }
-      await ctx.sync();
-    });
-    lastKnownText.set(paragraphId, next);
-    await api("/v1/accepted", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({
-        paragraph_id: paragraphId,
-        issue_id: "tier1:" + fnv1a(sug.original),
-        rule_id: "tier1",
-        category: "clarity",
-        applied_start: sentenceU16Start,
-        applied_end: sentenceU16Start + paraText.slice(sentence.start).length,
-        replacement_len: sug.revised.length,
-        paragraph_text_hash: fnv1a(paraText),
-      }),
-    });
-    checkDocument(true);
-  } catch (e) {
-    log("rewrite failed: " + e.message);
-  }
-}
-
-/** Minimal scalar→UTF-16 map (mirror of assist/offsets.rs). */
-class OffsetMap {
-  /** @param {string} text */
-  constructor(text) {
-    /** @type {number[]} */ this.prefix = [0];
-    let acc = 0;
-    for (const ch of text) {
-      const cp = ch.codePointAt(0) || 0;
-      acc += cp > 0xffff ? 2 : 1;
-      this.prefix.push(acc);
+    const text = lastKnownTextFor(paragraphId);
+    let planned;
+    try {
+        planned = planInlineEdit(paragraphId, text, issue, suggestion);
     }
-  }
-  /** @param {number} scalar */
-  scalarToUtf16(scalar) {
-    return this.prefix[Math.min(scalar, this.prefix.length - 1)];
-  }
-}
-
-// ------------------------------------------------------------- watching
-
-function scheduleCheck() {
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => checkDocument(false), DEBOUNCE_MS);
-}
-
-function isSelfEvent(rangeStart, rangeEnd) {
-  const now = Date.now();
-  watermark = watermark.filter((w) => now - w.at < SELF_EVENT_GRACE_MS);
-  return watermark.some((w) => rangeStart < w.end && rangeEnd > w.start);
-}
-
-async function startWatching() {
-  if (!paragraphEventsOk) {
-    log("paragraph events unavailable (WordApi 1.6); manual re-check only");
-    setStatus("ok", "Connected (manual mode: use Re-check).");
-    return;
-  }
-  Office.context.document.addHandlerAsync(
-    Office.EventType.DocumentParagraphChanged ?? "documentParagraphChanged",
-    () => scheduleCheck(),
-    (asyncResult) => {
-      if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
-        log("watching paragraph changes");
+    catch (e) {
+        // Stale offsets: never apply a wrong edit; surface and stop.
+        log(errorStatus("apply", e).message);
+        return;
+    }
+    watermark.push(planned.watermarkStart, planned.watermarkEnd, Date.now());
+    try {
+        await Word.run(async (ctx) => {
+            const paras = ctx.document.body.paragraphs;
+            paras.load("items");
+            await ctx.sync();
+            for (const p of paras.items) {
+                if ((p.text || "") === text) {
+                    p.insertText(planned.nextText, "Replace");
+                    break;
+                }
+            }
+            await ctx.sync();
+        });
+        rememberText(paragraphId, planned.nextText);
+        await api("/v1/accepted", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(planned.report),
+        });
+        log("accepted: " + issue.id);
         checkDocument(true);
-        attachPopupHandler();
-      } else {
-        log("could not attach paragraph listener: " + asyncResult.error.message);
-        setStatus("warn", "Connected, but live watching is unavailable. Use Re-check.");
-      }
     }
-  );
+    catch (e) {
+        log(errorStatus("apply", e).message);
+    }
 }
-
-// ---------------------------------------------------------------- boot
-
-Office.onReady(() => {
-  probeCapabilities();
-  loadToken().then(refreshHealth);
-  els.pairBtn.addEventListener("click", () => {
-    const code = (els.pairCode.value || "").trim().toUpperCase();
-    if (code.length !== 6) { setStatus("warn", "The pairing code is 6 characters."); return; }
-    els.pairBtn.disabled = true;
-    pair(code).catch((e) => {
-      setStatus("err", "Pairing failed: " + e.message);
-      els.pairBtn.disabled = false;
+function renderTier1(paragraphId, sentenceStart, t1) {
+    if (!t1.suggestion)
+        return;
+    const sug = t1.suggestion;
+    const box = document.createElement("div");
+    box.className = "tier1";
+    const label = document.createElement("div");
+    label.textContent = "Rewrite available" + (sug.explanation ? " — " + sug.explanation : "");
+    const chip = document.createElement("span");
+    chip.className = "chip rewrite";
+    chip.textContent = "Apply rewrite";
+    chip.onclick = () => {
+        applyTier1Edits(paragraphId, sentenceStart, sug).catch((e) => log(errorStatus("apply", e).message));
+    };
+    box.appendChild(label);
+    box.appendChild(chip);
+    requireEl("fallbackCard").classList.remove("hidden");
+    requireEl("fallbackList").appendChild(box);
+}
+/** Apply a Tier 1 rewrite: planned scalar→UTF-16 edits, then re-check. */
+async function applyTier1Edits(paragraphId, sentenceStartU16, sug) {
+    const paraText = lastKnownTextFor(paragraphId);
+    // Sentence-relative scalar edits → paragraph-relative UTF-16 edits.
+    // The sentence start arrives as a UTF-16 offset already (engine wire
+    // format), so the sentence text is the slice from there.
+    const sentenceText = paraText.slice(sentenceStartU16);
+    let planned;
+    try {
+        planned = planTier1Edits(paragraphId, paraText, sentenceStartU16, sentenceText, sug, new OffsetMap(sentenceText));
+    }
+    catch (e) {
+        log(errorStatus("apply", e).message);
+        return;
+    }
+    watermark.push(planned.watermarkStart, planned.watermarkEnd, Date.now());
+    try {
+        await Word.run(async (ctx) => {
+            const paras = ctx.document.body.paragraphs;
+            paras.load("items");
+            await ctx.sync();
+            for (const p of paras.items) {
+                if ((p.text || "") === paraText) {
+                    p.insertText(planned.nextText, "Replace");
+                    break;
+                }
+            }
+            await ctx.sync();
+        });
+        rememberText(paragraphId, planned.nextText);
+        await api("/v1/accepted", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(planned.report),
+        });
+        checkDocument(true);
+    }
+    catch (e) {
+        log(errorStatus("apply", e).message);
+    }
+}
+// ------------------------------------------------------------- watching
+function isSelfEvent(rangeStart, rangeEnd) {
+    return watermark.isSelfEvent(rangeStart, rangeEnd, Date.now());
+}
+async function startWatching() {
+    if (!hasLiveWatching(mode)) {
+        log("paragraph events unavailable (WordApi 1.6); manual re-check only");
+        setStatus({ kind: "ok", message: "Connected (manual mode: use Re-check)." });
+        return;
+    }
+    Office.context.document.addHandlerAsync(Office.EventType.DocumentParagraphChanged ?? "documentParagraphChanged", (args) => {
+        // Self-suppression: our own writes fire paragraph-changed too; a
+        // watermark overlap schedules nothing (the apply flow already
+        // re-checked with force=true).
+        const ev = args;
+        if (ev &&
+            typeof ev.start === "number" &&
+            typeof ev.end === "number" &&
+            isSelfEvent(ev.start, ev.end)) {
+            log("self event suppressed");
+            return;
+        }
+        debounce.schedule(() => {
+            checkDocument(false);
+        });
+    }, (asyncResult) => {
+        if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
+            log("watching paragraph changes");
+            checkDocument(true);
+            attachPopupHandler();
+        }
+        else {
+            log("could not attach paragraph listener: " + asyncResult.error.message);
+            setStatus(errorStatus("watch", new Error(asyncResult.error.message)));
+        }
     });
-  });
-  els.recheckBtn.addEventListener("click", () => checkDocument(true));
-  els.unpairBtn.addEventListener("click", async () => {
-    try { window.localStorage.removeItem("scholarscribe-assist-token"); } catch { /* ignore */ }
-    token = null;
-    els.unpairBtn.classList.add("hidden");
-    await refreshHealth();
-  });
-  setInterval(refreshHealth, 30000);
+}
+// ------------------------------------------------------------------ boot
+Office.onReady(() => {
+    const supported = (v) => Office.context.requirements.isSetSupported("WordApi", v);
+    const caps = {
+        paragraphEvents: supported(1.6),
+        annotations: supported(1.7),
+        popupActions: supported(1.8),
+    };
+    mode = selectMode(caps);
+    requireEl("caps").textContent = capsLine(caps);
+    requireEl("fallbackCard").classList.toggle("hidden", mode === "annotations");
+    log("mode: " + mode);
+    loadToken().then(refreshHealth);
+    const pairBtn = requireEl("pairBtn");
+    const pairCode = requireEl("pairCode");
+    pairBtn.addEventListener("click", () => {
+        const code = (pairCode.value || "").trim().toUpperCase();
+        if (code.length !== 6) {
+            setStatus({ kind: "warn", message: "The pairing code is 6 characters." });
+            return;
+        }
+        pairBtn.disabled = true;
+        pair(code).catch((e) => {
+            setStatus(errorStatus("pair", e));
+            pairBtn.disabled = false;
+        });
+    });
+    requireEl("recheckBtn").addEventListener("click", () => checkDocument(true));
+    requireEl("unpairBtn").addEventListener("click", async () => {
+        try {
+            window.localStorage.removeItem("scholarscribe-assist-token");
+        }
+        catch {
+            /* ignore */
+        }
+        token = null;
+        requireEl("unpairBtn").classList.add("hidden");
+        await refreshHealth();
+    });
+    setInterval(() => {
+        refreshHealth();
+    }, HEALTH_POLL_MS);
 });

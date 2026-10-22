@@ -1,0 +1,48 @@
+// ScholarScribe Word Assist — self-edit suppression watermark.
+//
+// When the add-in applies an edit, the paragraph-changed event that OUR
+// OWN write fires must not trigger another check (feedback loop) — that
+// is the suppression watermark, from the Phase 1b stale-discard ruling.
+// The watermark stores the UTF-16 ranges we recently wrote plus the wall
+// time; an incoming changed event is "self" when its range overlaps a
+// fresh watermark entry.
+//
+// Pure and clock-injectable: `now` is always a parameter.
+
+/** One range we recently wrote into the document. */
+export interface WatermarkRange {
+  start: number;
+  end: number;
+  at: number;
+}
+
+export class Watermark {
+  private entries: WatermarkRange[] = [];
+
+  constructor(private readonly graceMs: number) {}
+
+  /** Record a self-write covering [start, end) at time `now`. */
+  push(start: number, end: number, now: number): void {
+    this.entries.push({ start, end, at: now });
+  }
+
+  /** Drop entries older than the grace window (measured from `now`). */
+  private prune(now: number): void {
+    this.entries = this.entries.filter((w) => now - w.at < this.graceMs);
+  }
+
+  /** True when [start, end) overlaps any fresh self-write. */
+  isSelfEvent(start: number, end: number, now: number): boolean {
+    this.prune(now);
+    return this.entries.some((w) => start < w.end && end > w.start);
+  }
+
+  /** Test/teardown helper: forget everything. */
+  clear(): void {
+    this.entries = [];
+  }
+
+  get size(): number {
+    return this.entries.length;
+  }
+}
