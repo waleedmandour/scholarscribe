@@ -1,0 +1,2 @@
+7e7943fdbf8f4a859e002353f6b42d3129417f81ab0bc762d4cbdade5be584c5  docs/EVAL/heldout.schema.json
+717819165f3ad4704f724359c5516a964b1cc8d37e99621ddcb34020ea4b94fb  src-tauri/tests/assist/golden.json

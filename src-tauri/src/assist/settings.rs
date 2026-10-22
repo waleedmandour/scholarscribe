@@ -1076,21 +1076,23 @@ mod tests {
     /// coerced off (the "empty = last used chat model" shortcut is gone).
     #[test]
     fn tier1_requires_an_explicit_model_name() {
-        let mut s = crate::persistence::Settings::default();
-        s.word_assist_tier1_enabled = true;
-        s.word_assist_tier1_model = String::new();
-        let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
+        let build = |model: &str| crate::persistence::Settings {
+            word_assist_tier1_enabled: true,
+            word_assist_tier1_model: model.to_string(),
+            ..Default::default()
+        };
+
+        let resolved = super::AssistSettings::from_persisted(&build("")).expect("resolve");
         assert!(
             !resolved.tier1_enabled,
             "empty model must coerce Tier 1 OFF"
         );
         assert!(resolved.tier1_model.is_empty());
 
-        s.word_assist_tier1_model = "  ".into();
-        let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
+        let resolved = super::AssistSettings::from_persisted(&build("  ")).expect("resolve");
         assert!(!resolved.tier1_enabled, "whitespace model coerces OFF");
 
-        s.word_assist_tier1_model = "gemma3:4b".into();
+        let s = build("gemma3:4b");
         let resolved = super::AssistSettings::from_persisted(&s).expect("resolve");
         assert!(resolved.tier1_enabled, "named model keeps Tier 1 on");
         assert_eq!(resolved.tier1_model, "gemma3:4b");

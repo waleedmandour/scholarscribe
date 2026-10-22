@@ -152,3 +152,9 @@ jobs:
             exit 1
           fi
           echo "H7 OK: neither rcgen nor x509-parser resolves in the default config"
+      # Held-out freeze integrity (owner directive): every file in
+      # docs/EVAL/FROZEN.txt (the held-out schema + the golden smoke
+      # set; future data files get frozen by the owner per
+      # docs/EVAL/LABELLING_PROTOCOL.md rule 7) must be byte-identical.
+      - name: "eval freeze integrity (FROZEN.txt hashes must match)"
+        run: node scripts/check-eval-freeze.mjs

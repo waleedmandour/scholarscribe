@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scholarscribe-word-assist/heldout-set-v1",
+  "$comment": "Held-out evaluation set schema (hardening round, machinery only — the owner supplies or approves every sentence). One JSON object per line (JSONL). Offsets are Unicode scalar indices into the `text` field (the engine's canonical space; the assist engine's pub type ScalarOffset). Labels are written BEFORE any checker run (LABELLING_PROTOCOL.md rule 1).",
+  "title": "Held-out sentence",
+  "type": "object",
+  "required": ["id", "text", "category", "labels", "source", "license"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Stable sentence id, e.g. ho-0001. Never reused across versions of the set."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The sentence exactly as it should be fed to the checker. Trailing whitespace is significant and must match the source. Never include author-identifying content."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "plain",
+        "citation",
+        "number",
+        "latex",
+        "url",
+        "quote",
+        "mixed_protected",
+        "arabic",
+        "cjk",
+        "clean"
+      ],
+      "description": "The class the sentence belongs to (same classes as the golden smoke set)."
+    },
+    "labels": {
+      "type": "array",
+      "description": "The labelled errors in this sentence, written before any checker run. Empty for `clean` sentences.",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "category", "expected"],
+        "properties": {
+          "start": { "type": "integer", "minimum": 0, "description": "Scalar offset of the first character of the error." },
+          "end": { "type": "integer", "minimum": 0, "description": "Scalar offset one past the last character of the error (inclusive overlap matching)." },
+          "category": { "type": "string", "enum": ["grammar", "spelling", "clarity"], "description": "The engine category this error belongs to." },
+          "expected": { "type": "string", "description": "What a correct checker should flag here (short human note, e.g. 'subject-verb agreement')." }
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "description": "Where this sentence came from. Either 'owner' (written/approved by the owner) or a precise citation of a public dataset WITHOUT redistributing its text in the repo (the loader script fetches it locally)."
+    },
+    "license": {
+      "type": "string",
+      "description": "License of the sentence text. 'owner' for owner-written sentences. For public sets: the exact license name + whether commercial use is permitted. Non-commercial-licensed sentences may be scored locally but NEVER committed."
+    }
+  }
+}
