@@ -1,3 +1,48 @@
+## 2026-10-23 | word-assist | A7: held-out set mechanism shipped empty; golden v1 reclassified as SMOKE TEST; add-in client moves to TypeScript
+
+- **Decision (golden set):** `src-tauri/tests/assist/golden.json` (8 test
+  cases) is recorded as a **SMOKE TEST** — it pins engine behaviour
+  (determinism, protected-span handling, offset round-trips) and is never
+  precision evidence. v0.1's held-out evaluation set is NOT supplied
+  (owner default); `src-tauri/tests/eval/` ships the frozen-set mechanism
+  empty (schema in `docs/EVAL_PROTOCOL.md`, sha256 manifest + freeze
+  checks in `npm test` and `frozen_set_integrity`), the scoring tool
+  (per-category n/TP/FP/FN + Wilson 95% intervals, unit-tested in
+  `assist/eval.rs`), and the `#[ignore]` real-model run
+  (`WORD_ASSIST_EVAL_MODEL=… cargo test --features word-assist --test
+  eval_harness -- --ignored --nocapture`) whose stdout report must never
+  reach UI or docs without an owner decision. No third-party corpus is
+  vendored; sentences are owner-authored/approved with per-sentence
+  source and license fields.
+- **Decision (A2 supersession):** the add-in client is now TypeScript
+  strict compiled by the repo's existing `typescript` devDependency —
+  replacing the earlier "plain JS with @ts-check + JSDoc" choice —
+  because Node's built-in test runner against a hand-written Office.js
+  mock needs real modules, and `tsc` emits the dist with NO bundler and
+  NO new dependency (ES2020 modules served per-file by the listener;
+  ESM is supported by every webview the add-in runs in: Edge WebView2
+  and Safari WKWebView). The dist-integrity gate
+  (`scripts/check-addin-dist.mjs`) rebuilds and byte-compares the dist,
+  and the Rust listener fails its build if an embedded module file is
+  missing. The offset ADAPTER remains the single spike-(a) seam, now the
+  `OFFSET_UNIT_MODE` constant in `word-addin/src/core.ts`.
+- **Decision (A3):** the ledger export (`language_assist.json`) is signed
+  through the existing provenance ed25519 path (`sign_payload`), carries
+  counts + the HMAC chain head (which commits to every prior entry), and
+  states inside the file that the bundled HTML verifier does not check
+  it. No change to `verify.js`.
+- **Alternatives:** bundling the add-in with esbuild (rejected: new
+  dependency for one file); vendoring a public GEC corpus (rejected:
+  non-commercial terms unverified); shipping a held-out set authored by
+  the agent (rejected: sentences are owner-supplied by the work order).
+- **Consequence:** Stage B still owns the spike-dependent strategies
+  ((a) offset units, (b)/(j)/(k) popup semantics); the QA matrix
+  (`docs/QA_v0.1.md`) records actual observed behaviour per row; the
+  certificate model question (self-signed leaf vs the D-5 temporary CA)
+  remains an owner decision queued in `docs/RELEASE_PLAN_v0.1.md` §4.
+
+---
+
 ## 2026-10-22 | word-assist | Phases 1a-4 implemented on feature/word-assist (E-rulings applied)
 
 - **Decision:** Word Assist (feature `word-assist`, default-off) is implemented through Phase 4's documentation pass on `feature/word-assist`, applying the Phase 1a gate rulings: (E-1) the shipped strictness default is `dev` = Grammar on, Spelling off, Clarity off, marked provisional until the Phase 4 gate, and no golden-set precision figures appear in the UI or README; (D-4) Tier 0 reuses `language_check::Engine` via `build_engine`/`check_text` with the user's `language_check_rules` on top, protected spans use strategy S1 (lint original, drop intersecting lints) with S2 kept behind `MaskMode` for the Phase 4 arbitration; (D-3) port 38080 with one-time pairing codes (6 chars, unambiguous alphabet, 5-minute TTL, constant-time compares); (D-2) new dependencies are rcgen 0.14 (certificate) and hmac 0.12 (ledger chain) only, everything else reuses the in-tree hyper/tokio-rustls/rustls stack; (D-5/4c) the trust store is never written by the app - the registration command only shows the certificate and manual install steps; (D-6) `appsforoffice.microsoft.com` declared as the single `addin-webview` host; (D-1) CI gains a `word-assist-gates` job (fmt, clippy `-D warnings`, tests with the feature on, plus a default-build check) and the push trigger now includes `feature/word-assist`.

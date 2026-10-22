@@ -19,8 +19,9 @@
 //! canonical space). Precision = TP/(TP+FP), recall = TP/(TP+FN), each
 //! reported with a Wilson interval — never a bare percentage.
 
-/// One category row of the evaluation table.
-#[derive(Debug, Clone, PartialEq)]
+/// One category row of the evaluation table. (Integration: also reused by
+/// the Tier 1 harness report below, so it gained Default + Serialize.)
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize)]
 pub struct CategoryScore {
     pub category: String,
     /// labelled error spans scored in this category.
@@ -312,5 +313,365 @@ mod tests {
         );
         let (lo, hi) = wilson_interval_95(agg[0].tp, agg[0].tp + agg[0].fp);
         assert!((hi - 1.0).abs() < 1e-9 && lo > 0.3);
+    }
+}
+
+// =========================================================== Tier 1 harness
+//
+// A7 layer rebased onto the held-out scoring machinery above (integration
+// resolution: ONE eval module, ONE Wilson implementation — the hardening
+// round's `wilson_interval` / `CategoryScore` are the only ones; the
+// harness items below were renamed where they collided: Stage A's
+// `score_sentence` → `score_harness_sentence`, its `aggregate` →
+// `aggregate_classes`, and its duplicate `CategoryScore` was dropped in
+// favour of the one above (fields n/tp/fp/fn_count)).
+//
+// Mechanism only in v0.1. The owner has NOT supplied a held-out
+// evaluation set (v0.1 posture): this machinery exists so the moment a
+// set lands, one command produces the report. Nothing here writes
+// accuracy figures into the UI or docs — the report goes to stdout for
+// the owner's eyes, and the golden set in `tests/assist/golden.json` is
+// a SMOKE TEST, never precision evidence (DECISIONS 2026-10).
+//
+// Frozen set (owner-supplied, `src-tauri/tests/eval/sentences.jsonl`):
+// one JSON object per line, `EvalSentence` shape, annotated BEFORE any
+// checker runs (docs/EVAL_PROTOCOL.md). The freeze marker is
+// `docs/EVAL/FROZEN.txt`; `scripts/check-eval-freeze.mjs` is the single
+// freeze checker (npm + CI) — Stage A's uncommitted duplicate
+// `check-eval-frozen.mjs` was NOT resurrected.
+//
+// PRIVACY: the frozen set never contains manuscript text from real
+// documents — sentences are owner-authored or license-cleared with the
+// source recorded per sentence (annotation protocol).
+
+/// z value for the 95% Wilson interval (two-sided); same constant the
+/// survivor's `wilson_interval_95` inlines.
+pub const WILSON_Z_95: f64 = 1.959_963_984_540_054;
+
+/// One frozen, annotated sentence. `span` is the expected issue span in
+/// Unicode scalar offsets relative to `text` (engine space), `None` for
+/// a clean sentence (the harness scores a suggestion there as an FP).
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct EvalSentence {
+    pub id: String,
+    pub text: String,
+    /// Which category the annotation belongs to.
+    pub category: String, // "grammar" | "spelling" | "clarity"
+    /// true = the sentence contains the flagged issue; false = clean
+    /// (a "clean" sentence exists to measure false positives).
+    pub expect_issue: bool,
+    /// Optional expected span (scalar offsets, inclusive start, exclusive end).
+    #[serde(default)]
+    pub span: Option<(usize, usize)>,
+    /// Where the sentence came from (owner-authored, book, corpus name…).
+    pub source: String,
+    /// The license that allows its use here (annotation protocol).
+    pub license: String,
+}
+
+/// One harness run over the frozen set with a live (or mocked) model.
+/// `per_category` reuses the survivor's [`CategoryScore`] (n/tp/fp/fn_count).
+#[derive(Debug, Clone, Default, serde::Serialize)]
+pub struct EvalReport {
+    pub model: String,
+    pub sentences: usize,
+    pub per_category: Vec<CategoryScore>,
+    /// Requests whose revision was rejected by the validator, by rule id.
+    pub rejections_by_rule: std::collections::BTreeMap<u8, usize>,
+    /// Requests that produced a usable revision.
+    pub accepted: usize,
+    /// Requests that failed before validation (unparseable JSON counts
+    /// here: rule 1 rejections — kept separate for clarity).
+    pub schema_rejections: usize,
+    /// Latencies (ms) of all completed requests, sorted ascending.
+    pub latencies_ms: Vec<u128>,
+    /// Sentences where the model's revision changed protected content
+    /// (validator rules 2/3: removed or ADDED protected spans).
+    pub protected_span_changes: Vec<String>,
+    /// Wilson 95% intervals per category over precision (TP / (TP+FP)),
+    /// computed with the ONE Wilson implementation above.
+    pub precision_wilson: std::collections::BTreeMap<String, (f64, f64)>,
+}
+
+/// Classify one annotated sentence against a (possible) revision verdict.
+/// Returns (category, classification) where classification is
+/// "tp" | "fp" | "fn" | "tn". (Harness-layer classifier; the label-vs-
+/// issue scorer above is [`score_sentence`].)
+pub fn score_harness_sentence(
+    s: &EvalSentence,
+    suggestion_applied: bool,
+    overlap_with_span: bool,
+) -> (&'static str, &'static str) {
+    let class = if s.expect_issue {
+        if suggestion_applied && overlap_with_span {
+            "tp"
+        } else if suggestion_applied {
+            "fp" // changed something, not the annotated span
+        } else {
+            "fn" // missed the annotated issue
+        }
+    } else if suggestion_applied {
+        "fp" // "fixing" a clean sentence
+    } else {
+        "tn"
+    };
+    (category_bucket(&s.category), class)
+}
+
+/// Bucket name for the report; unknown categories keep their name so a
+/// frozen-set typo is VISIBLE in the report instead of silently dropped.
+fn category_bucket(category: &str) -> &'static str {
+    match category {
+        "grammar" => "grammar",
+        "spelling" => "spelling",
+        "clarity" => "clarity",
+        other => Box::leak(other.to_string().into_boxed_str()),
+    }
+}
+
+/// Aggregate per-sentence classifications into report rows.
+/// `rows` are (category, class) pairs from [`score_harness_sentence`].
+pub fn aggregate_classes(rows: &[(&str, &str)]) -> Vec<CategoryScore> {
+    let mut out: Vec<CategoryScore> = Vec::new();
+    for (category, class) in rows {
+        let entry = out.iter_mut().find(|c| c.category == *category);
+        let entry = match entry {
+            Some(e) => e,
+            None => {
+                out.push(CategoryScore {
+                    category: (*category).to_string(),
+                    ..Default::default()
+                });
+                out.last_mut().expect("just pushed")
+            }
+        };
+        entry.n += 1;
+        match *class {
+            "tp" => entry.tp += 1,
+            "fp" => entry.fp += 1,
+            "fn" => entry.fn_count += 1,
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Precision Wilson interval per category (TP over TP+FP), 95% level.
+pub fn precision_intervals(
+    scores: &[CategoryScore],
+) -> std::collections::BTreeMap<String, (f64, f64)> {
+    let mut out = std::collections::BTreeMap::new();
+    for s in scores {
+        let predicted_positive = s.tp + s.fp;
+        out.insert(
+            s.category.clone(),
+            wilson_interval(s.tp, predicted_positive, WILSON_Z_95),
+        );
+    }
+    out
+}
+
+/// p50 / p95 (nearest-rank) over sorted latencies in ms.
+pub fn percentiles(sorted_ms: &[u128]) -> (Option<u128>, Option<u128>) {
+    if sorted_ms.is_empty() {
+        return (None, None);
+    }
+    let p = |q: f64| -> u128 {
+        let idx = ((q * sorted_ms.len() as f64).ceil() as usize).clamp(1, sorted_ms.len());
+        sorted_ms[idx - 1]
+    };
+    (Some(p(0.50)), Some(p(0.95)))
+}
+
+#[cfg(test)]
+mod harness_tests {
+    use super::*;
+
+    #[test]
+    fn harness_scoring_matrix() {
+        let dirty = EvalSentence {
+            id: "s1".into(),
+            text: "The results indicates.".into(),
+            category: "grammar".into(),
+            expect_issue: true,
+            span: Some((4, 12)),
+            source: "owner-authored".into(),
+            license: "CC0".into(),
+        };
+        let clean = EvalSentence {
+            id: "s2".into(),
+            text: "The result indicates a trend.".into(),
+            category: "grammar".into(),
+            expect_issue: false,
+            span: None,
+            source: "owner-authored".into(),
+            license: "CC0".into(),
+        };
+        assert_eq!(score_harness_sentence(&dirty, true, true), ("grammar", "tp"));
+        assert_eq!(score_harness_sentence(&dirty, true, false), ("grammar", "fp"));
+        assert_eq!(score_harness_sentence(&dirty, false, false), ("grammar", "fn"));
+        assert_eq!(score_harness_sentence(&clean, true, false), ("grammar", "fp"));
+        assert_eq!(score_harness_sentence(&clean, false, false), ("grammar", "tn"));
+    }
+
+    #[test]
+    fn harness_aggregate_and_intervals() {
+        let rows = vec![
+            ("grammar", "tp"),
+            ("grammar", "tp"),
+            ("grammar", "fp"),
+            ("spelling", "fn"),
+            ("spelling", "tp"),
+        ];
+        let scores = aggregate_classes(&rows);
+        let g = scores.iter().find(|s| s.category == "grammar").unwrap();
+        assert_eq!((g.n, g.tp, g.fp), (3, 2, 1));
+        let intervals = precision_intervals(&scores);
+        // grammar precision = 2/3; the interval must not be a point value.
+        let (lo, hi) = intervals["grammar"];
+        assert!(lo < 2.0 / 3.0 && hi > 2.0 / 3.0 && lo < hi);
+    }
+
+    #[test]
+    fn percentiles_nearest_rank() {
+        assert_eq!(percentiles(&[]), (None, None));
+        let v: Vec<u128> = vec![10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        let (p50, p95) = percentiles(&v);
+        assert_eq!((p50, p95), (Some(50), Some(100)));
+    }
+}
+
+// --------------------------------------------------- real-model run (A7)
+//
+// Lives here (crate-internal) rather than in an integration test so the
+// private `ollama` module stays private. #[ignore]d: the owner runs it
+// locally against a real Ollama model; CI never runs it. Its results are
+// development measurements and never appear in docs (v0.1 posture).
+
+#[cfg(test)]
+mod real_model {
+    use super::*;
+    use crate::assist::engine::build_tier1_request;
+    use crate::assist::validate::validate_revision;
+    use crate::ollama::{base_url, chat_at, ChatMessage, ChatRequest, OllamaState};
+    use std::time::Instant;
+
+    const EVAL_DIR: &str = "tests/eval";
+    const SET_FILE: &str = "sentences.jsonl";
+    const MANIFEST_FILE: &str = "manifest.json";
+
+    fn eval_path(name: &str) -> std::path::PathBuf {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join(EVAL_DIR)
+            .join(name)
+    }
+
+    fn load_set() -> Result<Vec<EvalSentence>, String> {
+        let raw = std::fs::read_to_string(eval_path(SET_FILE))
+            .map_err(|e| format!("frozen set missing ({e}) — nothing to evaluate"))?;
+        let mut out = Vec::new();
+        for (i, line) in raw.lines().enumerate() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            let s: EvalSentence = serde_json::from_str(line)
+                .map_err(|e| format!("frozen set line {}: {e}", i + 1))?;
+            out.push(s);
+        }
+        Ok(out)
+    }
+
+    #[tokio::test]
+    #[ignore = "real-model eval: run locally with WORD_ASSIST_EVAL_MODEL set and a live Ollama; never run in CI"]
+    async fn real_model_eval() {
+        let model = std::env::var("WORD_ASSIST_EVAL_MODEL")
+            .expect("set WORD_ASSIST_EVAL_MODEL=<model> for the real-model eval");
+        let set = match load_set() {
+            Ok(s) if !s.is_empty() => s,
+            Ok(_) => {
+                eprintln!("frozen set present but empty — nothing to evaluate (v0.1 posture)");
+                return;
+            }
+            Err(e) => {
+                eprintln!("{e}");
+                eprintln!(
+                    "v0.1 posture: no held-out set supplied yet; supply tests/eval/{SET_FILE} + {MANIFEST_FILE} per docs/EVAL_PROTOCOL.md"
+                );
+                return;
+            }
+        };
+        let state = OllamaState::default();
+        let url = base_url().to_string();
+        let mut report = EvalReport {
+            model: model.clone(),
+            sentences: set.len(),
+            ..Default::default()
+        };
+        let mut rows: Vec<(&str, &'static str)> = Vec::new();
+        for s in &set {
+            let started = Instant::now();
+            let req = build_tier1_request(&model, &s.text);
+            let outcome = chat_at(
+                &state,
+                &url,
+                ChatRequest {
+                    model: req.model,
+                    messages: vec![
+                        ChatMessage {
+                            role: "system".into(),
+                            content: req.system,
+                        },
+                        ChatMessage {
+                            role: "user".into(),
+                            content: req.user,
+                        },
+                    ],
+                    stream: false,
+                    temperature: req.temperature,
+                    format: Some(req.format),
+                    think: Some(req.think),
+                },
+            )
+            .await;
+            report.latencies_ms.push(started.elapsed().as_millis());
+            let suggestion_applied = match outcome {
+                Err(e) => {
+                    eprintln!("[{}] ollama error: {e}", s.id);
+                    false
+                }
+                Ok(msg) => match crate::assist::engine::parse_tier1_response(&msg.content) {
+                    Err(_) => {
+                        report.schema_rejections += 1;
+                        false
+                    }
+                    Ok(resp) => {
+                        let changed = resp.revised != s.text;
+                        match validate_revision(&s.text, &resp.revised) {
+                            Err(rejection) => {
+                                *report.rejections_by_rule.entry(rejection.rule).or_insert(0) += 1;
+                                if rejection.rule == 2 || rejection.rule == 3 {
+                                    report.protected_span_changes.push(s.id.clone());
+                                }
+                                false
+                            }
+                            Ok(()) => changed, // identity revision = no suggestion
+                        }
+                    }
+                },
+            };
+            let overlap = suggestion_applied && s.expect_issue;
+            let (cat, class) = score_harness_sentence(s, suggestion_applied, overlap);
+            rows.push((cat, class));
+        }
+        report.per_category = aggregate_classes(&rows);
+        report.precision_wilson = precision_intervals(&report.per_category);
+        println!("\n=== Word Assist Tier 1 evaluation (LOCAL, not for docs) ===");
+        println!("{}", serde_json::to_string_pretty(&report).expect("report"));
+        println!("p50/p95 = {:?}", percentiles(&report.latencies_ms));
+        println!(
+            "Protected-span-change cases: {:?}",
+            report.protected_span_changes
+        );
+        println!("Development measurement only; v0.1 makes no accuracy claims from it.");
     }
 }
