@@ -85,6 +85,33 @@ The sidebar footer also holds the **A-/A/A+ font-scale control** and the **Comfo
 
 **Your writing stays on your device.** Drafts, `.bib` files, chat messages, and reference samples stay in memory or in local JSON files, and AI inference runs only through your local Ollama. The one designed exception: if you explicitly connect a Google Doc in the Provenance tab, its revision text is fetched from Google and processed locally; every such call is logged in the Privacy Audit tab. The log itself is in-memory only and is cleared on app close.
 
+## 5a. Word Assist in Word (Preview)
+
+Word Assist is an opt-in, feature-build extra: while it is on, ScholarScribe serves a task-pane add-in inside Microsoft Word that flags **grammar** issues as you type. There is no accuracy claim for this preview: spelling and style flags are off by default, and the optional rewrite feature (Tier 1) is **Experimental** — it stays off until you name a local Ollama model in the Word Assist tab, and every rewrite passes six validation rules (citations, numbers, URLs/DOIs, math, quotes, protected content) before Word shows it.
+
+**One-time setup** (all manual, all undoable — full walkthrough in [`docs/WORD_ASSIST_INSTALL.md`](docs/WORD_ASSIST_INSTALL.md)):
+
+1. In the Word Assist tab, accept the disclosure and **Enable**. This starts a loopback listener on `https://localhost:38080` (port configurable) bound to `127.0.0.1` only.
+2. Trust the per-install certificate with the copyable command for your OS (Windows: `certutil -user -addstore Root ...`; macOS: `security add-trusted-cert -r trustRoot ...`). The app never writes your certificate store itself.
+3. Export the manifest file and sideload it (Windows: trusted shared-folder catalog; macOS: the `wef` folder), then open the pane in Word.
+4. Generate a pairing code in the app and type it into the pane. Codes are 6 characters, expire after 5 minutes, and work once. Each app restart or disable/re-enable invalidates the old session, so re-pair then.
+
+**Using it**: underline marks appear on grammar issues in annotation mode (WordApi 1.7/1.8 + Microsoft 365), or as a list with clickable suggestions in fallback mode (older Word builds). Click a suggestion to apply it; click reject (or just ignore) to do nothing. Use **Re-check** after large pastes. A popup action applies the suggestion **exactly once** and the ledger records the count — never the text.
+
+**Troubleshooting**:
+
+| Symptom | Meaning and fix |
+|---|---|
+| The pane shows "ScholarScribe is not reachable" | The app is closed or Word Assist is not enabled. Open the app, enable Word Assist; check the port matches the pane's expectation. |
+| Certificate / TLS error when Word loads the pane | The per-install certificate is not trusted yet (or was regenerated). Re-run the trust command from step 2 — the certificate file path is shown in the Word Assist tab. |
+| "Port 38080 is already in use" | Another process (or a second ScholarScribe copy) holds the port. Change the port in Word Assist settings and re-enable; Word fetches the manifest at the new port automatically. |
+| Pairing always fails | The code expired (5 minutes) or was already used. Generate a fresh code; both sides must see the same port. |
+| macOS: a keychain prompt appears | The OS is asking whether ScholarScribe may read its own stored key. That prompt is macOS, not a new network action. Denying it makes Word Assist fall back to a 0600 file in the app data folder (disclosed in the audit log). |
+| Underlines never appear, only the list | Your Word build lacks WordApi 1.7/1.8 or the Microsoft 365 subscription the annotation APIs require. List mode is the designed fallback; nothing is broken. |
+| A rewrite chip never appears | Tier 1 is off until a model name is set in the Word Assist tab, and it needs Ollama running. |
+
+**Uninstall**: remove the add-in (Windows: My Add-ins → Remove / clear the trusted catalog; macOS: delete the manifest from the `wef` folder), then revoke certificate trust (Windows: `certutil -user -delstore Root "ScholarScribe Word Assist (localhost)"`; macOS: `security remove-trusted-cert ...` and `security delete-certificate -c "ScholarScribe Word Assist (localhost)"`), and click **Disable** (or Unpair) in the app. Every step's exact command is in [`docs/WORD_ASSIST_INSTALL.md`](docs/WORD_ASSIST_INSTALL.md).
+
 ## 6. Ethical use, please read
 
 ScholarScribe is designed for researchers who have **genuinely written** their manuscript and want transparent, local AI assistance.

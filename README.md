@@ -239,6 +239,51 @@ Unknown paragraph styles are passed through as body text, and merged table cells
 
 Checking runs in the app process: no helper program, no local socket, no new network hosts (enforced by the network-surface CI test), and nothing is written to disk unless you save it yourself. Honest limitation, stated in the app too: a rule based checker is deterministic but not complete; it can miss errors and flag correct academic wording, so ignore and dictionary tools are one click away. English only in this release.
 
+### Word Assist tab (Preview, feature builds only)
+
+> **Status: PREVIEW.** Word Assist ships as an opt-in feature on the
+> `word-assist` build (`--features word-assist`). There is **no accuracy
+> claim anywhere**: no held-out evaluation set has been run for this
+> release, so no precision, recall, or error-rate figure appears here or
+> in the app. See `docs/RELEASE_PLAN_v0.1.md` for exactly what is and is
+> not validated.
+
+- **What it is**: a task-pane add-in inside Microsoft Word, served by a
+  loopback listener in ScholarScribe (`127.0.0.1:38080` by default, TLS
+  with a per-install certificate scoped to `localhost`). While Word
+  Assist is on, grammar issues are flagged as you type; suggestions apply
+  only on your click, and a signed, text-free ledger records what was
+  accepted so you can acknowledge the assistance in a disclosure
+  statement.
+- **Default strictness**: Tier 0 checks **grammar only**; spelling and
+  clarity (style) flags are **off** by default in this preview. Optional
+  whole-sentence rewrites ("Tier 1") come from **your** local Ollama
+  model, are **Experimental**, stay **off** until you configure a model
+  by name, and pass six validation rules before Word ever sees them
+  (citations, numbers, URLs/DOIs, math, quotes, and protected content
+  cannot be introduced or destroyed by a rewrite).
+- **Platform status, exactly as evidenced**: Windows with Microsoft 365
+  is the primary platform and the owner's QA matrix
+  (`docs/QA_v0.1.md`) is the validation record; the macOS build ships
+  **labelled "unvalidated"** and Mac behaviour is not inferred from
+  Windows anywhere. The annotation APIs (underlines + suggestion popup)
+  require **WordApi 1.7/1.8 and a Microsoft 365 subscription** (per
+  Microsoft's requirement-set documentation); older builds or perpetual
+  licenses are expected to degrade to list mode — that degradation is
+  probed at runtime, and its observed behaviour on a perpetual license is
+  NOT VERIFIED in this release.
+- **Privacy**: your document text travels between Word's task pane and
+  ScholarScribe on your machine only — through the loopback listener —
+  and never leaves the device through ScholarScribe. The add-in page
+  itself fetches the office.js library from Microsoft's CDN
+  (`appsforoffice.microsoft.com`, fetched by Word's webview, never
+  carrying document text). Full host list: `docs/NETWORK_SURFACE.json`
+  and `SECURITY.md`.
+- **Install/uninstall**: the one-time, all-manual steps (certificate
+  trust with copyable commands, manifest sideload, and how to undo each
+  step) are in [docs/WORD_ASSIST_INSTALL.md](docs/WORD_ASSIST_INSTALL.md);
+  the app itself never writes to your certificate store or registry.
+
 ### Citation Manager tab
 
 Validates your draft's in-text citations against your `.bib` (BibTeX) file. Two input modes and three checks:
