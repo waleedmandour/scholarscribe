@@ -92,6 +92,60 @@ pub struct DisclosureOutput {
     pub statement: String,
     pub where_to_include: String,
     pub warnings: Vec<String>,
+    /// Word Assist pre-fill (feature word-assist): a counts-only sentence
+    /// the user may paste into the statement. Absent unless the caller
+    /// supplies Word Assist ledger aggregates (additive field; older
+    /// consumers see JSON without the key).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub word_assist_note: Option<String>,
+}
+
+/// Build the counts-only Word Assist sentence for a disclosure statement
+/// (Phase 3 pre-fill). Pure: the numbers come from the assist ledger,
+/// which stores hashes and counts, never text. No claim is made about
+/// quality or detector behavior — the wording mirrors ETHICS.md: the tool
+/// assisted the author; the author remains responsible for the text.
+/// (Called from the feature-gated assist command layer only, so the
+/// default build sees it as dead code; kept pub for the Disclosure
+/// Assistant contract and unit tested below.)
+#[cfg_attr(not(feature = "word-assist"), allow(dead_code))]
+pub fn word_assist_note(
+    accepted: u64,
+    grammar: u64,
+    spelling: u64,
+    clarity: u64,
+    rewrites: u64,
+) -> String {
+    if accepted == 0 {
+        return "No writing-assistance suggestions were accepted while drafting this manuscript."
+            .to_string();
+    }
+    let mut parts: Vec<String> = Vec::new();
+    if grammar > 0 {
+        parts.push(format!("{grammar} grammar"));
+    }
+    if spelling > 0 {
+        parts.push(format!("{spelling} spelling"));
+    }
+    if clarity > 0 {
+        parts.push(format!("{clarity} clarity"));
+    }
+    let breakdown = if parts.is_empty() {
+        String::new()
+    } else {
+        format!(" ({})", parts.join(", "))
+    };
+    let rewrites = if rewrites > 0 {
+        format!(
+            ", including {rewrites} whole-sentence rewrites generated locally and reviewed by the author"
+        )
+    } else {
+        String::new()
+    };
+    format!(
+        "While drafting, the author used ScholarScribe's local Word Assist feature, accepting {accepted} suggestion{plural}{breakdown}{rewrites}; all text was reviewed and approved by the author, who takes full responsibility for the final manuscript.",
+        plural = if accepted == 1 { "" } else { "s" },
+    )
 }
 
 pub fn generate(input: &DisclosureInput) -> Result<DisclosureOutput, String> {
@@ -162,5 +216,34 @@ pub fn generate(input: &DisclosureInput) -> Result<DisclosureOutput, String> {
         statement,
         where_to_include: where_to_include.join("\n"),
         warnings,
+        word_assist_note: None,
     })
+}
+
+#[cfg(test)]
+mod word_assist_note_tests {
+    use super::word_assist_note;
+
+    #[test]
+    fn zero_accepted_reads_neutral() {
+        let note = word_assist_note(0, 0, 0, 0, 0);
+        assert!(note.contains("No writing-assistance suggestions"));
+    }
+
+    #[test]
+    fn counts_are_listed_and_responsibility_stated() {
+        let note = word_assist_note(12, 7, 0, 5, 2);
+        assert!(note.contains("12 suggestions"));
+        assert!(note.contains("(7 grammar, 5 clarity)"));
+        assert!(note.contains("2 whole-sentence rewrites"));
+        assert!(note.contains("full responsibility"));
+        // E-1: no precision figures, no detector talk.
+        assert!(!note.contains('%'));
+        assert!(!note.to_lowercase().contains("detector"));
+    }
+
+    #[test]
+    fn singular_grammar() {
+        assert!(word_assist_note(1, 1, 0, 0, 0).contains("1 suggestion"));
+    }
 }
