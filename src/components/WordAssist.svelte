@@ -7,6 +7,7 @@
   // only external fetch the add-in itself makes is the office.js library
   // from Microsoft's CDN (it never carries document text).
   import { onMount } from "svelte";
+  import { save } from "@tauri-apps/plugin-dialog";
   import PageHeader from "./PageHeader.svelte";
   import Icon from "./Icon.svelte";
   import { api } from "../lib/api";
@@ -212,6 +213,22 @@
     }
   }
 
+  async function exportManifest() {
+    error = "";
+    notice = "";
+    try {
+      const path = await save({
+        title: "Export Word Assist manifest",
+        defaultPath: "ScholarScribe-Word-Assist-manifest.xml",
+        filters: [{ name: "Office add-in manifest", extensions: ["xml"] }],
+      });
+      if (!path) return; // user cancelled
+      notice = await api.wordAssistExportManifest(path);
+    } catch (e) {
+      error = String(e);
+    }
+  }
+
   async function applySettings() {
     busy = true;
     error = "";
@@ -402,6 +419,9 @@
         </button>
         <button class="btn secondary" on:click={() => copy(registration!.manifest_url, "url")}>
           {copiedField === "url" ? "Copied" : "Copy manifest URL"}
+        </button>
+        <button class="btn secondary" on:click={exportManifest}>
+          Export manifest file…
         </button>
       </div>
       <details>

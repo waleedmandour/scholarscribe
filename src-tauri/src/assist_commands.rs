@@ -441,20 +441,73 @@ pub async fn word_assist_registration(
         leaf_path: leaf_path.display().to_string(),
         leaf_pem: if leaf_der.is_empty() { String::new() } else { pem_encode(&leaf_der) },
         instructions: vec![
+            // A4 x H5 merge: the CA-not-leaf framing is hardening's; the
+            // per-OS copy/paste commands with uninstall/revoke are Stage A's,
+            // re-pointed at the hardened CA (file word-assist-ca.der, subject
+            // "ScholarScribe Word Assist Root CA (ephemeral)"). The app only
+            // displays these; the USER runs them; nothing writes a store.
             "Trust the CA certificate ('ScholarScribe Word Assist Root CA (ephemeral)'), NOT the leaf: the CA is name-constrained to localhost / 127.0.0.1 and its signing key was destroyed after issuing your leaf.".into(),
-            "Windows: double-click the CA certificate file, 'Install Certificate', scope 'Current User', store 'Trusted Root Certification Authorities'.".into(),
-            "Or: certmgr.msc > Trusted Root Certification Authorities > Import.".into(),
-            format!("Sideload: Word > Insert > My Add-ins / Get Add-ins > 'Upload My Add-in' > {}", format!("https://localhost:{port}/addin/manifest.xml")),
+            "Step 1 - trust the CA (Windows): certutil -user -addstore Root \"<assist-data-dir>\\word-assist-ca.der\" (installs into the CURRENT USER Trusted Root Certification Authorities store; the -user flag keeps this to your account; the app does not run this).".into(),
+            "Step 1 - trust the CA (macOS): security add-trusted-cert -r trustRoot \"<assist-data-dir>/word-assist-ca.der\" (adds to your login keychain; macOS shows an authentication dialog for per-user trust - that prompt is the OS, not ScholarScribe). CA name constraints against real OS stores are untested until spike (q).".into(),
+            "Step 2 - sideload (both OS): Word > Insert > My Add-ins / Get Add-ins > 'Upload My Add-in' > the manifest URL below.".into(),
+            "Step 2 (alt, Windows): save the manifest with 'Export manifest file', share its folder, then Word > File > Options > Trust Center > Trusted Add-in Catalogs > add the network path of that folder, and Insert > My Add-ins > SHARED FOLDER.".into(),
+            "Step 2 (alt, macOS): copy the exported manifest to ~/Library/Containers/com.microsoft.Word/Data/Documents/wef (create the folder if needed) and restart Word.".to_string(),
+            "Step 3 - pair: open the add-in pane and enter the pairing code shown in this tab.".into(),
             "Renewal: the CA + leaf are regenerated when they expire (CA 3 years, leaf 1 year); re-trust the NEW CA — this re-asks your consent.".into(),
-            "Removal: delete 'ScholarScribe Word Assist Root CA (ephemeral)' from Manage User Certificates > Trusted Root Certification Authorities, and remove the add-in from My Add-ins.".into(),
+            "Uninstall - remove the add-in first (My Add-ins > right-click > Remove, or clear the trusted catalog / delete the manifest from the wef folder), then revoke CA trust (Windows: certutil -user -delstore Root \"ScholarScribe Word Assist Root CA (ephemeral)\"; macOS: security remove-trusted-cert <ca file> and security delete-certificate -c \"ScholarScribe Word Assist Root CA (ephemeral)\").".into(),
+            "Full verified walkthrough with uninstall and revoke for every step: docs/WORD_ASSIST_INSTALL.md.".into(),
         ],
     })
+}
+
+/// Export the {PORT}-substituted manifest to a user-chosen file (the
+/// Windows shared-folder catalog consumes a manifest FILE; macOS sideload
+/// copies the same file). The add-in GUID is stable in the manifest itself
+/// (word-addin/dist/manifest.xml <Id>), so every export re-uses one
+/// identity - reinstalling or re-exporting never duplicates the add-in.
+#[cfg(feature = "word-assist")]
+#[tauri::command]
+pub async fn word_assist_export_manifest(
+    state: tauri::State<'_, std::sync::Arc<crate::assist::settings::AssistState>>,
+    path: String,
+) -> Result<String, String> {
+    let port = state
+        .bound_port
+        .lock()
+        .map_err(|e| e.to_string())?
+        .ok_or("Word Assist is not running. Enable it first.")?;
+    // Fail fast on a missing parent dir instead of a half-written export.
+    let target = std::path::PathBuf::from(&path);
+    if target.parent().map(|p| !p.exists()).unwrap_or(false) {
+        return Err(format!(
+            "target folder does not exist: {}",
+            target
+                .parent()
+                .map(|p| p.display().to_string())
+                .unwrap_or_default()
+        ));
+    }
+    let xml =
+        include_str!("../../word-addin/dist/manifest.xml").replace("{PORT}", &port.to_string());
+    std::fs::write(&target, xml).map_err(|e| format!("write manifest: {e}"))?;
+    let written = format!(
+        "manifest written for port {port} (SourceLocation https://localhost:{port}/addin/taskpane.html): {path}"
+    );
+    log::info!("{written}");
+    Ok(written)
 }
 
 /// Stub for builds without the feature.
 #[cfg(not(feature = "word-assist"))]
 #[tauri::command]
 pub async fn word_assist_registration(_app: AppHandle) -> Result<AssistRegistration, String> {
+    Err(feature_absent())
+}
+
+/// Stub for builds without the feature.
+#[cfg(not(feature = "word-assist"))]
+#[tauri::command]
+pub async fn word_assist_export_manifest(_app: AppHandle, _path: String) -> Result<String, String> {
     Err(feature_absent())
 }
 

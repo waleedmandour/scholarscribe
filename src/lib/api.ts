@@ -617,6 +617,8 @@ export const api = {
   wordAssistAudit: () => invoke<WaAuditEntry[]>("word_assist_audit"),
   wordAssistUnpair: () => invoke<void>("word_assist_unpair"),
   wordAssistRegistration: () => invoke<WaRegistration>("word_assist_registration"),
+  wordAssistExportManifest: (path: string) =>
+    invoke<string>("word_assist_export_manifest", { path }),
   wordAssistDisclosurePrefill: () => invoke<WaDisclosurePrefill>("word_assist_disclosure_prefill"),
   persistenceEnable: () => invoke<void>("persistence_enable"),
   persistenceDisable: () => invoke<void>("persistence_disable"),

@@ -172,6 +172,7 @@ pub fn run() {
             assist_commands::word_assist_unpair,
             assist_commands::word_assist_rotate_token,
             assist_commands::word_assist_registration,
+            assist_commands::word_assist_export_manifest,
             assist_commands::word_assist_disclosure_prefill,
         ])
         .run(tauri::generate_context!())
