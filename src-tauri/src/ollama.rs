@@ -229,6 +229,14 @@ pub struct ChatRequest {
     pub stream: bool,
     #[serde(default = "default_temperature")]
     pub temperature: f32,
+    /// Word Assist (feature/word-assist): JSON schema for structured
+    /// output. None keeps the wire format identical to before.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub format: Option<serde_json::Value>,
+    /// Word Assist (feature/word-assist): chain-of-thought switch for
+    /// thinking models. None keeps the wire format identical to before.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub think: Option<bool>,
 }
 
 fn default_temperature() -> f32 {
@@ -247,21 +255,44 @@ struct ChatResponse {
 }
 
 pub async fn chat(state: &OllamaState, req: ChatRequest) -> Result<ChatMessage, OllamaError> {
-    let body = serde_json::json!({
+    chat_at(state, OLLAMA_BASE, req).await
+}
+
+/// Same as [`chat`] against an explicitly provided base URL. Word Assist's
+/// Tier 1 scheduler uses this so its requests stay observable and
+/// separately cancellable from the chat features (ruling D-3: injectable
+/// base URL, additive only — the default is unchanged).
+pub async fn chat_at(
+    state: &OllamaState,
+    base_url: &str,
+    req: ChatRequest,
+) -> Result<ChatMessage, OllamaError> {
+    let mut body = serde_json::json!({
         "model": req.model,
         "messages": req.messages,
         "stream": false,
         "options": { "temperature": req.temperature }
     });
+    // Additive request fields (Word Assist, feature-gated callers only):
+    // `format` pins structured output to a JSON schema; `think` turns
+    // chain-of-thought off so it cannot leak into the `revised` field.
+    // Both stay absent unless set, so existing callers' wire bytes are
+    // unchanged and older daemons see exactly what they saw before.
+    if let Some(format) = req.format {
+        body["format"] = format;
+    }
+    if let Some(think) = req.think {
+        body["think"] = serde_json::Value::Bool(think);
+    }
     let resp = state
         .client
-        .post(format!("{}/api/chat", OLLAMA_BASE))
+        .post(format!("{base_url}/api/chat"))
         .json(&body)
         .timeout(Duration::from_secs(300))
         .send()
         .await
         .map_err(|_| OllamaError::NotRunning {
-            base: OLLAMA_BASE.to_string(),
+            base: base_url.to_string(),
         })?;
 
     if !resp.status().is_success() {

@@ -1229,6 +1229,8 @@ pub async fn writing_coach_chat(
         messages,
         stream: false,
         temperature: 0.5,
+        format: None,
+        think: None,
     };
 
     ollama::chat(state.inner(), request).await

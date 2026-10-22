@@ -48,12 +48,52 @@ pub struct Settings {
     /// `persistence_enabled` is on.
     #[serde(default)]
     pub language_check_rules: BTreeMap<String, Option<bool>>,
+    /// Word Assist (feature/word-assist): master opt-in. Default false; the
+    /// disclosure dialog on the Word Assist tab is the only code path that
+    /// sets it to true (ruling 5: explicit consent before any listener).
+    #[serde(default)]
+    pub word_assist_enabled: bool,
+    /// Word Assist: loopback listener port. Default 38080 (below the
+    /// Windows ephemeral range, ruling D-3). Changing it forces re-pairing
+    /// (localStorage is per-origin including port) — the UI says so.
+    #[serde(default = "default_word_assist_port")]
+    pub word_assist_port: u16,
+    /// Word Assist: strictness profile name. Shipped default "dev"
+    /// (Grammar only, PROVISIONAL per ruling E-1; final defaults are a
+    /// Phase 4 decision). One of: dev | conservative | balanced | thorough.
+    #[serde(default = "default_word_assist_strictness")]
+    pub word_assist_strictness: String,
+    /// Word Assist: whether the Tier 1 (local model) pass runs at all.
+    /// Tier 0 is always on while the feature is enabled; Tier 1 sends one
+    /// sentence at a time to the local Ollama daemon, so it is opt-in on
+    /// top of the feature opt-in.
+    #[serde(default)]
+    pub word_assist_tier1_enabled: bool,
+    /// Word Assist: model name for Tier 1. Empty = use the app's last-used
+    /// chat model. No validation here; the scheduler surfaces daemon errors.
+    #[serde(default)]
+    pub word_assist_tier1_model: String,
+    /// Word Assist: per-script experimental opt-in for scripts the engine
+    /// cannot validate ("experimental: other languages", off by default,
+    /// ruling 2). Keys are script names from assist::tier0::script_name
+    /// ("arabic", "cjk", "cyrillic", "greek", "other"); true runs checks
+    /// with the "experimental, unvalidated" status line.
+    #[serde(default)]
+    pub word_assist_experimental_languages: BTreeMap<String, bool>,
     /// App version that wrote this settings file. Used for migrations.
     pub version: String,
 }
 
 fn default_language_check_dialect() -> String {
     "American".to_string()
+}
+
+fn default_word_assist_port() -> u16 {
+    38080
+}
+
+fn default_word_assist_strictness() -> String {
+    "dev".to_string()
 }
 
 impl Default for Settings {
@@ -64,6 +104,12 @@ impl Default for Settings {
             theme: "auto".into(),
             language_check_dialect: default_language_check_dialect(),
             language_check_rules: BTreeMap::new(),
+            word_assist_enabled: false,
+            word_assist_port: default_word_assist_port(),
+            word_assist_strictness: default_word_assist_strictness(),
+            word_assist_tier1_enabled: false,
+            word_assist_tier1_model: String::new(),
+            word_assist_experimental_languages: BTreeMap::new(),
             version: env!("CARGO_PKG_VERSION").into(),
         }
     }
