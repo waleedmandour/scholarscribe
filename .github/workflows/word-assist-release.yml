@@ -90,6 +90,15 @@ jobs:
       - name: Build Tauri app with the word-assist feature (unsigned)
         run: npm run tauri build -- --features word-assist --config ${{ env.TAURI_CONFIG_OVERLAY }}
 
+      - name: Dry-run / publish mode banner
+        shell: bash
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "DRY RUN: artifacts go to this workflow run only; no release is created."
+          else
+            echo "PUBLISH MODE: artifacts will be attached to the pre-release."
+          fi
+
       - name: Stage renamed assets (OS + architecture in the name)
         shell: bash
         run: |
@@ -165,7 +174,3 @@ jobs:
             --notes "PREVIEW: Word Assist v0.1 release candidate assets. Unsigned build; see docs/RELEASE_PLAN_v0.1.md for what is and is not validated per platform. Windows SmartScreen / macOS Gatekeeper will warn because the binaries are unsigned." \
             --prerelease
           gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber
-
-      - name: Dry-run notice
-        if: inputs.dry_run == true
-        run: echo "::notice::Dry run: artifacts uploaded to this workflow run only; no release was created."
