@@ -9,7 +9,7 @@
 
 ScholarScribe helps researchers who are writing their own manuscripts to:
 
-- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the 21 tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
+- **Get a guided 6-step welcome tour**: on first launch, an interactive modal walks you through privacy, model install, Writing Provenance, the tools (organized into 7 workflow groups), and ethical use. Re-openable any time from the sidebar or the About tab.
 - **Export verifiable Writing Provenance** *(new in v2.1.0)*, turn the revision history your document already carries (Word Track Changes, or Google Docs version history) into a signed, hash-chained evidence package. Opt-in, offline, contains hashes and counts, never text. It is explicitly **not** an AI-detection score and **not** proof of authorship: it is evidence the author can offer, verified with a standalone offline HTML verifier. See [docs/PROVENANCE_SPEC.md](docs/PROVENANCE_SPEC.md).
 - **Run open LLMs fully offline**: Gemma 3, Qwen 3, GPT-OSS, Phi-4, DeepSeek R1, Llama 3.3, and more. No paid APIs, no OpenAI/Anthropic/Google AI calls.
 - **Import local `.gguf` files**, pick a model file you already downloaded (e.g. from HuggingFace); ScholarScribe checks whether your device has enough RAM, then registers it with Ollama.
@@ -17,6 +17,7 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Convert Word to LaTeX** *(new in v2.2.1 r3)*, with a `.docx` loaded in the Text Cleaner, the "Convert to LaTeX (.tex)" action produces a compilable LaTeX article through a deterministic structural mapping: Title and Heading 1 to 6 styles become `\title`, `\section`, `\subsection`, `\subsubsection`, and `\paragraph`; bulleted paragraphs become `itemize` lists; bold and italic runs become `\textbf` and `\emph`; tables become `tabular` grids; special characters are LaTeX-escaped. Unknown styles and merged or nested table constructs are reported in a warnings card, never silently dropped. No LLM, no network: a pure, auditable local transformation.
 - **Convert pasted reference lists to BibTeX** *(new in v2.2.1 r4)*, paste references in your venue's style (APA 7th, MLA 9th, Chicago 17th, Vancouver, or plain with auto-detect) in the Citation Manager and ScholarScribe converts them to BibTeX, offers the `.bib` for download, and auto-validates the result against your draft. The heuristic parser tolerates mixed formats and flags entries where fields could not be extracted.
 - **Check spelling, grammar, and style offline** *(new in v2.2.1 r5)*, the Language Check tab flags issues in your draft and proposes one click corrections, powered by the embedded harper engine. The Grammarly job with the opposite trust model: your text is analyzed in memory on your machine, never uploaded. Five English dialects, a personal dictionary, and per-rule settings.
+- **Word Assist inside Microsoft Word** *(feature branch, opt-in)*, the Word Assist tab starts a loopback listener on 127.0.0.1 and serves a task-pane add-in that reads live Word text while Word Assist is on and flags grammar issues as you type. Tier 0 runs offline through the same engine as Language Check; optional whole-sentence rewrites come from your local Ollama model and pass six validation rules (citations, numbers, URLs, math and quotes are untouchable) before Word sees them. Pairing uses a one-time code; an HMAC-chained ledger records accepted counts (never text) so you can acknowledge the assistance in a disclosure statement. Nothing is installed system-wide without your explicit action.
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file (or against a pasted reference list converted to BibTeX), lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
@@ -152,7 +153,7 @@ Then compare the printed digest with the matching line in `CHECKSUMS.txt`. If th
 
 ### Quick start (5 minutes)
 
-When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → 21 tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
+When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → the tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
 See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
 
@@ -419,7 +420,7 @@ These figures come from peer-reviewed literature and author guidelines that are 
 | Property | Status |
 |---|---|
 | Telemetry | **None.** No analytics, no crash reporting, no usage tracking. |
-| Network calls | ScholarScribe's own process: `127.0.0.1:11434` (your local Ollama) always; the Google Drive/OAuth endpoints only when you explicitly connect a Google Doc in the Provenance tab. The Ollama daemon itself contacts `registry.ollama.ai` or `hf.co` when you pull a model, at your request. No manuscript text is ever sent to any registry host. |
+| Network calls | ScholarScribe's own process: `127.0.0.1:11434` (your local Ollama) always; the Google Drive/OAuth endpoints only when you explicitly connect a Google Doc in the Provenance tab. The Ollama daemon itself contacts `registry.ollama.ai` or `hf.co` when you pull a model, at your request. No manuscript text is ever sent to any registry host. The opt-in Word Assist feature (feature branch) additionally runs an inbound loopback listener on `https://localhost:38080` (127.0.0.1 only, port configurable) while enabled; Word's task pane loads the office.js library from Microsoft's CDN, a fetch that never carries document text. |
 | User text | **Stays on your device** with one designed exception: drafts, reference samples, chat messages, and .bib files stay in memory or local files, and inference runs locally; if you explicitly connect a Google Doc, its revision text is fetched from Google and processed locally (inherent to that opt-in feature, logged in the Privacy Audit tab). |
 | Third-party APIs | **None.** No OpenAI, Anthropic, Google AI, or any other cloud LLM API. |
 | Crash reports | None collected. Errors go to the console output (stderr) and are not persisted to a log file. |
@@ -429,7 +430,7 @@ These figures come from peer-reviewed literature and author guidelines that are 
 The CSP in `tauri.conf.json` explicitly restricts the UI's own connections to `127.0.0.1:11434` (your local Ollama). The Rust backend calls the same loopback Ollama daemon for all model operations; the Ollama daemon, not ScholarScribe, fetches models from `registry.ollama.ai` or `hf.co` when you pull. The only other outbound HTTPS in the app is the opt-in Google Docs bridge in the Provenance tab (Google's OAuth and Drive endpoints). Every outbound call, file read, and keyring operation is logged live in the Privacy Audit tab. The complete, machine-readable host list is `docs/NETWORK_SURFACE.json`, cross-checked against SECURITY.md in CI.
 
 If you want to verify this yourself:
-1. Audit `src-tauri/src/ollama.rs` and `src-tauri/src/abstract_generator.rs` (the loopback Ollama client) and `src-tauri/src/google_docs_net.rs` (the opt-in Google bridge), those three files contain every outbound HTTP call the app can make.
+1. Audit `src-tauri/src/ollama.rs` and `src-tauri/src/abstract_generator.rs` (the loopback Ollama client) and `src-tauri/src/google_docs_net.rs` (the opt-in Google bridge), those three files contain every outbound HTTP call the app can make. The Word Assist listener (`src-tauri/src/assist/server.rs`, feature branch) is inbound-only and bound to 127.0.0.1.
 2. Watch the Privacy Audit tab while interacting with the app.
 3. Run ScholarScribe behind a network monitor (GlassWire, Wireshark) and cross-reference outbound hosts.
 
@@ -454,6 +455,8 @@ scholarscribe/
 │   │   ├── citation_manager.rs BibTeX parser + citation validator
 │   │   ├── plain_ref_parser.rs Plain-text reference list → BibTeX converter, v2.2.1 r4
 │   │   ├── language_check.rs   Offline spelling/grammar/style engine (embedded harper), v2.2.1 r5
+│   │   ├── assist/              Word Assist engine (feature word-assist): offsets, sentences, mask, diff, validate, cache, tier0, engine, server, scheduler, settings, ledger
+│   │   ├── assist_commands.rs   Word Assist Tauri commands (stubs without the feature)
 │   │   ├── document_stats.rs   Document statistics
 │   │   ├── structure_analyzer.rs  Heading tree + missing-section detection
 │   │   ├── abstract_generator.rs  Local-LLM structured abstract generation
@@ -483,6 +486,7 @@ scholarscribe/
 │       ├── Models.svelte
 │       ├── AITextCleaner.svelte  Cleaner + docx-to-LaTeX conversion
 │       ├── LanguageCheck.svelte  Offline Language Check tab, v2.2.1 r5
+│       ├── WordAssist.svelte     Word Assist tab (opt-in listener control, feature branch)
 │       ├── CitationManager.svelte
 │       ├── DocumentStats.svelte
 │       ├── StructureAnalyzer.svelte

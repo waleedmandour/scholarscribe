@@ -29,7 +29,7 @@ Open the **Models** tab. The top card shows your CPU and RAM, and the card below
 
 Click **Download** and wait 2-15 minutes (depending on model size and connection). **Already have a `.gguf` file?** Click **Pick .gguf file…**: ScholarScribe checks your RAM and imports it via Ollama with zero outbound network.
 
-## 3. The 21 tabs at a glance
+## 3. The 22 tabs at a glance
 
 The sidebar groups the tabs into 7 workflow phases that follow the order you'd typically use while writing a manuscript:
 
@@ -42,27 +42,28 @@ The sidebar groups the tabs into 7 workflow phases that follow the order you'd t
 | 3 | **Text Cleaner** | Fix 23 PDF/OCR/web artifacts in `.txt`, `.md`, or `.docx` |
 | 4 | **Language Check** | Offline spelling, grammar, and style checks with one click corrections (English, five dialects) |
 | 5 | **Citations** | Validate in-text citations against your `.bib` file |
+| 6 | **Word Assist** | As-you-type grammar feedback inside Microsoft Word via a local, opt-in listener (feature branch; off until you enable it) |
 | | **Understand the draft** | |
-| 6 | **Stats** | Word count, readability, journal-target comparison |
-| 7 | **Structure** | Heading tree + missing-section suggestions |
+| 7 | **Stats** | Word count, readability, journal-target comparison |
+| 8 | **Structure** | Heading tree + missing-section suggestions |
 | | **AI writing help** | |
-| 8 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
-| 9 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
-| 10 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
+| 9 | **Abstract** | LLM-generated Background/Methods/Results/Conclusions |
+| 10 | **Writing Coach** | Local-LLM coaching on a paragraph or argument |
+| 11 | **Chat** | Local-only chat (refuses evasion/fabrication requests) |
 | | **Authenticity and style** | |
-| 11 | **Detector Literacy** | How AI detectors work, and where they fail |
-| 12 | **Risk Profile** | Does your draft share surface features with AI text? |
-| 13 | **Style Analysis** | Compare a draft to your own prior writing |
-| 14 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
-| 15 | **Voice Check** | Spot within-document stylistic shifts |
+| 12 | **Detector Literacy** | How AI detectors work, and where they fail |
+| 13 | **Risk Profile** | Does your draft share surface features with AI text? |
+| 14 | **Style Analysis** | Compare a draft to your own prior writing |
+| 15 | **Fingerprint** | Multi-paper stylistic fingerprint of your writing |
+| 16 | **Voice Check** | Spot within-document stylistic shifts |
 | | **Evidence and compliance** | |
-| 16 | **Journal** | Auto-saved timestamped snapshots of your draft |
-| 17 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
-| 18 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
-| 19 | **Disclosure** | Generate venue-compliant AI-use statements |
+| 17 | **Journal** | Auto-saved timestamped snapshots of your draft |
+| 18 | **Provenance** | Export a signed record of your document's real revision history (opt-in) |
+| 19 | **Appeal Letter** | Generate an evidence-based appeal if falsely flagged |
+| 20 | **Disclosure** | Generate venue-compliant AI-use statements |
 | | **Privacy and app** | |
-| 20 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
-| 21 | **Saved Work** | Opt-in local JSON persistence (off by default) |
+| 21 | **Privacy Audit** | Every file read + outbound HTTP call, logged live |
+| 22 | **Saved Work** | Opt-in local JSON persistence (off by default) |
 
 The sidebar footer also holds the **A-/A/A+ font-scale control** and the **Comfortable / Compact density toggle**; both persist across restarts.
 

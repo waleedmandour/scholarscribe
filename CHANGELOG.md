@@ -8,6 +8,65 @@ Statistics and citations carry "Last verified" dates inside the app. Dates
 older than six months should prompt a re-check before relying on the figure
 in a real submission. See [README.md](README.md) "Statistics and citations".
 
+## [Unreleased] - feature/word-assist
+
+Word Assist: as-you-type grammar and clarity feedback inside Microsoft
+Word, implemented behind the opt-in `word-assist` Cargo feature on the
+`feature/word-assist` branch. The default build is unchanged; every
+artifact of the feature compiles only with the feature enabled.
+
+### Added
+
+- Word Assist engine (`src-tauri/src/assist/`): scalar↔UTF-16 offset
+  mapping with round-trip property tests, a script-agnostic sentence
+  splitter (Latin/CJK/RTL), protected-span detection (citations, URLs and
+  DOIs, numbers, inline LaTeX, quotes) with S1-filter/S2-mask strategies,
+  a word-level diff producing word-aligned edits, the six Tier 1
+  validation rules, a memory-only sentence cache, the Tier 0 adapter over
+  the existing Language Check engine, and the versioned Tier 1 prompt with
+  structured-output schema.
+- Loopback listener (`assist/server.rs`): TLS-only (per-install self-signed
+  leaf via rcgen, key in the OS keychain with a 0600-file fallback),
+  127.0.0.1 binding, strict Host/Origin pinning, one-time 6-character
+  pairing codes, bearer tokens with constant-time compares, 64 KiB body
+  cap, and a sliding-window rate limit. Serves `/v1/health`, `/v1/pair`,
+  `/v1/check`, `/v1/accepted` and the add-in pages.
+- Single-flight Tier 1 scheduler: newest request wins, stale results are
+  discarded, and a per-paragraph session budget guards the
+  accept→apply→recheck loop against oscillation.
+- Word Assist tab in the app: disclosure-gated enable, pairing code,
+  strictness profiles (shipped default "dev" = Grammar only, provisional
+  per the Phase 1a gate), optional local-model rewrites, per-script
+  experimental language opt-ins, registration/certificate hand-holding,
+  and a counts-only disclosure pre-fill.
+- Task-pane add-in (`word-addin/dist/`): capability probing per
+  requirement set (1.6/1.7/1.8), annotations with popup suggestions,
+  a suppression watermark for self-edits, and a list-mode fallback for
+  hosts without the annotation API.
+- HMAC-chained JSONL ledger (`assist/ledger.rs`): accepted/rejected
+  counts keyed by hashes - never text - with chain verification on open
+  and a counts-only Disclosure Assistant pre-fill.
+- Golden set (`src-tauri/tests/assist/golden.json`, ~50 scholarly
+  sentences) asserting protected content is never flagged, the dev
+  profile emits grammar only, Arabic/CJK gate correctly, and ASCII
+  offsets coincide in both wire spaces.
+- CI: `word-assist-gates` job (fmt, clippy strict, tests with the feature
+  on, default-build check) and the `feature/word-assist` push trigger
+  (ruling D-1).
+
+### Changed
+
+- `ollama.rs`: additive `ChatRequest` fields (`format`, `think`) and an
+  injectable base URL (`chat_at`); the default `chat()` wire bytes are
+  unchanged.
+- `persistence.rs`: additive `word_assist_*` settings (opt-in flag, port,
+  strictness, Tier 1 model, experimental-language map).
+- `disclosure.rs`: additive optional `word_assist_note` output field and
+  a pure counts-only note builder; existing consumers are unaffected.
+- SECURITY.md and docs/NETWORK_SURFACE.json: the Word Assist loopback
+  listener and the add-in's office.js CDN fetch (`addin-webview` class)
+  are documented and CI-enforced.
+
 ## [2.2.1] - 2026-10-13 (stable)
 
 Graduation of the v2.2.1 line from the r2 through r5 pre-releases to the

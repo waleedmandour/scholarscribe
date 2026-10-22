@@ -12,9 +12,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feature/word-assist
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   check-frontend:
@@ -96,3 +99,40 @@ jobs:
         with:
           name: sbom-cargo
           path: sbom-cargo.json
+
+  word-assist-gates:
+    # Owner ruling D-1: the feature branch gets its own compile+test gates
+    # so every phase report can cite a green CI run instead of
+    # "CI-PENDING". The default build is untouched by the feature; this
+    # job proves the gated code compiles and passes its own tests
+    # (including the golden set) with the feature ON.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-wa-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-wa-
+      - name: Install Tauri Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libdbus-1-dev
+      - name: cargo fmt (feature build)
+        working-directory: src-tauri
+        run: cargo fmt -- --check
+      - name: cargo clippy with word-assist (strict)
+        working-directory: src-tauri
+        run: cargo clippy --features word-assist --all-targets -- -D warnings
+      - name: cargo test with word-assist (unit + golden set)
+        working-directory: src-tauri
+        run: cargo test --features word-assist
+      - name: cargo check default build (feature stays opt-in)
+        working-directory: src-tauri
+        run: cargo check
