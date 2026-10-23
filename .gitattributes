@@ -12,6 +12,12 @@ src-tauri/tests/assist/*.json text eol=lf
 src-tauri/tests/eval/*.jsonl text eol=lf
 src-tauri/tests/eval/*.md text eol=lf
 src-tauri/fixtures/** text eol=lf
+# Hardening H9's frozen held-out machinery lives under docs/EVAL and is
+# hash-pinned by docs/EVAL/FROZEN.txt + scripts/check-eval-freeze.mjs:
+# a Windows autocrlf checkout must not change its bytes. FROZEN.txt
+# itself is sha256sum-format, so its own bytes matter too.
+docs/EVAL/** text eol=lf
+docs/EVAL/FROZEN.txt text eol=lf
 
 # Add-in client: served byte-for-byte by the listener and embedded in
 # the binary (include_str!). The manifest is fetched by Word.
