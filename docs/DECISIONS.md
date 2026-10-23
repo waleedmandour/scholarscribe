@@ -108,7 +108,7 @@ Running log per the work order: date, decision, alternatives considered, sources
 
 ## 2026-10-13 | M0 | User-level sysroot for baseline gates in the audit sandbox
 
-- **Decision:** To run `cargo check/test/clippy` in a rootless sandbox missing `libwebkit2gtk-4.1-dev`/`libgtk-3-dev`/`libsoup-3.0-dev`, the audit downloaded the Debian 13 dev packages and extracted them to a user directory (`/home/z/sysroot`), resolving them via `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH`. This is a sandbox-only workaround; nothing in the repo or CI depends on it.
+- **Decision:** To run `cargo check/test/clippy` in a rootless sandbox missing `libwebkit2gtk-4.1-dev`/`libgtk-3-dev`/`libsoup-3.0-dev`, the audit downloaded the Debian 13 dev packages and extracted them to a user-level sysroot directory (path neutral: `<agent-sysroot>`, outside the repo), resolving them via `PKG_CONFIG_PATH` and `LD_LIBRARY_PATH`. This is a sandbox-only workaround; nothing in the repo or CI depends on it.
 - **Alternatives:** (a) mark cargo gates NOT RUN, losing baseline verification for 43 tests; (b) request a GitHub Actions run, which the agent cannot trigger without touching CI config in M0. (a) was the fallback if extraction failed; it did not fail.
 - **Source:** Debian package search for trixie; packages listed in `docs/agent-reports/REPORT-M0.md`.
 

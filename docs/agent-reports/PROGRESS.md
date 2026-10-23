@@ -10,7 +10,7 @@ source passes, one fails → STOP, awaiting the owner's one-line decision.**
 
 ## Evidence (all VERIFIED this session, 2026-10-23)
 
-### Bundles FOUND and VERIFIED (in `/tmp/my-project/download/`, which survived the sandbox reset)
+### Bundles FOUND and VERIFIED (in the pre-reset sandbox download directory, which survived the reset; paths neutralised for publication)
 
 | Bundle | `git bundle verify` | Head | Tip | Ancestry |
 |---|---|---|---|---|
@@ -19,7 +19,7 @@ source passes, one fails → STOP, awaiting the owner's one-line decision.**
 
 - Hardening chain (9 commits over d55bc00): e7fc910 (H-pre pair fix) → 5154890 (E-4 revert: SHA-256 chain, hmac removed) → ccdd905 (threat model) → bb03faa (H1–H5) → cd76d6c (H6 E2E) → e14dcc0 (H7 CI) → 827b7cc (H8) → 54dba31 (H9) → 0fbc012 (report).
 - Stage A chain (11 commits over d55bc00): e8465b2 (Stage 0) → 5593cec (A1) → 1d8f63f (A2) → adb34a9 (A4) → 9ccef8d (A3) → fca391f (A5) → 18720db (A5 fix) → a1e37ea (A6) → 2d9210f (A8) → 80f0e3c (A9) → ba5a959 (A7).
-- SHA-256 (verified copies now in `/home/z/my-project/download/`):
+- SHA-256 (verified copies now in the delivery `download/` directory):
   - hardening: `e7faee5c4a834838f7e9e633a1ac20b844987e08e200455602a31dfa3c14bbac`
   - stageA: `981e506acef7f50ce44ffa065469a533a43d59c9457d475fe2493b125cae0c87`
 
@@ -32,7 +32,7 @@ source passes, one fails → STOP, awaiting the owner's one-line decision.**
 ### Step 1 verdict against the declared sources
 
 - HARDENING SOURCE = origin (declared default) → **FAILS** (0fbc012 not an ancestor of origin/feature/word-assist).
-- STAGE A SOURCE default ("whichever of origin or `download/word-assist-stageA.bundle` verifies with tip ba5a959") → **PASSES via the bundle**, now restored to `/home/z/my-project/download/word-assist-stageA.bundle`.
+- STAGE A SOURCE default ("whichever of origin or `download/word-assist-stageA.bundle` verifies with tip ba5a959") → **PASSES via the bundle**, now restored to `download/word-assist-stageA.bundle` in the delivery directory.
 - One declared source failing → work order section 4 requires STOP; the hardening source may not silently become the bundle without the owner's word.
 
 ## Owner decision (pick one)

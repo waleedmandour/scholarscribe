@@ -18,7 +18,7 @@ The sandbox had no Rust toolchain (and no sudo). Built one from scratch:
   `gdk-3.0`, `webkit2gtk-4.1` absent, `sudo` requires a password. Fixed
   WITHOUT root: 288 Debian trixie `.deb`s (libgtk-3-dev,
   libwebkit2gtk-4.1-dev + closure) extracted into a local sysroot at
-  `/home/z/my-project/.sysroot`, `.pc` prefixes rewritten to the
+  `<agent-sysroot>` (a user-level directory outside the repo), `.pc` prefixes rewritten to the
   sysroot, dev symlinks repointed at the system runtime libs
   (`scripts/setup_gtk_sysroot.sh`, `scripts/fix_sysroot_symlinks.sh`).
 - Baseline BEFORE any change: `cargo check --lib` PASS;
