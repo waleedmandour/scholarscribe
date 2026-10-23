@@ -25,6 +25,12 @@ name: Word Assist Release (draft)
 
 on:
   push:
+    branches:
+      # P5: RC-branch pushes exercise the release pipeline as a DRY RUN
+      # (artifacts only). A branch push can NEVER publish: the publish job
+      # requires github.ref_type == 'tag' (walk-through in the delivery
+      # README). Tag pushes still trigger normally.
+      - word-assist-rc-*
     tags:
       - "word-assist-v*"
   workflow_dispatch:
@@ -34,6 +40,14 @@ on:
         required: false
         default: true
         type: boolean
+
+# P5: serialize runs per ref. cancel-in-progress is deliberately FALSE
+# here: a release run must never be killed halfway (a cancelled tag run
+# would leave a half-attached release). Different refs never collide
+# because the group includes github.ref.
+concurrency:
+  group: word-assist-release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -57,6 +71,7 @@ jobs:
             platform: macos
             arch: x64
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -93,7 +108,11 @@ jobs:
       - name: Dry-run / publish mode banner
         shell: bash
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          # P5: the banner reflects the hard gate below — anything that is
+          # not a word-assist-v* tag push is a dry run by construction.
+          if [ "${{ github.ref_type }}" != "tag" ]; then
+            echo "DRY RUN (no tag): artifacts go to this workflow run only; publishing requires a word-assist-v* tag push."
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "DRY RUN: artifacts go to this workflow run only; no release is created."
           else
             echo "PUBLISH MODE: artifacts will be attached to the pre-release."
@@ -130,11 +149,15 @@ jobs:
           if-no-files-found: error
 
   publish:
-    # Publishes ONLY on a tag push (never in dry-run). This is the single
-    # job holding contents: write.
-    if: startsWith(github.ref, 'refs/tags/word-assist-v') && inputs.dry_run != true
+    # Publishes ONLY on a word-assist-v* TAG push, never in dry-run, never
+    # from a branch push, never from workflow_dispatch (dispatch always runs
+    # on a branch ref, so github.ref_type is 'branch' there — see the
+    # trigger walk-through in the delivery README). This is the single job
+    # holding contents: write.
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'word-assist-v') && inputs.dry_run != true
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:

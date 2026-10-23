@@ -22,11 +22,19 @@ on:
   push:
     branches:
       - main
-      - feature/word-assist
+      - feature/word-assist*
+      - word-assist-rc-*
   pull_request:
     branches:
       - main
+      - feature/word-assist*
   workflow_dispatch:
+
+# P5: one concurrent run per ref; a newer push to the same branch cancels
+# the older run (keeps the pending queue short, never touches other refs).
+concurrency:
+  group: word-assist-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   rust:
@@ -56,6 +64,7 @@ jobs:
           - os: macos-15-intel
             features: "--features word-assist"
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +72,12 @@ jobs:
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
         with:
           components: clippy, rustfmt
+
+      - name: Print toolchain versions
+        shell: bash
+        run: |
+          cargo --version
+          rustc --version
 
       - uses: actions/cache@v4
         with:
@@ -89,7 +104,18 @@ jobs:
 
       - name: cargo test (${{ matrix.features || 'default' }})
         working-directory: src-tauri
-        run: cargo test ${{ matrix.features }}
+        shell: bash
+        run: |
+          cargo test ${{ matrix.features }} 2>&1 | tee test-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload cargo test log on failure (test output only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-test-log-${{ matrix.os }}-${{ strategy.job-index }}
+          path: src-tauri/test-output.txt
+          if-no-files-found: ignore
 
       # H7 (integration: on every OS, via each default-config leg): the
       # DEFAULT build must resolve neither feature-only crate. cargo tree
@@ -129,14 +155,29 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
+      - name: Print toolchain versions
+        shell: bash
+        run: node --version && npm --version
       - run: npm ci --no-audit --no-fund
       - run: npm run check
       - run: npm run build
       - name: JS-side tests (references, network surface, verifier cross-check, add-in client, dist integrity)
-        run: npm test
+        shell: bash
+        run: |
+          npm test 2>&1 | tee npm-test-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload npm test log on failure (test output only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-test-log-${{ matrix.os }}-${{ strategy.job-index }}
+          path: npm-test-output.txt
+          if-no-files-found: ignore
