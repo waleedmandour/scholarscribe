@@ -753,7 +753,10 @@ async fn embedded_modules_served_with_secure_headers_and_graph_loads() {
     let (qstatus, _, qbody) = client
         .request_full("GET", "/addin/taskpane.js?x=1", &[], None)
         .await;
-    assert_eq!(qstatus, 200, "query string must not change the served asset");
+    assert_eq!(
+        qstatus, 200,
+        "query string must not change the served asset"
+    );
     assert!(!qbody.is_empty());
 
     // 4. The module graph loads: fetch the entry, extract its relative
