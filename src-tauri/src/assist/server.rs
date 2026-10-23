@@ -1197,10 +1197,9 @@ fn generate_chain(
     // ---- the ephemeral CA -------------------------------------------
     let ca_key = rcgen::KeyPair::generate().map_err(|e| format!("CA key generation: {e}"))?;
     let mut ca_params = CertificateParams::default();
-    ca_params.distinguished_name.push(
-        DnType::CommonName,
-        "ScholarScribe Word Assist Root CA (ephemeral)",
-    );
+    ca_params
+        .distinguished_name
+        .push(DnType::CommonName, crate::assist_commands::CA_COMMON_NAME);
     ca_params.is_ca = IsCa::Ca(BasicConstraints::Constrained(0)); // CA:TRUE, pathlen 0
     ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign]; // keyCertSign ONLY
     ca_params.name_constraints = Some(NameConstraints {

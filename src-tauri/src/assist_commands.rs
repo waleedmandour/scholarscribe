@@ -496,15 +496,40 @@ pub async fn word_assist_registration(
             // re-pointed at the hardened CA (file word-assist-ca.der, subject
             // "ScholarScribe Word Assist Root CA (ephemeral)"). The app only
             // displays these; the USER runs them; nothing writes a store.
+            //
+            // P6: the Step 1 / uninstall commands are now EMITTED by the
+            // per-shell builders below (quote rules unit-tested on spaces,
+            // apostrophes, non-ASCII and long paths). The placeholder
+            // `<assist-data-dir>` is passed as the path so the displayed
+            // command arrives pre-quoted for its shell: the user replaces
+            // the placeholder with their real data dir (which the tab shows
+            // elsewhere) and the quoting is already correct.
             "Trust the CA certificate ('ScholarScribe Word Assist Root CA (ephemeral)'), NOT the leaf: the CA is name-constrained to localhost / 127.0.0.1 and its signing key was destroyed after issuing your leaf.".into(),
-            "Step 1 - trust the CA (Windows): certutil -user -addstore Root \"<assist-data-dir>\\word-assist-ca.der\" (installs into the CURRENT USER Trusted Root Certification Authorities store; the -user flag keeps this to your account; the app does not run this).".into(),
-            "Step 1 - trust the CA (macOS): security add-trusted-cert -r trustRoot \"<assist-data-dir>/word-assist-ca.der\" (adds to your login keychain; macOS shows an authentication dialog for per-user trust - that prompt is the OS, not ScholarScribe). CA name constraints against real OS stores are untested until spike (q).".into(),
+            format!(
+                "Step 1 - trust the CA (Windows, cmd.exe): {} (installs into the CURRENT USER Trusted Root Certification Authorities store; the -user flag keeps this to your account; the app does not run this).",
+                ca_trust_command_windows(std::path::Path::new("<assist-data-dir>"))
+            ),
+            format!(
+                "Step 1 - trust the CA (macOS, zsh/bash): {} (adds to your login keychain; macOS shows an authentication dialog for per-user trust - that prompt is the OS, not ScholarScribe). CA name constraints against real OS stores are untested until spike (q).",
+                ca_trust_command_macos(std::path::Path::new("<assist-data-dir>"))
+            ),
+            format!(
+                "Step 1 (Windows, PowerShell variant): {} (same store as cmd.exe; PowerShell single-quote rules).",
+                format!(
+                    "certutil -user -addstore Root {}",
+                    quote_powershell(r"<assist-data-dir>\word-assist-ca.der")
+                )
+            ),
             "Step 2 - sideload (both OS): Word > Insert > My Add-ins / Get Add-ins > 'Upload My Add-in' > the manifest URL below.".into(),
             "Step 2 (alt, Windows): save the manifest with 'Export manifest file', share its folder, then Word > File > Options > Trust Center > Trusted Add-in Catalogs > add the network path of that folder, and Insert > My Add-ins > SHARED FOLDER.".into(),
             "Step 2 (alt, macOS): copy the exported manifest to ~/Library/Containers/com.microsoft.Word/Data/Documents/wef (create the folder if needed) and restart Word.".to_string(),
             "Step 3 - pair: open the add-in pane and enter the pairing code shown in this tab.".into(),
             "Renewal: the CA + leaf are regenerated when they expire (CA 3 years, leaf 1 year); re-trust the NEW CA — this re-asks your consent.".into(),
-            "Uninstall - remove the add-in first (My Add-ins > right-click > Remove, or clear the trusted catalog / delete the manifest from the wef folder), then revoke CA trust (Windows: certutil -user -delstore Root \"ScholarScribe Word Assist Root CA (ephemeral)\"; macOS: security remove-trusted-cert <ca file> and security delete-certificate -c \"ScholarScribe Word Assist Root CA (ephemeral)\").".into(),
+            format!(
+                "Uninstall - remove the add-in first (My Add-ins > right-click > Remove, or clear the trusted catalog / delete the manifest from the wef folder), then revoke CA trust (Windows, cmd.exe: {}; macOS, zsh/bash: {}).",
+                ca_revoke_command_windows(),
+                ca_revoke_command_macos()
+            ),
             "Full verified walkthrough with uninstall and revoke for every step: docs/WORD_ASSIST_INSTALL.md.".into(),
         ],
     })
@@ -540,8 +565,13 @@ pub async fn word_assist_export_manifest(
     let xml =
         include_str!("../../word-addin/dist/manifest.xml").replace("{PORT}", &port.to_string());
     std::fs::write(&target, xml).map_err(|e| format!("write manifest: {e}"))?;
+    // P6: attach the generated, correctly-quoted macOS sideload copy command
+    // (zsh/bash; $HOME form works for every username shape — spaces,
+    // apostrophes, non-ASCII). Windows users use the shared-folder catalog
+    // instead (no shell command).
+    let mac_sideload = sideload_copy_command_macos(&target);
     let written = format!(
-        "manifest written for port {port} (SourceLocation https://localhost:{port}/addin/taskpane.html): {path}"
+        "manifest written for port {port} (SourceLocation https://localhost:{port}/addin/taskpane.html): {path}\nmacOS sideload (zsh/bash): {mac_sideload}"
     );
     log::info!("{written}");
     Ok(written)
@@ -604,8 +634,219 @@ fn pem_encode(der: &[u8]) -> String {
     out
 }
 
+// ---------------------------------------------------------------------------
+// P6: per-shell, copy-pasteable command builders for the CA trust / revoke /
+// sideload steps. Pure functions so the exact quoting a user must type for a
+// REAL data dir (spaces, apostrophes, non-ASCII usernames, long paths) is
+// generated and unit-tested in one place. The registration UI keeps using the
+// PLACEHOLDER text (`<assist-data-dir>`); nothing here writes to any trust
+// store — the USER runs these commands.
+//
+// Shell targets (stated explicitly, as required by the Gate-1 review):
+//   * Windows instructions target cmd.exe. (PowerShell would need different
+//     quoting; see quote_powershell — provided and tested so a future UI can
+//     print a PowerShell variant without re-deriving the rules.)
+//   * macOS instructions target zsh/bash (POSIX single-quote rules).
+//
+// Elevation (verified against vendor docs in docs/ADVISORIES_A6-adjacent
+// install notes and re-checked in the P6 report): `certutil -user -addstore`
+// writes the CURRENT USER store (no admin); macOS `security add-trusted-cert
+// -r trustRoot` without `-d` targets the login keychain (no admin; the OS
+// shows its own auth prompt). These builders assert the no-elevation shape.
+// ---------------------------------------------------------------------------
+
+/// The ephemeral CA subject (single source of truth; also used by the cert
+/// generator in assist::server).
+#[cfg(feature = "word-assist")]
+pub(crate) const CA_COMMON_NAME: &str = "ScholarScribe Word Assist Root CA (ephemeral)";
+
+/// cmd.exe quoting: wrap in double quotes. Inside double quotes cmd treats
+/// `^` and most metacharacters literally for a single file argument; `%VAR%`
+/// would still expand (documented in the tests — paths with `%` are out of
+/// scope for the trust step because the app renders the real path, which
+/// never contains `%` unless the OS did something extraordinary).
+#[cfg(feature = "word-assist")]
+pub fn quote_windows_cmd(s: &str) -> String {
+    format!("\"{s}\"")
+}
+
+/// PowerShell single-quoted string: fully literal; double any inner `'`.
+#[cfg(feature = "word-assist")]
+pub fn quote_powershell(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "''"))
+}
+
+/// POSIX (zsh/bash) single-quoted string with the standard `'\''` re-entry
+/// trick for inner single quotes.
+#[cfg(feature = "word-assist")]
+pub fn quote_posix(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// Windows CA trust command (cmd.exe). CURRENT USER Trusted Root store — the
+/// `-user` flag keeps it to the calling user's profile, so NO elevation.
+#[cfg(feature = "word-assist")]
+pub fn ca_trust_command_windows(data_dir: &std::path::Path) -> String {
+    let ca = data_dir.join("word-assist-ca.der");
+    format!(
+        "certutil -user -addstore Root {}",
+        quote_windows_cmd(&ca.display().to_string())
+    )
+}
+
+/// macOS CA trust command (zsh/bash). Login keychain (per-user) — no `-d`
+/// (that would target the admin domain and require elevation); the OS shows
+/// its own authentication prompt for per-user trust-root changes.
+#[cfg(feature = "word-assist")]
+pub fn ca_trust_command_macos(data_dir: &std::path::Path) -> String {
+    let ca = data_dir.join("word-assist-ca.der");
+    format!(
+        "security add-trusted-cert -r trustRoot {}",
+        quote_posix(&ca.display().to_string())
+    )
+}
+
+/// Windows CA revoke/uninstall command (cmd.exe). CURRENT USER store — no
+/// elevation.
+#[cfg(feature = "word-assist")]
+pub fn ca_revoke_command_windows() -> String {
+    format!(
+        "certutil -user -delstore Root {}",
+        quote_windows_cmd(CA_COMMON_NAME)
+    )
+}
+
+/// macOS CA revoke/uninstall command (zsh/bash): drop per-user trust then
+/// delete the login-keychain certificate. Omitting `-d` on BOTH commands
+/// keeps them in the user's login domain — no `-d`, no sudo.
+#[cfg(feature = "word-assist")]
+pub fn ca_revoke_command_macos() -> String {
+    format!(
+        "security remove-trusted-cert {} && security delete-certificate -c {}",
+        quote_posix("word-assist-ca.der"),
+        quote_posix(CA_COMMON_NAME)
+    )
+}
+
+/// macOS sideload copy command (zsh/bash): copy an exported manifest into
+/// Word's per-user wef folder (created if missing). `$HOME` keeps the
+/// command working for every username shape (spaces, apostrophes, non-ASCII).
+#[cfg(feature = "word-assist")]
+pub fn sideload_copy_command_macos(manifest_path: &std::path::Path) -> String {
+    let wef = "$HOME/Library/Containers/com.microsoft.Word/Data/Documents/wef";
+    format!(
+        "mkdir -p {wef} && cp {} {wef}/manifest.xml",
+        quote_posix(&manifest_path.display().to_string())
+    )
+}
+
 #[cfg(all(test, feature = "word-assist"))]
 mod tests {
+    // ---- P6: hostile-path unit tests for the command builders ------------
+    // Each case exercises a path shape the owner named: spaces, apostrophes,
+    // non-ASCII (Arabic / accented) usernames, long paths — and asserts the
+    // no-elevation shape of every command.
+    #[test]
+    fn p6_windows_trust_quotes_paths_with_spaces() {
+        let dir = std::path::Path::new(r"C:\Users\John Doe\AppData\Roaming\scholarscribe");
+        let cmd = super::ca_trust_command_windows(dir);
+        assert!(cmd.starts_with("certutil -user -addstore Root \""), "{cmd}");
+        assert!(cmd.ends_with("word-assist-ca.der\""), "{cmd}");
+        assert!(cmd.contains("John Doe"), "{cmd}");
+        // No elevation: -user store, never the machine store flag pair.
+        assert!(!cmd.contains(" -enterprise"), "{cmd}");
+        assert!(!cmd.contains(" -gpo"), "{cmd}");
+    }
+
+    #[test]
+    fn p6_posix_quoting_survives_apostrophes() {
+        let dir = std::path::Path::new("/Users/O'Brien/Library/Application Support/scholarscribe");
+        let cmd = super::ca_trust_command_macos(dir);
+        // The '\'' re-entry trick must be applied, and the name must survive
+        // round-trip: stripping the quoting yields the original path.
+        assert!(cmd.contains("'\\''"), "{cmd}");
+        assert!(!cmd.starts_with("sudo"), "{cmd}");
+        assert!(!cmd.contains(" -d "), "{cmd}");
+        let quoted = cmd
+            .strip_prefix("security add-trusted-cert -r trustRoot ")
+            .expect("command shape")
+            .to_string();
+        let unquoted = quoted
+            .strip_prefix('\'')
+            .and_then(|s| s.strip_suffix('\''))
+            .unwrap()
+            .replace("'\\''", "'");
+        assert_eq!(
+            unquoted,
+            "/Users/O'Brien/Library/Application Support/scholarscribe/word-assist-ca.der"
+        );
+    }
+
+    #[test]
+    fn p6_powershell_quoting_doubles_inner_apostrophes() {
+        let q = super::quote_powershell("/Users/O'Brien/x");
+        assert_eq!(q, "'/Users/O''Brien/x'");
+    }
+
+    #[test]
+    fn p6_non_ascii_usernames_pass_through_verbatim() {
+        // Arabic username (Windows shape) — UTF-8 passthrough, quoted.
+        let dir = std::path::Path::new(r"C:\Users\مستخدم\AppData\Roaming\scholarscribe");
+        let cmd = super::ca_trust_command_windows(dir);
+        assert!(cmd.contains("مستخدم"), "{cmd}");
+        assert!(cmd.starts_with("certutil -user"), "{cmd}");
+        // Accented username (macOS shape).
+        let dir2 = std::path::Path::new("/Users/José/Library/Application Support/scholarscribe");
+        let cmd2 = super::ca_trust_command_macos(dir2);
+        assert!(cmd2.contains("José"), "{cmd2}");
+        assert!(
+            cmd2.starts_with("security add-trusted-cert -r trustRoot"),
+            "{cmd2}"
+        );
+    }
+
+    #[test]
+    fn p6_long_paths_are_not_truncated() {
+        let mut long = std::path::PathBuf::from(r"C:\Users\jane");
+        for i in 0..40 {
+            long.push(format!("directory-with-a-very-long-name-{i:02}"));
+        }
+        let cmd = super::ca_trust_command_windows(&long);
+        assert!(
+            cmd.len() > 1200,
+            "path should survive intact: len={}",
+            cmd.len()
+        );
+        assert!(cmd.starts_with("certutil -user -addstore Root \""), "{cmd}");
+        assert!(cmd.ends_with("\""), "{cmd}");
+    }
+
+    #[test]
+    fn p6_revoke_commands_target_user_stores_only() {
+        let win = super::ca_revoke_command_windows();
+        assert!(win.starts_with("certutil -user -delstore Root \""), "{win}");
+        assert!(win.contains(super::CA_COMMON_NAME), "{win}");
+        let mac = super::ca_revoke_command_macos();
+        assert!(mac.starts_with("security remove-trusted-cert '"), "{mac}");
+        assert!(!mac.contains(" -d "), "{mac}");
+        assert!(!mac.contains("sudo"), "{mac}");
+        assert!(mac.contains(super::CA_COMMON_NAME), "{mac}");
+    }
+
+    #[test]
+    fn p6_sideload_copy_uses_home_and_quotes_manifest() {
+        let manifest = std::path::Path::new("/Users/Ann Lee/Downloads/word assist manifest.xml");
+        let cmd = super::sideload_copy_command_macos(manifest);
+        assert!(
+            cmd.starts_with(
+                "mkdir -p $HOME/Library/Containers/com.microsoft.Word/Data/Documents/wef && cp '"
+            ),
+            "{cmd}"
+        );
+        assert!(cmd.contains("Ann Lee"), "{cmd}");
+        assert!(cmd.contains("manifest.xml"), "{cmd}");
+    }
+
     #[test]
     fn pem_encoder_matches_shape() {
         let pem = super::pem_encode(&[0x30, 0x82, 0x01]);

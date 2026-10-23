@@ -885,6 +885,42 @@ mod tests {
         assert!(constant_time_eq(b"", b""));
     }
 
+    // ---- P6: the Windows refusal path, tested through the write_private
+    // seam. These compile per-platform: on Windows CI legs the refusal MUST
+    // fire (no unencrypted private-file fallback on Windows, owner ruling);
+    // on unix legs the same seam must produce a 0600 file.
+    #[test]
+    #[cfg(not(unix))]
+    fn p6_write_private_refused_on_windows() {
+        let dir = std::env::temp_dir().join(format!("wa-test-p6-refus-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("would-be-key.bin");
+        let err = super::write_private(&path, b"secret").expect_err("refusal expected");
+        assert!(
+            err.contains("refused"),
+            "user-facing refusal must say 'refused': {err}"
+        );
+        assert!(
+            err.contains("keychain"),
+            "refusal must point at the keychain requirement: {err}"
+        );
+        assert!(!path.exists(), "no file may be created on the refused path");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn p6_write_private_uses_0600_on_unix() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("wa-test-p6-0600-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let path = dir.join("key.bin");
+        super::write_private(&path, b"secret").expect("write ok on unix");
+        let mode = std::fs::metadata(&path).expect("meta").permissions().mode();
+        assert_eq!(mode & 0o777, 0o600, "file must be 0600");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     #[test]
     fn rate_limiter_windows() {
         let rl = super::RateLimiter::new(3, Duration::from_millis(50));
