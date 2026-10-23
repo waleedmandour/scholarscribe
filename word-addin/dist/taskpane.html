@@ -86,6 +86,11 @@
     </div>
   </main>
   <footer>ScholarScribe Word Assist · engine <span id="engineVersion">?</span> · text stays on this machine</footer>
+  <!-- Classic (non-module) runtime check FIRST: a webview without ES-module
+       support ignores the module tag below, so without legacy-check.js the
+       pane would sit on "Starting…" forever. legacy-check.js is served by
+       the engine (CSP script-src 'self') and written in ES5. -->
+  <script src="legacy-check.js"></script>
   <script type="module" src="taskpane.js"></script>
 </body>
 </html>

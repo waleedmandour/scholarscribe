@@ -30,6 +30,7 @@ import { Watermark } from "./watermark.js";
 import { planInlineEdit, planTier1Edits } from "./apply.js";
 import { capsLine, hasLiveWatching, selectMode, usesAnnotations, } from "./fallback.js";
 import { errorStatus, healthStatus, unsupportedLanguage } from "./errors.js";
+import { ApiError, classifyCheckFailure, classifyPairFailure, parsePairOk, sanitizeForDisplay, } from "./pairing.js";
 // ------------------------------------------------------------- constants
 const ENGINE_ORIGIN = window.location.origin; // served by the engine
 const DEBOUNCE_MS = 1200; // typing quiet period before a check
@@ -66,7 +67,9 @@ let liveIssues = [];
 function log(msg) {
     const logEl = requireEl("log");
     const li = document.createElement("li");
-    li.textContent = new Date().toTimeString().slice(0, 8) + " " + msg;
+    // sanitizeForDisplay: pairing codes and bearer tokens never reach the
+    // pane log even if a future call site tries to log them (A2×H1/H2).
+    li.textContent = new Date().toTimeString().slice(0, 8) + " " + sanitizeForDisplay(msg);
     logEl.appendChild(li);
     while (logEl.childElementCount > 40)
         logEl.removeChild(logEl.firstChild);
@@ -76,15 +79,15 @@ function setStatus(state) {
     statusEl.className = "status " + state.kind;
     statusEl.textContent = state.message;
 }
-/** @returns parsed JSON or throws Error(message from body) */
+/** @returns parsed JSON or throws ApiError(status, server message) */
 async function api(path, opts) {
     const res = await fetch(ENGINE_ORIGIN + path, opts);
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-        const err = body && typeof body === "object" && "error" in body
+        const msg = body && typeof body === "object" && "error" in body
             ? String(body.error)
             : "HTTP " + res.status;
-        throw new Error(err);
+        throw new ApiError(res.status, msg);
     }
     return body;
 }
@@ -104,15 +107,13 @@ async function loadToken() {
     }
 }
 async function pair(code) {
-    const body = (await api("/v1/pair", {
+    const body = await api("/v1/pair", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
-    }));
-    if (typeof body.token !== "string" || body.token.length === 0) {
-        throw new Error("engine returned no token");
-    }
-    token = body.token;
+    });
+    // parsePairOk: throws ApiError when the engine returned no token.
+    token = parsePairOk(body);
     try {
         window.localStorage.setItem("scholarscribe-assist-token", token);
     }
@@ -122,6 +123,36 @@ async function pair(code) {
     log("paired");
     await refreshHealth();
     startWatching();
+}
+/** The token was revoked, rotated (H2) or expired (401 from a /v1 call):
+ *  clear it everywhere and put the pane back into the re-pair state. */
+function clearTokenAndRequirePairing(message) {
+    token = null;
+    try {
+        window.localStorage.removeItem("scholarscribe-assist-token");
+    }
+    catch {
+        /* ignore */
+    }
+    requireEl("pairingCard").classList.remove("hidden");
+    requireEl("unpairBtn").classList.add("hidden");
+    setStatus({ kind: "warn", message });
+}
+/** Single router for engine failures on /v1/check and /v1/accepted:
+ *  401 -> re-pair UX; 429 -> back-off note; anything else -> log. */
+function handleEngineFailure(site, e) {
+    if (e instanceof ApiError) {
+        const verdict = classifyCheckFailure(e.status, e.message);
+        if (verdict.action === "repair") {
+            clearTokenAndRequirePairing(verdict.message);
+            return;
+        }
+        if (verdict.action === "backoff") {
+            setStatus({ kind: "warn", message: verdict.message });
+            return;
+        }
+    }
+    log(errorStatus(site, e).message);
 }
 // ---------------------------------------------------------------- health
 async function refreshHealth() {
@@ -185,7 +216,7 @@ async function checkDocument(force) {
         });
     }
     catch (e) {
-        log(errorStatus("check", e).message);
+        handleEngineFailure("check", e);
     }
     finally {
         checking = false;
@@ -266,7 +297,7 @@ async function repoll(paragraphId, text) {
         await checkParagraph(paragraphId, text);
     }
     catch (e) {
-        log(errorStatus("repoll", e).message);
+        handleEngineFailure("repoll", e);
     }
 }
 // ------------------------------------------------- annotations (1.7/1.8)
@@ -425,7 +456,7 @@ async function applyInlineEdit(paragraphId, issue, suggestion) {
         checkDocument(true);
     }
     catch (e) {
-        log(errorStatus("apply", e).message);
+        handleEngineFailure("apply", e);
     }
 }
 function renderTier1(paragraphId, sentenceStart, t1) {
@@ -485,7 +516,7 @@ async function applyTier1Edits(paragraphId, sentenceStartU16, sug) {
         checkDocument(true);
     }
     catch (e) {
-        log(errorStatus("apply", e).message);
+        handleEngineFailure("apply", e);
     }
 }
 // ------------------------------------------------------------- watching
@@ -547,8 +578,22 @@ Office.onReady(() => {
             return;
         }
         pairBtn.disabled = true;
-        pair(code).catch((e) => {
-            setStatus(errorStatus("pair", e));
+        pair(code)
+            .then(() => {
+            pairBtn.disabled = false;
+            pairCode.value = "";
+        })
+            .catch((e) => {
+            // A2×H1/H2: the failure kind decides the wording — wrong code,
+            // lockout (cooldown + NEW code required), rate limit, expiry.
+            // The typed code and any token are never shown or logged.
+            if (e instanceof ApiError) {
+                const v = classifyPairFailure(e.status, e.message);
+                setStatus({ kind: v.kind === "rate-limited" || v.kind === "locked" ? "warn" : "err", message: v.message });
+            }
+            else {
+                setStatus(errorStatus("pair", e));
+            }
             pairBtn.disabled = false;
         });
     });

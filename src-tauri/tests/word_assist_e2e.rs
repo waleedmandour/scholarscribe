@@ -161,6 +161,19 @@ impl Client {
         headers: &[(&str, &str)],
         body: Option<&[u8]>,
     ) -> (u16, String) {
+        let (status, _, body) = self.request_full(method, path, headers, body).await;
+        (status, body)
+    }
+
+    /// Like [`Client::request`] but also returns the raw header block
+    /// (A2×H6: the module-serving tests assert on response headers).
+    async fn request_full(
+        &self,
+        method: &str,
+        path: &str,
+        headers: &[(&str, &str)],
+        body: Option<&[u8]>,
+    ) -> (u16, String, String) {
         let mut conn = self.connect().await;
         let mut req = format!(
             "{method} {path} HTTP/1.1\r\nHost: localhost:{}\r\n",
@@ -180,22 +193,38 @@ impl Client {
         }
         let mut raw = Vec::new();
         conn.read_to_end(&mut raw).await.expect("read response");
-        parse_response(&raw)
+        parse_response_full(&raw)
     }
 }
 
 fn parse_response(raw: &[u8]) -> (u16, String) {
+    let (status, _, body) = parse_response_full(raw);
+    (status, body)
+}
+
+fn parse_response_full(raw: &[u8]) -> (u16, String, String) {
     let text = String::from_utf8_lossy(raw);
     let status: u16 = text
         .split_whitespace()
         .nth(1)
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
-    let body = text
+    let (head, body) = text
         .split_once("\r\n\r\n")
-        .map(|(_, b)| b.to_string())
+        .map(|(h, b)| (h.to_string(), b.to_string()))
         .unwrap_or_default();
-    (status, body)
+    (status, head, body)
+}
+
+fn header_value(head: &str, name: &str) -> Option<String> {
+    head.lines().skip(1).find_map(|l| {
+        let (k, v) = l.split_once(":")?;
+        if k.trim().eq_ignore_ascii_case(name) {
+            Some(v.trim().to_string())
+        } else {
+            None
+        }
+    })
 }
 
 fn json_body(v: &serde_json::Value) -> Vec<u8> {
@@ -635,6 +664,125 @@ async fn static_routes_serve_only_embedded_assets() {
     ] {
         let (status, _) = client.request("GET", path, &[], None).await;
         assert_eq!(status, 404, "path variant {path} must be 404");
+    }
+
+    server_handle_stop(&server);
+    cleanup(&dir);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn embedded_modules_served_with_secure_headers_and_graph_loads() {
+    // A2×H6: every embedded ES module is served through the REAL TLS
+    // listener with Content-Type text/javascript, X-Content-Type-Options
+    // nosniff and the pane CSP; path variants still 404; and every import
+    // of the entry module resolves (the module graph is fetchable, which
+    // is the listener's whole role in an ES-module load).
+    install_log_capture();
+    let dir = temp_dir("modules");
+    let state = new_state(&dir);
+    let server = spawn_server(Arc::clone(&state), &dir, test_limits(), false, "")
+        .await
+        .expect("server");
+    let client = Client::new(&load_ca(&dir), server.port, false, false);
+    let csp = scholarscribe_lib::assist::server::ADDIN_CSP;
+
+    // 1. Every module in the embed table: 200 + the three headers.
+    let routes = scholarscribe_lib::assist::server::addin_module_routes();
+    assert!(
+        routes.len() >= 9,
+        "expected the full module table (taskpane + pure modules + legacy check), got {routes:?}"
+    );
+    for route in &routes {
+        let (status, head, body) = client.request_full("GET", route, &[], None).await;
+        assert_eq!(status, 200, "{route} must be served");
+        let ct = header_value(&head, "Content-Type").unwrap_or_default();
+        assert!(
+            ct.starts_with("text/javascript"),
+            "{route}: Content-Type must be text/javascript, got {ct}"
+        );
+        assert_eq!(
+            header_value(&head, "X-Content-Type-Options").as_deref(),
+            Some("nosniff"),
+            "{route}: nosniff missing"
+        );
+        assert_eq!(
+            header_value(&head, "Content-Security-Policy").as_deref(),
+            Some(csp),
+            "{route}: CSP missing or wrong"
+        );
+        assert!(!body.is_empty(), "{route}: empty body");
+    }
+
+    // 2. The pane HTML keeps nosniff + CSP too (it is what declares the
+    //    module graph and the legacy fallback script).
+    let (status, head, _) = client
+        .request_full("GET", "/addin/taskpane.html", &[], None)
+        .await;
+    assert_eq!(status, 200);
+    assert_eq!(
+        header_value(&head, "X-Content-Type-Options").as_deref(),
+        Some("nosniff")
+    );
+    assert_eq!(
+        header_value(&head, "Content-Security-Policy").as_deref(),
+        Some(csp)
+    );
+    let (_, _, html) = client
+        .request_full("GET", "/addin/taskpane.html", &[], None)
+        .await;
+    assert!(
+        html.contains("legacy-check.js"),
+        "pane must load the classic-script fallback before the module entry"
+    );
+
+    // 3. Path variants of a REAL module route still 404. (A query string
+    //    is NOT a path variant: hyper's uri().path() excludes it, and
+    //    serving the same embedded bytes with a cache-busting query is
+    //    correct HTTP behaviour — asserted below, not failed.)
+    for path in [
+        "/addin/taskpane.js/",
+        "/addin/taskpane.js%2F",
+        "/addin/./taskpane.js",
+        "//addin/taskpane.js",
+        "/addin/taskpane%2Ejs",
+        "/addin/TASKPANE.js",
+    ] {
+        let (status, _) = client.request("GET", path, &[], None).await;
+        assert_eq!(status, 404, "module path variant {path} must be 404");
+    }
+    let (qstatus, _, qbody) = client
+        .request_full("GET", "/addin/taskpane.js?x=1", &[], None)
+        .await;
+    assert_eq!(qstatus, 200, "query string must not change the served asset");
+    assert!(!qbody.is_empty());
+
+    // 4. The module graph loads: fetch the entry, extract its relative
+    //    imports, and fetch each one — every edge must resolve through
+    //    the listener with the right content type.
+    let (status, _, entry) = client
+        .request_full("GET", "/addin/taskpane.js", &[], None)
+        .await;
+    assert_eq!(status, 200);
+    let mut imports: Vec<String> = Vec::new();
+    for tail in entry.split(" from \"").skip(1) {
+        if let Some(name) = tail.split('"').next() {
+            if let Some(module) = name.strip_prefix("./") {
+                imports.push(format!("/addin/{module}"));
+            }
+        }
+    }
+    assert!(
+        imports.len() >= 6,
+        "entry module should import the pure modules, found {imports:?}"
+    );
+    for imp in &imports {
+        let (status, head, _) = client.request_full("GET", imp, &[], None).await;
+        assert_eq!(status, 200, "import {imp} of the entry module must resolve");
+        let ct = header_value(&head, "Content-Type").unwrap_or_default();
+        assert!(
+            ct.starts_with("text/javascript"),
+            "{imp}: wrong content type {ct}"
+        );
     }
 
     server_handle_stop(&server);

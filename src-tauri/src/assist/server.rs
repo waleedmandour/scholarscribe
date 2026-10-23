@@ -154,7 +154,26 @@ static ADDIN_MODULE_FILES: &[(&str, &str)] = &[
         "/addin/errors.js",
         include_str!("../../../word-addin/dist/errors.js"),
     ),
+    (
+        "/addin/pairing.js",
+        include_str!("../../../word-addin/dist/pairing.js"),
+    ),
+    // Classic-script runtime probe for webviews without ES-module
+    // support (loaded first by taskpane.html; ES5 so legacy engines can
+    // even parse it).
+    (
+        "/addin/legacy-check.js",
+        include_str!("../../../word-addin/dist/legacy-check.js"),
+    ),
 ];
+
+/// The route paths of every embedded add-in module. Public so the E2E
+/// suite can iterate the table and prove each module is served with the
+/// right headers through the real TLS listener (single source of truth:
+/// a module added to the table is automatically covered).
+pub fn addin_module_routes() -> Vec<&'static str> {
+    ADDIN_MODULE_FILES.iter().map(|(route, _)| *route).collect()
+}
 
 fn json_response(status: StatusCode, value: &impl Serialize) -> Response<RespBody> {
     let body = serde_json::to_vec(value).unwrap_or_else(|_| b"{}".to_vec());
@@ -178,6 +197,12 @@ fn static_response(content_type: &str, bytes: Vec<u8>, csp: Option<&str>) -> Res
     resp.headers_mut().insert(
         CONTENT_TYPE,
         HeaderValue::from_str(content_type).expect("static content type"),
+    );
+    // A2×H6: every embedded asset (modules included) is served with
+    // nosniff so a webview can never reinterpret the bytes.
+    resp.headers_mut().insert(
+        "X-Content-Type-Options",
+        HeaderValue::from_static("nosniff"),
     );
     resp.headers_mut()
         .insert("Cache-Control", HeaderValue::from_static("no-store"));
@@ -493,10 +518,12 @@ async fn handle(
                 .iter()
                 .position(|(route, _)| *route == path)
                 .expect("route matched the guard above");
+            // ES modules get the SAME CSP as the pane HTML: they run in
+            // the pane's realm, and nosniff comes from static_response.
             static_response(
                 "text/javascript; charset=utf-8",
                 ADDIN_MODULE_FILES[idx].1.as_bytes().to_vec(),
-                None,
+                Some(ADDIN_CSP),
             )
         }
         (&hyper::Method::GET, "/addin/icon-32.png") => static_response(

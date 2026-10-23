@@ -38,6 +38,13 @@ import {
   type ProbedCapabilities,
 } from "./fallback.js";
 import { errorStatus, healthStatus, unsupportedLanguage, type StatusState } from "./errors.js";
+import {
+  ApiError,
+  classifyCheckFailure,
+  classifyPairFailure,
+  parsePairOk,
+  sanitizeForDisplay,
+} from "./pairing.js";
 
 // ------------------------------------------------------------- constants
 
@@ -81,7 +88,9 @@ let liveIssues: Array<{ paraId: string; sentenceStart: number; issue: AssistIssu
 function log(msg: string): void {
   const logEl = requireEl<HTMLUListElement>("log");
   const li = document.createElement("li");
-  li.textContent = new Date().toTimeString().slice(0, 8) + " " + msg;
+  // sanitizeForDisplay: pairing codes and bearer tokens never reach the
+  // pane log even if a future call site tries to log them (A2×H1/H2).
+  li.textContent = new Date().toTimeString().slice(0, 8) + " " + sanitizeForDisplay(msg);
   logEl.appendChild(li);
   while (logEl.childElementCount > 40) logEl.removeChild(logEl.firstChild as ChildNode);
 }
@@ -92,16 +101,16 @@ function setStatus(state: StatusState): void {
   statusEl.textContent = state.message;
 }
 
-/** @returns parsed JSON or throws Error(message from body) */
+/** @returns parsed JSON or throws ApiError(status, server message) */
 async function api(path: string, opts: RequestInit): Promise<unknown> {
   const res = await fetch(ENGINE_ORIGIN + path, opts);
   const body: unknown = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err =
+    const msg =
       body && typeof body === "object" && "error" in body
         ? String((body as { error: unknown }).error)
         : "HTTP " + res.status;
-    throw new Error(err);
+    throw new ApiError(res.status, msg);
   }
   return body;
 }
@@ -124,15 +133,13 @@ async function loadToken(): Promise<void> {
 }
 
 async function pair(code: string): Promise<void> {
-  const body = (await api("/v1/pair", {
+  const body = await api("/v1/pair", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
-  })) as { token?: string };
-  if (typeof body.token !== "string" || body.token.length === 0) {
-    throw new Error("engine returned no token");
-  }
-  token = body.token;
+  });
+  // parsePairOk: throws ApiError when the engine returned no token.
+  token = parsePairOk(body);
   try {
     window.localStorage.setItem("scholarscribe-assist-token", token);
   } catch {
@@ -141,6 +148,37 @@ async function pair(code: string): Promise<void> {
   log("paired");
   await refreshHealth();
   startWatching();
+}
+
+/** The token was revoked, rotated (H2) or expired (401 from a /v1 call):
+ *  clear it everywhere and put the pane back into the re-pair state. */
+function clearTokenAndRequirePairing(message: string): void {
+  token = null;
+  try {
+    window.localStorage.removeItem("scholarscribe-assist-token");
+  } catch {
+    /* ignore */
+  }
+  requireEl<HTMLElement>("pairingCard").classList.remove("hidden");
+  requireEl<HTMLButtonElement>("unpairBtn").classList.add("hidden");
+  setStatus({ kind: "warn", message });
+}
+
+/** Single router for engine failures on /v1/check and /v1/accepted:
+ *  401 -> re-pair UX; 429 -> back-off note; anything else -> log. */
+function handleEngineFailure(site: "check" | "apply" | "repoll", e: unknown): void {
+  if (e instanceof ApiError) {
+    const verdict = classifyCheckFailure(e.status, e.message);
+    if (verdict.action === "repair") {
+      clearTokenAndRequirePairing(verdict.message);
+      return;
+    }
+    if (verdict.action === "backoff") {
+      setStatus({ kind: "warn", message: verdict.message });
+      return;
+    }
+  }
+  log(errorStatus(site, e).message);
 }
 
 // ---------------------------------------------------------------- health
@@ -206,7 +244,7 @@ async function checkDocument(force: boolean): Promise<void> {
       }
     });
   } catch (e) {
-    log(errorStatus("check", e).message);
+    handleEngineFailure("check", e);
   } finally {
     checking = false;
   }
@@ -291,7 +329,7 @@ async function repoll(paragraphId: string, text: string): Promise<void> {
   try {
     await checkParagraph(paragraphId, text);
   } catch (e) {
-    log(errorStatus("repoll", e).message);
+    handleEngineFailure("repoll", e);
   }
 }
 
@@ -456,7 +494,7 @@ async function applyInlineEdit(
     log("accepted: " + issue.id);
     checkDocument(true);
   } catch (e) {
-    log(errorStatus("apply", e).message);
+    handleEngineFailure("apply", e);
   }
 }
 
@@ -534,7 +572,7 @@ async function applyTier1Edits(
     });
     checkDocument(true);
   } catch (e) {
-    log(errorStatus("apply", e).message);
+    handleEngineFailure("apply", e);
   }
 }
 
@@ -609,10 +647,23 @@ Office.onReady(() => {
       return;
     }
     pairBtn.disabled = true;
-    pair(code).catch((e) => {
-      setStatus(errorStatus("pair", e));
-      pairBtn.disabled = false;
-    });
+    pair(code)
+      .then(() => {
+        pairBtn.disabled = false;
+        pairCode.value = "";
+      })
+      .catch((e) => {
+        // A2×H1/H2: the failure kind decides the wording — wrong code,
+        // lockout (cooldown + NEW code required), rate limit, expiry.
+        // The typed code and any token are never shown or logged.
+        if (e instanceof ApiError) {
+          const v = classifyPairFailure(e.status, e.message);
+          setStatus({ kind: v.kind === "rate-limited" || v.kind === "locked" ? "warn" : "err", message: v.message });
+        } else {
+          setStatus(errorStatus("pair", e));
+        }
+        pairBtn.disabled = false;
+      });
   });
   requireEl<HTMLButtonElement>("recheckBtn").addEventListener("click", () =>
     checkDocument(true),

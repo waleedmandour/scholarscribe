@@ -10,7 +10,11 @@
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": false,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "types": [],
     "skipLibCheck": true,
     "noEmitOnError": true,
@@ -29,6 +33,7 @@
     "src/apply.ts",
     "src/fallback.ts",
     "src/errors.ts",
-    "src/taskpane.ts"
+    "src/taskpane.ts",
+    "src/pairing.ts"
   ]
 }

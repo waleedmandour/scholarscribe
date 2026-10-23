@@ -9,7 +9,9 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "types": [],
     "skipLibCheck": true,
     "noEmitOnError": true,
@@ -31,6 +33,8 @@
     "test/offsets.test.ts",
     "test/units.test.ts",
     "test/apply.test.ts",
-    "test/flow.test.ts"
+    "test/flow.test.ts",
+    "src/pairing.ts",
+    "test/pairing.test.ts"
   ]
 }

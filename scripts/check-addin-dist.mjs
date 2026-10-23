@@ -27,6 +27,14 @@ function fail(msg) {
   console.error("FAIL " + msg);
 }
 
+// Hand-maintained dist assets: NOT tsc outputs, so they are exempt from
+// the byte-compare below, but they carry their own contracts (embedded
+// in the listener, LF-only, loaded in the right order).
+//  - legacy-check.js: classic ES5 runtime probe for webviews without
+//    ES-module support (A2 integration). tsc must NOT build it — it has
+//    to stay a classic script so legacy engines can even parse it.
+const HAND_MAINTAINED = new Set(["legacy-check.js"]);
+
 // --- 1. rebuild into a temp dir and compare -----------------------------
 const tmp = mkdtempSync(join(tmpdir(), "addin-dist-"));
 execFileSync(join(repoRoot, "node_modules", ".bin", "tsc"), ["-p", join(addin, "tsconfig.json"), "--outDir", tmp], {
@@ -47,14 +55,14 @@ for (const f of built) {
   }
 }
 for (const f of committed) {
-  if (!built.includes(f)) {
+  if (!built.includes(f) && !HAND_MAINTAINED.has(f)) {
     fail(`dist file ${f} has no built counterpart (stale leftover? regenerate dist)`);
   }
 }
 
-// --- 2. every built module must be embedded in the listener -------------
+// --- 2. every built module AND hand-maintained script must be embedded -
 const serverSrc = readFileSync(join(repoRoot, "src-tauri/src/assist/server.rs"), "utf8");
-for (const f of built) {
+for (const f of [...built, ...HAND_MAINTAINED]) {
   const route = f === "taskpane.js" ? "/addin/taskpane.js" : "/addin/" + f;
   if (!serverSrc.includes(`"/addin/${f}"`)) {
     fail(`${f} is not embedded in server.rs ADDIN_MODULE_FILES (route ${route})`);
@@ -66,7 +74,16 @@ const html = readFileSync(join(dist, "taskpane.html"), "utf8");
 if (!html.includes('<script type="module" src="taskpane.js">')) {
   fail('taskpane.html must load taskpane.js with type="module" (ESM serve model)');
 }
-for (const f of [...built, "taskpane.html", "manifest.xml"]) {
+if (HAND_MAINTAINED.has("legacy-check.js")) {
+  const probe = html.indexOf('src="legacy-check.js"');
+  const entry = html.indexOf('<script type="module" src="taskpane.js">');
+  if (probe === -1) {
+    fail("taskpane.html must load legacy-check.js (webviews without ES modules otherwise show a dead pane)");
+  } else if (entry !== -1 && probe > entry) {
+    fail("legacy-check.js must load BEFORE the module entry (it is the fallback for engines that skip module scripts)");
+  }
+}
+for (const f of [...built, ...HAND_MAINTAINED, "taskpane.html", "manifest.xml"]) {
   const p = join(dist, f);
   if (!existsSync(p)) continue; // already reported above
   const bytes = readFileSync(p);
@@ -84,4 +101,7 @@ if (failures > 0) {
   console.error("Fix: npm run addin:build, then commit word-addin/dist/");
   process.exit(1);
 }
-console.log("addin dist integrity: OK (" + built.length + " modules byte-identical, all embedded, LF-only)");
+console.log(
+  "addin dist integrity: OK (" + built.length + " modules byte-identical, " +
+    HAND_MAINTAINED.size + " hand-maintained checked by contract, all embedded, LF-only)",
+);
