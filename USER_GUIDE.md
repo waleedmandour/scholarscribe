@@ -92,7 +92,7 @@ Word Assist is an opt-in, feature-build extra: while it is on, ScholarScribe ser
 **One-time setup** (all manual, all undoable — full walkthrough in [`docs/WORD_ASSIST_INSTALL.md`](docs/WORD_ASSIST_INSTALL.md)):
 
 1. In the Word Assist tab, accept the disclosure and **Enable**. This starts a loopback listener on `https://localhost:38080` (port configurable) bound to `127.0.0.1` only.
-2. Trust the per-install certificate with the copyable command for your OS (Windows: `certutil -user -addstore Root ...`; macOS: `security add-trusted-cert -r trustRoot ...`). The app never writes your certificate store itself.
+2. Trust the CA certificate with the copyable command for your OS (Windows: `certutil -user -addstore Root ...`; macOS: `security add-trusted-cert -r trustRoot ...`). You are trusting the CA named "ScholarScribe Word Assist Root CA (ephemeral)" — never the leaf; it is name-constrained to localhost/127.0.0.1 and its signing key was destroyed after issuing your leaf. The app never writes your certificate store itself.
 3. Export the manifest file and sideload it (Windows: trusted shared-folder catalog; macOS: the `wef` folder), then open the pane in Word.
 4. Generate a pairing code in the app and type it into the pane. Codes are 6 characters, expire after 5 minutes, and work once. Each app restart or disable/re-enable invalidates the old session, so re-pair then.
 
@@ -103,14 +103,14 @@ Word Assist is an opt-in, feature-build extra: while it is on, ScholarScribe ser
 | Symptom | Meaning and fix |
 |---|---|
 | The pane shows "ScholarScribe is not reachable" | The app is closed or Word Assist is not enabled. Open the app, enable Word Assist; check the port matches the pane's expectation. |
-| Certificate / TLS error when Word loads the pane | The per-install certificate is not trusted yet (or was regenerated). Re-run the trust command from step 2 — the certificate file path is shown in the Word Assist tab. |
+| Certificate / TLS error when Word loads the pane | The CA certificate is not trusted yet (or was regenerated on renewal). Re-run the trust command from step 2 — the CA file path is shown in the Word Assist tab. |
 | "Port 38080 is already in use" | Another process (or a second ScholarScribe copy) holds the port. Change the port in Word Assist settings and re-enable; Word fetches the manifest at the new port automatically. |
-| Pairing always fails | The code expired (5 minutes) or was already used. Generate a fresh code; both sides must see the same port. |
-| macOS: a keychain prompt appears | The OS is asking whether ScholarScribe may read its own stored key. That prompt is macOS, not a new network action. Denying it makes Word Assist fall back to a 0600 file in the app data folder (disclosed in the audit log). |
-| Underlines never appear, only the list | Your Word build lacks WordApi 1.7/1.8 or the Microsoft 365 subscription the annotation APIs require. List mode is the designed fallback; nothing is broken. |
+| Pairing always fails | The code expired (5 minutes), was already used, or was burned by 5 wrong attempts. Generate a fresh code (during a lockout cooldown the tab shows how long to wait); both sides must see the same port. |
 | A rewrite chip never appears | Tier 1 is off until a model name is set in the Word Assist tab, and it needs Ollama running. |
+| Underlines never appear, only the list | Your Word build lacks WordApi 1.7/1.8 or the Microsoft 365 subscription the annotation APIs require. List mode is the designed fallback; nothing is broken. |
+| macOS: a keychain prompt appears | The OS is asking whether ScholarScribe may read its own stored secrets (the leaf TLS key or the token hash). That prompt is macOS, not a new network action. Denying it makes Word Assist fall back to a 0600 file in the app data folder (disclosed in the audit log; on Windows the keychain is not used and the 0600-file equivalent is refused — the feature needs the keychain there). |
 
-**Uninstall**: remove the add-in (Windows: My Add-ins → Remove / clear the trusted catalog; macOS: delete the manifest from the `wef` folder), then revoke certificate trust (Windows: `certutil -user -delstore Root "ScholarScribe Word Assist (localhost)"`; macOS: `security remove-trusted-cert ...` and `security delete-certificate -c "ScholarScribe Word Assist (localhost)"`), and click **Disable** (or Unpair) in the app. Every step's exact command is in [`docs/WORD_ASSIST_INSTALL.md`](docs/WORD_ASSIST_INSTALL.md).
+**Uninstall**: remove the add-in (Windows: My Add-ins → Remove / clear the trusted catalog; macOS: delete the manifest from the `wef` folder), then revoke CA trust (Windows: `certutil -user -delstore Root "ScholarScribe Word Assist Root CA (ephemeral)"`; macOS: `security remove-trusted-cert ...` and `security delete-certificate -c "ScholarScribe Word Assist Root CA (ephemeral)"`), and click **Disable** (or Unpair) in the app. Every step's exact command is in [`docs/WORD_ASSIST_INSTALL.md`](docs/WORD_ASSIST_INSTALL.md).
 
 ## 6. Ethical use, please read
 

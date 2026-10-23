@@ -91,6 +91,30 @@ jobs:
         working-directory: src-tauri
         run: cargo test ${{ matrix.features }}
 
+      # H7 (integration: on every OS, via each default-config leg): the
+      # DEFAULT build must resolve neither feature-only crate. cargo tree
+      # -i exits non-zero when nothing matches, so success here means
+      # "not found". Deliberately NOT checking hyper/rustls: they are in
+      # the default tree through reqwest and Tauri.
+      - name: "default build excludes rcgen and x509-parser (H7)"
+        if: matrix.features == ''
+        working-directory: src-tauri
+        run: |
+          if cargo tree -i rcgen; then
+            echo "::error::rcgen resolved in the DEFAULT build — the word-assist feature is leaking"
+            exit 1
+          fi
+          if cargo tree -i x509-parser; then
+            echo "::error::x509-parser resolved in the DEFAULT build — the word-assist feature is leaking"
+            exit 1
+          fi
+          echo "H7 OK on ${{ runner.os }}: neither rcgen nor x509-parser resolves in the default config"
+
+      # Held-out freeze integrity on every leg (byte-identical frozen
+      # files across OSes is exactly what .gitattributes must guarantee).
+      - name: "eval freeze integrity (FROZEN.txt hashes must match)"
+        run: node scripts/check-eval-freeze.mjs
+
       # The default build must stay feature-free even when the feature
       # config runs on the same runner: proves the opt-in gate holds on
       # every OS, not just Linux.

@@ -14,25 +14,39 @@ never creates a duplicate add-in.
 
 ## What you are trusting, and what it can reach
 
-ScholarScribe generates a per-install certificate for `localhost` /
-`127.0.0.1` and serves the add-in over HTTPS on 127.0.0.1 (loopback only).
-Trusting that certificate in YOUR user account lets Word's webview open
-`https://localhost:<port>`. It grants nothing else: the certificate is
-valid only for `localhost` and `127.0.0.1`, only you install it, and only
-in your user account. (Hardening note, recorded in the release plan: the
-certificate is currently a self-signed leaf with rcgen's default validity;
-the temporary-CA model is a pending owner decision.)
+ScholarScribe generates an EPHEMERAL CERTIFICATE CHAIN for `localhost` /
+`127.0.0.1` and serves the add-in over HTTPS on 127.0.0.1 (loopback only):
+
+- a temporary **CA** named "ScholarScribe Word Assist Root CA (ephemeral)"
+  (file `word-assist-ca.der`): `CA:TRUE`, pathlen 0, keyCertSign only,
+  **name-constrained** to DNS `localhost` and IP `127.0.0.1/32`, valid
+  3 years;
+- one **leaf** (file `word-assist-cert.der`) it signs: serverAuth only,
+  SANs `localhost` + `127.0.0.1`, valid 365 days — strictly inside the
+  CA's window.
+
+The CA's signing key is used exactly once and never persisted (it is
+destroyed in memory after issuing your leaf), so nothing can mint new
+certificates under this CA. You trust the **CA** — never the leaf — in
+YOUR user account. That lets Word's webview open `https://localhost:<port>`
+and nothing else: the name constraints and SANs make the CA useless for
+any other host, only you install it, and only in your account. Whether
+the target OS stores honour the name constraints is verified by the
+owner's spike (q); until then the constraint claim is [DOCS + code test,
+not OS-verified]. Renewal regenerates both certificates and re-asks your
+consent (re-trust the NEW CA).
 
 ## Windows (Word with Microsoft 365)
 
-### 1. Trust the certificate (Current User store)
+### 1. Trust the CA certificate (Current User store)
 
 In the Word Assist tab, click **Copy certificate (PEM)** — or use the
-`.der` file shown at "Certificate path" — save it as e.g.
-`scholarscribe-wa.cer`, then in a normal Command Prompt:
+`.der` file shown at "Certificate path" (it is `word-assist-ca.der`, the
+CA) — save it as e.g. `scholarscribe-wa-ca.cer`, then in a normal Command
+Prompt:
 
 ```bat
-certutil -user -addstore Root "C:\path\to\scholarscribe-wa.cer"
+certutil -user -addstore Root "C:\path\to\scholarscribe-wa-ca.cer"
 ```
 
 `-user` scopes the install to your account (Current User → Trusted Root
@@ -41,11 +55,11 @@ the certificate → Install Certificate → Current User → place in
 "Trusted Root Certification Authorities".
 
 **Verify:** `certutil -user -store Root | findstr /i "ScholarScribe"`
-(lists the entry; the line after the name carries its hash).
+(lists the CA entry; the line after the name carries its hash).
 
 **Revoke / uninstall:**
 ```bat
-certutil -user -delstore Root "ScholarScribe Word Assist (localhost)"
+certutil -user -delstore Root "ScholarScribe Word Assist Root CA (ephemeral)"
 ```
 (certutil accepts the common name, its serial number, or the SHA-1 hash
 shown by the verify step as the identifier).
@@ -77,30 +91,34 @@ unshare the folder).
 
 Enable Word Assist in ScholarScribe, click "Generate pairing code", type
 the 6-character code into the add-in pane, press Pair. Codes expire after
-5 minutes and work once.
+5 minutes, work once, and are burned by 5 wrong attempts — after a burn,
+request a NEW code (the tab shows a cooldown before a burned-out code can
+be replaced: it starts at 30 seconds and doubles up to 30 minutes). If the
+pane later says your session ended (revoke/rotate/30-day expiry), pair
+again with a fresh code.
 
 ## macOS (Word for Mac — build ships "unvalidated")
 
-### 1. Trust the certificate (login keychain)
+### 1. Trust the CA certificate (login keychain)
 
 ```zsh
-security add-trusted-cert -r trustRoot "/path/to/scholarscribe-wa.der"
+security add-trusted-cert -r trustRoot "/path/to/word-assist-ca.der"
 ```
 
 Notes verified against the `security` command documentation:
 - Without `-d` this modifies **per-user** trust settings; macOS shows an
   authentication dialog — that prompt is the operating system asking you,
   not ScholarScribe.
-- The certificate file can be the `.der` from the Word Assist tab (saved
-  to disk) — `add-trusted-cert` accepts DER or PEM.
+- The file is the CA (`word-assist-ca.der`) from the Word Assist tab —
+  `add-trusted-cert` accepts DER or PEM.
 
-**Verify:** `security find-certificate -c "ScholarScribe Word Assist"`
+**Verify:** `security find-certificate -c "ScholarScribe Word Assist Root CA (ephemeral)"`
 prints the keychain entry; Keychain Access shows it under "login".
 
 **Revoke / uninstall:**
 ```zsh
-security remove-trusted-cert "/path/to/scholarscribe-wa.der"
-security delete-certificate -c "ScholarScribe Word Assist (localhost)"
+security remove-trusted-cert "/path/to/word-assist-ca.der"
+security delete-certificate -c "ScholarScribe Word Assist Root CA (ephemeral)"
 ```
 
 ### 2. Sideload the manifest (wef folder)

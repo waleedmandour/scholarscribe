@@ -203,51 +203,70 @@ path → A3 ledger export → A5 release workflow draft → A6 supply chain →
 A8 docs → A9 QA matrix → A7 Tier 1 evaluation harness. Gate report, then
 STOP (Stage B waits on the owner's spike results; Stage C on the RC build).
 
-## 4. Risks and owner decisions required
+## 4. Decisions: settled by the hardening rulings (2026-10-23)
 
-1. **Certificate model (decision needed before Stage C).** The pushed tree
-   still ships a self-signed leaf with rcgen's default 1975→4096 validity.
-   The D-5 temporary-CA ruling (CA pathlen 0 + nameConstraints, zeroized CA
-   key, trust the CA not the leaf) is unimplemented. Either (a) implement the
-   D-5 model as a Stage C fix-up commit (changes cert generation, the
-   registration UI text, and the A4 trust instructions), or (b) ship v0.1
-   Preview with the self-signed leaf and document it, doing D-5 in v0.2.
-   Default if unanswered: (a) — the trust instructions in A4 are written
-   against the CA model so the docs do not churn twice.
-2. **Pairing hardening gaps.** No failed-attempt lockout exists (an
-   unpaired client can guess 6-char codes within the 120 req/60s global
-   limiter; codes expire in 300s and burn on success). Options: accept for
-   Preview (loopback-only, code never leaves the machine, audit logs record
-   attempts) or add the 5-failure burn rule. Default if unanswered: accept
-   for Preview, document the residual risk; the QA matrix rows describe
-   actual behaviour.
-3. **Token lifetime.** The paired token is in-memory only: restarting
-   ScholarScribe (or disabling/re-enabling Word Assist) invalidates the
-   add-in's stored token and requires re-pairing. Acceptable for Preview;
-   QA matrix covers it. Persistent hashed tokens stay deferred.
-4. **TLS configuration.** rustls defaults (TLS 1.2+1.3) are used; no
-   explicit version floor or handshake/read timeouts are configured. The
-   webview evidence (spike (g)/(l)) must land before tightening; recorded as
-   Stage B work, not Stage A.
-5. **Mac unvalidated.** The Mac build ships "unvalidated" or is omitted;
-   default is to ship it labelled (owner default posture). Mac QA rows stay
-   NOT VERIFIED and no Mac behaviour is inferred from Windows.
-6. **Advisories.** cargo audit is report-only in CI with known open
-   advisories (quick-xml, rustls, time, thiserror — pending dependabot PRs);
-   A6 reports each with ship/don't-ship reasoning. npm audit stays blocking.
-7. **Spike dependence.** Offset units (spike (a)), popup apply semantics
-   ((b)/(j)/(k)), name constraints ((q)), and webview TLS behaviour ((g)/(l))
-   remain NOT VERIFIED until the owner's OBSERVATIONS.md lands; the add-in
-   isolates the offset adapter and the strategy interfaces, and the QA
-   matrix verifies each observed behaviour on real Word.
+The four decisions this plan originally queued were SETTLED by the owner's
+hardening round (H0-H9, tip 0fbc012) and are implemented on this branch;
+they are recorded here so the plan matches reality, not as open questions:
+
+1. **Certificate model — SETTLED: H5 implemented.** The listener ships the
+   ephemeral name-constrained CA (CA:TRUE, pathlen 0, keyCertSign only,
+   nameConstraints DNS `localhost` + IP `127.0.0.1/32`, 3 years) signing one
+   leaf (serverAuth only, SANs localhost + 127.0.0.1, 365 days). The CA key
+   is used once and never persisted; the user trusts the CA, never the leaf;
+   x509-parser tests assert the chain. The A4 trust instructions and the
+   exported manifest refer to the CA (Windows `certutil -user -addstore
+   Root` into the CURRENT USER store; macOS `security add-trusted-cert -r
+   trustRoot`), with uninstall and revoke per step.
+2. **Pairing lockout — SETTLED: H1 implemented.** 6-symbol OS-CSPRNG code;
+   5 global wrong attempts burn the code; a new code needs an explicit user
+   action behind a cooldown that doubles from 30 s to a 30-minute cap;
+   TTL 300 s on an injectable clock; constant-time compares; success burns;
+   `/v1/pair` route limiter 10/60 s on top of the global 120/60 s; audit
+   events for success/failure/lockout never carry the code.
+3. **Token lifetime — SETTLED: H2 implemented.** 32 CSPRNG bytes; only
+   SHA-256(token) + created_at/last_used/label is persisted (keychain
+   first, audited 0600-file fallback on unix, refused on Windows); the
+   session survives restart; revoke and rotate in settings; rotate on
+   feature disable; 30-day sliding expiry. The add-in keeps the plaintext
+   token in localStorage — accepted and documented (threat model).
+4. **TLS configuration — SETTLED: H3/H4 implemented.** Explicit limits
+   (handshake 5 s, header 30 s, body 30 s, 16 concurrent, 32 headers /
+   16 KiB, body 64 KiB, Tier 1 deadline 120 s) and rustls
+   `builder_with_provider(ring)` with versions [TLS1.3, TLS1.2] and ALPN
+   http/1.1 only. Do not tighten further without owner approval (spike
+   (g)/(l) evidence first).
+
+## 4b. What remains open (honest list)
+
+- **Spike-dependent behaviour (Stage B, blocked on OBSERVATIONS.md a-r):**
+  offset units (a); who applies a popup accept (b); annotation-id
+  correlation (j); self-event suppression wiring (e); per-OS requirement
+  sets (f)/(k); webview runtime + HTTPS behaviour (g)/(l); name-constraint
+  support in real OS stores (q); network capture (h); tables/footnotes/
+  headers/Track Changes (m); ::1 resolution (r); squiggle co-existence
+  (o)/(p).
+- **Mac is unvalidated.** The macOS build ships labelled "unvalidated";
+  Mac QA rows stay NOT VERIFIED; no Mac behaviour is inferred from Windows.
+- **No accuracy claims.** No held-out evaluation set exists for v0.1; the
+  golden set is a smoke test; Tier 1 is off until the user picks a model
+  and is labelled Experimental; spelling and clarity default off.
+- **Advisories.** cargo audit is report-only in CI with known open
+  advisories (see Gate 1 report A6 table for reachability and fix status);
+  npm audit stays blocking.
+- **Token in the add-in's localStorage is plaintext** (accepted by ruling;
+  the pane's origin is the engine itself, so the token is readable only by
+  code the engine served).
 
 ## 5. Owner actions (in order)
 
-1. Push the Stage A branch/bundle commits; send back CI results for the new
-   matrix (D1 evidence).
+1. Push the hardening branch and this integration branch; send back CI
+   results for the OS matrix (D1 evidence - nothing is CI-verified until
+   then).
 2. Run `workflow_dispatch` dry-run of `word-assist-release.yml` (A5) and
    confirm the artifact set.
-3. Answer §4 decisions 1–3 (certificate model, lockout, token lifetime).
-4. Fill word-addin/spike/OBSERVATIONS.md items (a)–(r) (Stage B unblocks).
-5. Execute docs/QA_v0.1.md on Windows (and Mac if available) and return the
+3. Fill word-addin/spike/OBSERVATIONS.md items (a)-(r) (Stage B unblocks;
+   several rows above say STOP on a negative result).
+4. Execute docs/QA_v0.1.md on Windows (and Mac if available) and return the
    recorded results (Stage C unblocks).
+

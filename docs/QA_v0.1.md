@@ -28,9 +28,9 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 - Expected: status shows the listener running on `https://127.0.0.1:<port>`; the port defaults to 38080. [CODE]
 - Recorded: ______
 
-### A3. Trust the certificate (CA trust)
-- Do: in the Word Assist tab, copy the certificate (PEM) or note the `.der` path; run the Windows command from `docs/WORD_ASSIST_INSTALL.md` §Windows step 1: `certutil -user -addstore Root "<cert file>"`.
-- Expected: certutil prints the store add; the verify command lists the ScholarScribe certificate. Record the hash it prints (needed for A19). [DOCS]
+### A3. Trust the CA certificate (CA trust — never the leaf)
+- Do: in the Word Assist tab, copy the CA certificate (PEM) or note the `.der` path (`word-assist-ca.der`); run the Windows command from `docs/WORD_ASSIST_INSTALL.md` §Windows step 1: `certutil -user -addstore Root "<CA cert file>"`.
+- Expected: certutil prints the store add into the CURRENT USER Trusted Root Certification Authorities store; the verify command lists a certificate named "ScholarScribe Word Assist Root CA (ephemeral)". Record the hash it prints (needed for A19). Note: the CA is name-constrained to localhost/127.0.0.1 — whether a real OS store honours those constraints is spike (q); record anything unexpected. [DOCS]
 - Recorded: ______
 
 ### A4. Sideload the manifest (shared-folder catalog)
@@ -43,9 +43,9 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 - Expected: the pane shows "Connected to ScholarScribe (dev)"; the app shows the paired state. Wrong-length codes are refused client-side with "The pairing code is 6 characters." [CODE]
 - Recorded: ______
 
-### A6. Pairing failure, lockout, cooldown (record actual behaviour)
-- Do: with a fresh code, type a WRONG 6-character code 5 times, then the correct code.
-- Expected (preview behaviour, recorded in the release plan): wrong codes fail each time; there is **no** failed-attempt lockout beyond the listener's global 120-requests/60-seconds limit; the correct code still pairs; codes expire after 5 minutes (wait 5+ minutes with the pane open → pairing fails until a new code is generated); each generated code burns on success. Record whether the correct code still paired after 5 wrong attempts. [CODE][SPIKE]
+### A6. Pairing failure, burn, lockout, cooldown (hardened H1 behaviour)
+- Do: with a fresh code, type a WRONG 6-character code 5 times, then the correct code; then request a NEW code in the app immediately.
+- Expected (hardened): each wrong code fails with a clear pane message; after the 5th wrong attempt the code is BURNED — the correct code is now rejected too (the pane says pairing is disabled / request a new code). Requesting a new code is an explicit user action that succeeds only after a cooldown that starts at 30 s and doubles per burn up to a 30-minute cap; record the cooldown the app actually shows. Codes expire after 5 minutes (wait 5+ minutes with the pane open → pairing fails until a new code is generated); each generated code burns on success. The audit log records the failure events but never the typed code. [CODE]
 - Recorded: ______
 
 ### A7. Grammar underline appears
@@ -109,7 +109,7 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 - Recorded: ______
 
 ### A19. Uninstall cleanup
-- Do: remove the add-in (My Add-ins → Remove; clear the trusted catalog), then `certutil -user -delstore Root "ScholarScribe Word Assist (localhost)"`, then verify with `certutil -user -store Root | findstr /i "ScholarScribe"`.
+- Do: remove the add-in (My Add-ins → Remove; clear the trusted catalog), then `certutil -user -delstore Root "ScholarScribe Word Assist Root CA (ephemeral)"`, then verify with `certutil -user -store Root | findstr /i "ScholarScribe"`.
 - Expected: the add-in is gone from Word; the findstr returns nothing. Record anything left behind. [DOCS]
 - Recorded: ______
 
@@ -122,9 +122,9 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 - Expected: the app opens; Word Assist tab present. (The build is unsigned: right-click → Open on first launch is the documented Gatekeeper path.)
 - Recorded: ______
 
-### B2. Trust the certificate
-- Do: `security add-trusted-cert -r trustRoot "<cert .der>"`.
-- Expected: an **authentication dialog** appears (per-user trust always prompts on macOS) — that prompt is the OS, not the app. After confirming, `security find-certificate -c "ScholarScribe Word Assist"` lists it. [DOCS]
+### B2. Trust the CA certificate
+- Do: `security add-trusted-cert -r trustRoot "<CA .der>"` (the file is `word-assist-ca.der`).
+- Expected: an **authentication dialog** appears (per-user trust always prompts on macOS) — that prompt is the OS, not the app. After confirming, `security find-certificate -c "ScholarScribe Word Assist Root CA (ephemeral)"` lists it. Whether macOS honours the CA's name constraints is spike (q); record anything unexpected. [DOCS]
 - Recorded: ______
 
 ### B3. Sideload (wef folder)
@@ -142,7 +142,7 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 - Recorded: ______
 
 ### B6. Uninstall (macOS)
-- Do: delete the manifest from `wef`, `security remove-trusted-cert <cert>` + `security delete-certificate -c "ScholarScribe Word Assist (localhost)"`, clear the Office cache.
+- Do: delete the manifest from `wef`, `security remove-trusted-cert <CA cert>` + `security delete-certificate -c "ScholarScribe Word Assist Root CA (ephemeral)"`, clear the Office cache.
 - Expected: add-in gone; cert lookup empty. [DOCS]
 - Recorded: ______
 
@@ -153,7 +153,7 @@ depends on live Word behaviour the owner's spike run has not yet confirmed.
 | Install + enable | ______ | ______ |
 | Certificate trust + revoke | ______ | ______ |
 | Sideload + uninstall | ______ | ______ |
-| Pairing + expiry + failure behaviour | ______ | ______ |
+| Pairing + expiry + burn/lockout/cooldown + revoke/rotate | ______ | ______ |
 | Grammar flags (annotation / list mode) | ______ | ______ |
 | Apply exactly once / reject | ______ | ______ |
 | Rapid typing / stale discard | ______ | ______ |
