@@ -507,11 +507,26 @@ mod harness_tests {
             source: "owner-authored".into(),
             license: "CC0".into(),
         };
-        assert_eq!(score_harness_sentence(&dirty, true, true), ("grammar", "tp"));
-        assert_eq!(score_harness_sentence(&dirty, true, false), ("grammar", "fp"));
-        assert_eq!(score_harness_sentence(&dirty, false, false), ("grammar", "fn"));
-        assert_eq!(score_harness_sentence(&clean, true, false), ("grammar", "fp"));
-        assert_eq!(score_harness_sentence(&clean, false, false), ("grammar", "tn"));
+        assert_eq!(
+            score_harness_sentence(&dirty, true, true),
+            ("grammar", "tp")
+        );
+        assert_eq!(
+            score_harness_sentence(&dirty, true, false),
+            ("grammar", "fp")
+        );
+        assert_eq!(
+            score_harness_sentence(&dirty, false, false),
+            ("grammar", "fn")
+        );
+        assert_eq!(
+            score_harness_sentence(&clean, true, false),
+            ("grammar", "fp")
+        );
+        assert_eq!(
+            score_harness_sentence(&clean, false, false),
+            ("grammar", "tn")
+        );
     }
 
     #[test]
