@@ -505,9 +505,14 @@ impl TokenStore {
 /// to refuse (the TLS key path refuses on Windows; the token store has no
 /// file fallback on Windows at all).
 pub(crate) fn write_private(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
-    use std::io::Write;
     #[cfg(unix)]
     {
+        // The Write trait import lives inside the unix block: on Windows
+        // this function refuses without writing (see the cfg(not(unix))
+        // arm below), so a fn-level import is unused there and fails
+        // clippy -D warnings (word-assist-ci run 40119529889,
+        // rust (windows-latest, --features word-assist)).
+        use std::io::Write;
         use std::os::unix::fs::PermissionsExt;
         let mut f = std::fs::File::create(path).map_err(|e| format!("create key file: {e}"))?;
         f.write_all(bytes)

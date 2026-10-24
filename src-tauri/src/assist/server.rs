@@ -1175,7 +1175,10 @@ fn load_leaf_key(
     #[cfg(not(unix))]
     {
         // Windows: no file fallback (refused by ruling, see module docs).
+        // audit is consumed only by the unix file-fallback event above;
+        // silence the genuinely-unused parameter on this platform.
         let _ = data_dir;
+        let _ = audit;
         Ok(None)
     }
 }
@@ -1274,6 +1277,8 @@ fn generate_chain(
             // Windows: the fallback is REFUSED (owner decision point:
             // "apply an owner-only ACL or refuse the fallback; state
             // which" — this build refuses; the keychain is required).
+            // audit is consumed only by the unix fallback event above.
+            let _ = audit;
             return Err(
                 "the OS keychain (Windows Credential Manager) is required to store the Word Assist TLS key; the unencrypted file fallback is refused on Windows"
                     .into(),
