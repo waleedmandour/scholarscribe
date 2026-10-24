@@ -71,6 +71,11 @@ jobs:
       - name: Install Rust stable (pinned action)
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
         with:
+          # With a SHA pin the ref no longer carries the toolchain name, so
+          # the required `toolchain` input must be given explicitly (the
+          # 2026-10-24 first run failed exactly here on all 8 rust legs:
+          # "'toolchain' is a required input").
+          toolchain: stable
           components: clippy, rustfmt
 
       - name: Print toolchain versions
