@@ -37,9 +37,17 @@ const HAND_MAINTAINED = new Set(["legacy-check.js"]);
 
 // --- 1. rebuild into a temp dir and compare -----------------------------
 const tmp = mkdtempSync(join(tmpdir(), "addin-dist-"));
-execFileSync(join(repoRoot, "node_modules", ".bin", "tsc"), ["-p", join(addin, "tsconfig.json"), "--outDir", tmp], {
-  stdio: "inherit",
-});
+// Invoke tsc via its JS entry with the running node binary. The
+// node_modules/.bin shims are platform-specific (`tsc` is an extensionless
+// sh script that spawnSync cannot execute on Windows — ENOENT — while the
+// real Windows entry is tsc.cmd; see word-assist-ci run 40115931743,
+// node (windows-latest)). Going through node + typescript/bin/tsc is
+// identical behaviour on every OS.
+execFileSync(
+  process.execPath,
+  [join(repoRoot, "node_modules", "typescript", "bin", "tsc"), "-p", join(addin, "tsconfig.json"), "--outDir", tmp],
+  { stdio: "inherit" },
+);
 const built = readdirSync(tmp).filter((f) => f.endsWith(".js"));
 const committed = readdirSync(dist).filter((f) => f.endsWith(".js"));
 
