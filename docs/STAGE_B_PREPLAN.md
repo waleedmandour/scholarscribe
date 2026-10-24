@@ -136,7 +136,7 @@ Outcome H1: only Word's known traffic + the office.js CDN fetch appear.
 - Code: none. Docs: `docs/RELEASE_NOTES_v0.1_DRAFT.md` privacy section gains
   the precise statement (the current text already anticipates this: "anything
   else only once spike item (h) is in"); `docs/NETWORK_SURFACE.json` gains
-  the observed hosts with class + trigger; `docs/SECURITY.md` updated to
+  the observed hosts with class + trigger; `SECURITY.md` updated to
   match (its CI cross-check enforces this — `scripts/check-network-surface.mjs`).
 - Tests: network-surface test keeps CI green after the JSON update (the check
   requires each new host to be documented).

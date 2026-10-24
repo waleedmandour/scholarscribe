@@ -53,7 +53,7 @@ are provided for the owner's later QA only.
   ScholarScribe. The Word Assist listener binds `127.0.0.1` only, requires
   TLS 1.2+ with an app-generated local certificate, a pairing code, and a
   per-session token; no request is accepted without them (VERIFIED,
-  docs/SECURITY.md and the H1–H5 hardening tests).
+  SECURITY.md and the H1–H5 hardening tests).
 - **Local AI**: grammar/clarity processing runs in the local Ollama daemon
   on your machine (`127.0.0.1:11434`). Text sent there stays on your device
   (VERIFIED, docs/NETWORK_SURFACE.json).
@@ -131,5 +131,5 @@ the reviewed sources or obtained it from the project's own release page).
 
 Step-by-step install, pairing, certificate trust, and uninstall/revoke:
 `docs/WORD_ASSIST_INSTALL.md`. Security model and guarantees:
-`docs/SECURITY.md`. Evaluation protocol (Stage B, not yet run):
+`SECURITY.md`. Evaluation protocol (Stage B, not yet run):
 `docs/EVAL_PROTOCOL.md`.
