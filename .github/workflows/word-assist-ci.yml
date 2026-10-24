@@ -64,7 +64,11 @@ jobs:
           - os: macos-15-intel
             features: "--features word-assist"
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    # 45m was exceeded by the cold-cache macOS --features word-assist builds
+    # on the first run (both legs cancelled at 45m24s in run 40115931743 —
+    # rcgen/x509-parser/ring all compile from scratch). 60m gives the
+    # cold-cache worst case headroom; warm-cache legs stay far under it.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
