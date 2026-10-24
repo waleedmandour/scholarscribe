@@ -132,6 +132,7 @@ jobs:
       - name: "default build excludes rcgen and x509-parser (H7)"
         if: matrix.features == ''
         working-directory: src-tauri
+        shell: bash
         run: |
           if cargo tree --locked -i rcgen; then
             echo "::error::rcgen resolved in the DEFAULT build — the word-assist feature is leaking"

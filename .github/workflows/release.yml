@@ -172,6 +172,7 @@ jobs:
       # the tauri-action step above.
       - name: Generate and upload User Guide PDF
         if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
         run: |
           python3 -m pip install --quiet --user reportlab pypdf
           python3 scripts/user_guide_pdf.py --input USER_GUIDE.md --output ScholarScribe-User-Guide.pdf
