@@ -99,14 +99,27 @@ async fn spawn_server(
     model: &str,
 ) -> Result<ServerHandle, String> {
     let settings = base_settings(tier1, model);
-    scholarscribe_lib::assist::server::start_with_limits(settings, state, dir.to_path_buf(), limits)
-        .await
+    // Isolated TLS key entry — same credential-isolation ruling as
+    // new_state above (see start_with_limits_isolated).
+    scholarscribe_lib::assist::server::start_with_limits_isolated(
+        settings,
+        state,
+        dir.to_path_buf(),
+        limits,
+    )
+    .await
 }
 
 fn new_state(dir: &std::path::Path) -> Arc<AssistState> {
     let state = Arc::new(AssistState::new_default());
     state.attach_ledger(dir).expect("ledger attach");
-    state.attach_token_store(dir).expect("token store attach");
+    // Isolated credential entries: parallel e2e tests in this process share
+    // one OS credential manager; the fixed production entry let them read
+    // and overwrite each other's records (windows +feat e2e, run
+    // 40122758526: the health test restored the pairing test's token).
+    state
+        .attach_token_store_isolated(dir)
+        .expect("token store attach");
     state
 }
 

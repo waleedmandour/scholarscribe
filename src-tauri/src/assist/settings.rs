@@ -418,10 +418,31 @@ impl StoredToken {
 /// rather than writing an unhardened file.
 pub struct TokenStore {
     file_path: Option<std::path::PathBuf>,
+    /// OS credential record name. Production uses the fixed
+    /// [`KEYCHAIN_TOKEN_ENTRY`]; test isolation derives a per-data-dir name
+    /// ([`TokenStore::for_dir_isolated`]) so parallel e2e tests sharing one
+    /// OS credential manager cannot read or overwrite each other's records
+    /// (windows-latest +feat e2e, run 40122758526: the health test saw the
+    /// pairing test's token through the shared fixed entry).
+    keychain_entry: String,
 }
 
 const KEYCHAIN_SERVICE: &str = "scholarscribe";
 const KEYCHAIN_TOKEN_ENTRY: &str = "word-assist-client-token-v1";
+
+/// Deterministic per-data-dir credential entry name for TEST isolation:
+/// `<base>-iso-<sha256(dir)[0..8] hex>`. Production code keeps the fixed
+/// constants; the e2e suites derive this so concurrent tests (and re-runs
+/// in the same runner session) never share one OS credential record, while
+/// a restart against the SAME dir still resolves the SAME record.
+pub fn isolated_credential_entry(base: &str, dir: &std::path::Path) -> String {
+    use sha2::{Digest, Sha256};
+    let mut h = Sha256::new();
+    h.update(dir.to_string_lossy().as_bytes());
+    let d = h.finalize();
+    let hex: String = d.iter().take(8).map(|b| format!("{b:02x}")).collect();
+    format!("{base}-iso-{hex}")
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StoreLocation {
@@ -433,13 +454,24 @@ impl TokenStore {
     pub fn for_dir(dir: &std::path::Path) -> Self {
         Self {
             file_path: Some(dir.join("word-assist-token.json")),
+            keychain_entry: KEYCHAIN_TOKEN_ENTRY.to_string(),
+        }
+    }
+
+    /// TEST-ISOLATED store: identical backends, but the keychain record is
+    /// namespaced per `dir` ([`isolated_credential_entry`]). Only the e2e
+    /// suites use this; production keeps the fixed entry.
+    pub fn for_dir_isolated(dir: &std::path::Path) -> Self {
+        Self {
+            file_path: Some(dir.join("word-assist-token.json")),
+            keychain_entry: isolated_credential_entry(KEYCHAIN_TOKEN_ENTRY, dir),
         }
     }
 
     /// Read the persisted record. Keychain first, then file. Returns
     /// (record, where it came from).
     pub fn load(&self) -> Result<Option<(StoredToken, StoreLocation)>, String> {
-        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_TOKEN_ENTRY) {
+        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, &self.keychain_entry) {
             match entry.get_password() {
                 Ok(json) => {
                     return serde_json::from_str::<StoredToken>(&json)
@@ -468,7 +500,7 @@ impl TokenStore {
     /// Returns where it landed so the caller can audit a fallback.
     pub fn save(&self, token: &StoredToken) -> Result<StoreLocation, String> {
         let json = serde_json::to_string(token).map_err(|e| e.to_string())?;
-        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_TOKEN_ENTRY) {
+        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, &self.keychain_entry) {
             match entry.set_password(&json) {
                 Ok(()) => return Ok(StoreLocation::Keychain),
                 Err(e) => {
@@ -487,7 +519,7 @@ impl TokenStore {
 
     /// Remove the record from every backend (revoke). Idempotent.
     pub fn delete(&self) -> Result<(), String> {
-        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_TOKEN_ENTRY) {
+        if let Ok(entry) = keyring::Entry::new(KEYCHAIN_SERVICE, &self.keychain_entry) {
             // NoEntry is fine — revoking an absent token is a no-op.
             let _ = entry.delete_credential();
         }
@@ -567,6 +599,16 @@ impl AssistState {
     /// an app restart (H2). A fallback-file store is audited.
     pub fn attach_token_store(&self, dir: &std::path::Path) -> Result<(), String> {
         let store = TokenStore::for_dir(dir);
+        *self.token_store.lock().map_err(|e| e.to_string())? = Some(store);
+        self.restore_token()
+    }
+
+    /// TEST-ISOLATED attach: same contract as [`AssistState::attach_token_store`],
+    /// but the token record lives in a per-`dir` namespaced keychain entry so
+    /// parallel e2e tests in one process never share the fixed production
+    /// record. A restart against the same `dir` still restores the token.
+    pub fn attach_token_store_isolated(&self, dir: &std::path::Path) -> Result<(), String> {
+        let store = TokenStore::for_dir_isolated(dir);
         *self.token_store.lock().map_err(|e| e.to_string())? = Some(store);
         self.restore_token()
     }
@@ -924,6 +966,57 @@ mod tests {
         let mode = std::fs::metadata(&path).expect("meta").permissions().mode();
         assert_eq!(mode & 0o777, 0o600, "file must be 0600");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ---- Credential isolation regression (windows +feat e2e, run
+    // 40122758526): parallel e2e tests must never share one OS credential
+    // record. Pure name-derivation assertions, no keychain needed.
+    #[test]
+    fn token_store_production_entry_is_the_fixed_constant() {
+        let dir = std::env::temp_dir().join(format!("wa-test-entry-prod-{}", std::process::id()));
+        let store = TokenStore::for_dir(&dir);
+        assert_eq!(store.keychain_entry, super::KEYCHAIN_TOKEN_ENTRY);
+        assert_eq!(
+            store.file_path.as_deref(),
+            Some(dir.join("word-assist-token.json").as_path())
+        );
+    }
+
+    #[test]
+    fn token_store_isolated_entry_is_derived_not_fixed() {
+        let a = std::env::temp_dir().join(format!("wa-test-entry-iso-{}", std::process::id()));
+        let store = TokenStore::for_dir_isolated(&a);
+        assert_eq!(
+            store.keychain_entry,
+            super::isolated_credential_entry(super::KEYCHAIN_TOKEN_ENTRY, &a)
+        );
+        assert_ne!(
+            store.keychain_entry,
+            TokenStore::for_dir(&a).keychain_entry,
+            "isolated store must not use the production entry"
+        );
+    }
+
+    #[test]
+    fn isolated_credential_entry_is_stable_per_dir_and_distinct() {
+        let a = std::env::temp_dir().join(format!("wa-test-iso-a-{}", std::process::id()));
+        let b = std::env::temp_dir().join(format!("wa-test-iso-b-{}", std::process::id()));
+        let ia1 = super::isolated_credential_entry(super::KEYCHAIN_TOKEN_ENTRY, &a);
+        let ia2 = super::isolated_credential_entry(super::KEYCHAIN_TOKEN_ENTRY, &a);
+        let ib = super::isolated_credential_entry(super::KEYCHAIN_TOKEN_ENTRY, &b);
+        let tls = super::isolated_credential_entry(crate::assist::server::KEYCHAIN_TLS_ENTRY, &a);
+        assert_eq!(ia1, ia2, "same dir -> same entry (restart persistence)");
+        assert_ne!(
+            ia1, ib,
+            "different dirs -> different entries (no cross-test reads)"
+        );
+        assert_ne!(ia1, super::KEYCHAIN_TOKEN_ENTRY);
+        assert_ne!(tls, crate::assist::server::KEYCHAIN_TLS_ENTRY);
+        assert_ne!(
+            ia1, tls,
+            "token and TLS entries must not collide for one dir"
+        );
+        assert!(ia1.starts_with(super::KEYCHAIN_TOKEN_ENTRY));
     }
 
     #[test]

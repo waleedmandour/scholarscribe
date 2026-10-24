@@ -282,14 +282,39 @@ pub async fn start(
 /// allowed here for tests: the handle reports the actually-bound port and
 /// the Host/Origin pins use that port.
 pub async fn start_with_limits(
-    mut settings: AssistSettings,
+    settings: AssistSettings,
     state: Arc<AssistState>,
     data_dir: std::path::PathBuf,
     limits: NetLimits,
 ) -> Result<ServerHandle, String> {
+    serve_with_tls_entry(settings, state, data_dir, limits, KEYCHAIN_TLS_ENTRY).await
+}
+
+/// TEST-ISOLATED start: identical listener path, but the TLS leaf key's
+/// keychain record is namespaced per `data_dir` so parallel e2e tests in
+/// one process cannot overwrite each other's keys through the shared fixed
+/// entry (same failure class as the token record: windows-latest +feat e2e,
+/// run 40122758526). Production never calls this.
+pub async fn start_with_limits_isolated(
+    settings: AssistSettings,
+    state: Arc<AssistState>,
+    data_dir: std::path::PathBuf,
+    limits: NetLimits,
+) -> Result<ServerHandle, String> {
+    let entry = super::settings::isolated_credential_entry(KEYCHAIN_TLS_ENTRY, &data_dir);
+    serve_with_tls_entry(settings, state, data_dir, limits, &entry).await
+}
+
+async fn serve_with_tls_entry(
+    mut settings: AssistSettings,
+    state: Arc<AssistState>,
+    data_dir: std::path::PathBuf,
+    limits: NetLimits,
+    tls_entry: &str,
+) -> Result<ServerHandle, String> {
     // H5: ephemeral CA + leaf (owner's D-5 model replaces the old
     // self-signed leaf).
-    let material = ensure_certificate_chain(&data_dir, &state.audit)?;
+    let material = ensure_certificate_chain_with_entry(&data_dir, &state.audit, tls_entry)?;
     // H4: build the config with the EXPLICIT ring provider and EXPLICIT
     // protocol versions [TLS1.3, TLS1.2] — not the defaults — and pin
     // ALPN to http/1.1 only. (The owner tightens to 1.3-only after spike
@@ -1067,12 +1092,22 @@ pub fn ensure_certificate_chain(
     data_dir: &std::path::Path,
     audit: &crate::audit::AuditLog,
 ) -> Result<TlsMaterial, String> {
+    ensure_certificate_chain_with_entry(data_dir, audit, KEYCHAIN_TLS_ENTRY)
+}
+
+/// [`ensure_certificate_chain`] with an explicit keychain entry name for the
+/// leaf key (test isolation). All internal stages thread the name through.
+fn ensure_certificate_chain_with_entry(
+    data_dir: &std::path::Path,
+    audit: &crate::audit::AuditLog,
+    tls_entry: &str,
+) -> Result<TlsMaterial, String> {
     std::fs::create_dir_all(data_dir).map_err(|e| format!("create assist dir: {e}"))?;
     let ca_path = data_dir.join(CA_CERT_FILE);
     let leaf_path = data_dir.join(LEAF_CERT_FILE);
 
     if ca_path.exists() && leaf_path.exists() {
-        match load_existing_chain(&ca_path, &leaf_path, data_dir, audit) {
+        match load_existing_chain(&ca_path, &leaf_path, data_dir, audit, tls_entry) {
             Ok(material) => return Ok(material),
             Err(e) => {
                 // Corrupt, expired, or key missing: regenerate below. The
@@ -1082,7 +1117,7 @@ pub fn ensure_certificate_chain(
             }
         }
     }
-    generate_chain(data_dir, audit)
+    generate_chain(data_dir, audit, tls_entry)
 }
 
 /// Load CA + leaf from disk and the key from the keychain (or file
@@ -1093,11 +1128,12 @@ fn load_existing_chain(
     leaf_path: &std::path::Path,
     data_dir: &std::path::Path,
     audit: &crate::audit::AuditLog,
+    tls_entry: &str,
 ) -> Result<TlsMaterial, String> {
     let ca_der = std::fs::read(ca_path).map_err(|e| format!("read assist CA: {e}"))?;
     let leaf_der = std::fs::read(leaf_path).map_err(|e| format!("read assist leaf: {e}"))?;
-    let key =
-        load_leaf_key(data_dir, audit)?.ok_or("assist TLS key not found in keychain or file")?;
+    let key = load_leaf_key(data_dir, audit, tls_entry)?
+        .ok_or("assist TLS key not found in keychain or file")?;
 
     // Validity + sanity via x509-parser (H5 test parity): an expired or
     // unparseable chain is regenerated, never served.
@@ -1117,13 +1153,13 @@ fn load_existing_chain(
         ca: CertificateDer::from(ca_der),
         leaf: CertificateDer::from(leaf_der),
         key,
-        key_location: leaf_key_location(),
+        key_location: leaf_key_location(tls_entry),
     })
 }
 
 /// Where the leaf key would come from (mirrors load_leaf_key's decision).
-fn leaf_key_location() -> KeyLocation {
-    if let Ok(entry) = keyring::Entry::new("scholarscribe", KEYCHAIN_TLS_ENTRY) {
+fn leaf_key_location(tls_entry: &str) -> KeyLocation {
+    if let Ok(entry) = keyring::Entry::new("scholarscribe", tls_entry) {
         if entry.get_password().is_ok() {
             return KeyLocation::Keychain;
         }
@@ -1137,8 +1173,9 @@ fn leaf_key_location() -> KeyLocation {
 fn load_leaf_key(
     data_dir: &std::path::Path,
     audit: &crate::audit::AuditLog,
+    tls_entry: &str,
 ) -> Result<Option<PrivateKeyDer<'static>>, String> {
-    if let Ok(entry) = keyring::Entry::new("scholarscribe", KEYCHAIN_TLS_ENTRY) {
+    if let Ok(entry) = keyring::Entry::new("scholarscribe", tls_entry) {
         match entry.get_password() {
             Ok(hex) => {
                 let bytes =
@@ -1189,6 +1226,7 @@ fn load_leaf_key(
 fn generate_chain(
     data_dir: &std::path::Path,
     audit: &crate::audit::AuditLog,
+    tls_entry: &str,
 ) -> Result<TlsMaterial, String> {
     use rcgen::{
         BasicConstraints, CertificateParams, DnType, ExtendedKeyUsagePurpose, GeneralSubtree, IsCa,
@@ -1249,7 +1287,7 @@ fn generate_chain(
     std::fs::write(&ca_path, ca_der.as_ref()).map_err(|e| format!("write assist CA: {e}"))?;
     std::fs::write(&leaf_path, leaf_der.as_ref()).map_err(|e| format!("write assist cert: {e}"))?;
 
-    let stored_in_keychain = match keyring::Entry::new("scholarscribe", KEYCHAIN_TLS_ENTRY) {
+    let stored_in_keychain = match keyring::Entry::new("scholarscribe", tls_entry) {
         Ok(entry) => entry.set_password(&hex_encode(&leaf_pkcs8)).is_ok(),
         Err(_) => false,
     };
