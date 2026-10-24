@@ -687,11 +687,14 @@ pub fn quote_posix(s: &str) -> String {
 /// `-user` flag keeps it to the calling user's profile, so NO elevation.
 #[cfg(feature = "word-assist")]
 pub fn ca_trust_command_windows(data_dir: &std::path::Path) -> String {
-    let ca = data_dir.join("word-assist-ca.der");
-    format!(
-        "certutil -user -addstore Root {}",
-        quote_windows_cmd(&ca.display().to_string())
-    )
+    // cmd.exe command: the separator must always be `\`, regardless of the
+    // build host — the user-facing instructions render BOTH OS commands on
+    // every platform, and Path::join would emit `/` on a unix host (and `\`
+    // on Windows), making the displayed command host-dependent. Shell
+    // commands are text, not host paths: render the separator literally.
+    // (CARD C1-FIX class 5, word-assist-ci run 40120747527.)
+    let ca = format!(r"{}\word-assist-ca.der", data_dir.display());
+    format!("certutil -user -addstore Root {}", quote_windows_cmd(&ca))
 }
 
 /// macOS CA trust command (zsh/bash). Login keychain (per-user) — no `-d`
@@ -699,10 +702,15 @@ pub fn ca_trust_command_windows(data_dir: &std::path::Path) -> String {
 /// its own authentication prompt for per-user trust-root changes.
 #[cfg(feature = "word-assist")]
 pub fn ca_trust_command_macos(data_dir: &std::path::Path) -> String {
-    let ca = data_dir.join("word-assist-ca.der");
+    // POSIX command: the separator must always be `/`, regardless of the
+    // build host — Path::join emits `\` on Windows, which corrupted the
+    // macOS command (and failed p6_posix_quoting_survives_apostrophes on
+    // the Windows CI leg; word-assist-ci run 40120747527). Shell commands
+    // are text, not host paths: render the separator literally.
+    let ca = format!("{}/word-assist-ca.der", data_dir.display());
     format!(
         "security add-trusted-cert -r trustRoot {}",
-        quote_posix(&ca.display().to_string())
+        quote_posix(&ca)
     )
 }
 
@@ -753,6 +761,10 @@ mod tests {
         assert!(cmd.starts_with("certutil -user -addstore Root \""), "{cmd}");
         assert!(cmd.ends_with("word-assist-ca.der\""), "{cmd}");
         assert!(cmd.contains("John Doe"), "{cmd}");
+        // cmd.exe separator pinned host-independently (C1-FIX class 5):
+        // the command is shell text, never a host-filesystem path.
+        assert!(cmd.contains("scholarscribe\\word-assist-ca.der"), "{cmd}");
+        assert!(!cmd.contains("/word-assist-ca.der"), "{cmd}");
         // No elevation: -user store, never the machine store flag pair.
         assert!(!cmd.contains(" -enterprise"), "{cmd}");
         assert!(!cmd.contains(" -gpo"), "{cmd}");
