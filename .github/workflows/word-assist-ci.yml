@@ -51,9 +51,10 @@ jobs:
             features: "--features word-assist"
             cargo_test_args: ""
           # Windows x64: the primary Word Assist platform (owner QA host).
-          # STAYS PARALLEL: the parallel run is the exact contamination
-          # scenario the e2e credential-isolation fix must prove itself
-          # against.
+          # PARALLEL: this is the exact contamination scenario the e2e
+          # credential-isolation fix had to prove itself against; the
+          # isolation held (windows +feat parallel green, run
+          # 40130765357).
           - os: windows-latest
             features: ""
             cargo_test_args: ""
@@ -64,22 +65,28 @@ jobs:
           - os: macos-latest
             features: ""
             cargo_test_args: ""
-          # macOS +feat: e2e serial with --nocapture (diagnostic, run
-          # 40122758526: parallel e2e hung 47-53m with zero completed
-          # tests — libtest only warned "over 60 seconds" for the 3-4
-          # started tests). Serialization + WA_E2E_TRACE phase lines make
-          # the runner log name the exact blocked test and phase. Remove
-          # once the root cause is fixed and proven.
+          # macOS +feat: PARALLEL again. The original parallel hang (runs
+          # 40119529889/40120747527/40122758526: every started test stuck,
+          # ZERO completions, libtest warning only for the 3 started
+          # tests) had the same root cause as the windows +feat failure:
+          # all e2e tests shared the FIXED OS keyring entries (client
+          # token + TLS leaf key). On macOS the Keychain serializes
+          # same-item access, so the 3 concurrent tests blocked on the
+          # shared records instead of failing fast like Windows did.
+          # 6adbbbb namespaced both records per data dir, and the serial
+          # diagnostic (9e81ed0) proved the harness itself healthy
+          # end-to-end. This commit restores parallel on both macOS +feat
+          # legs; this commit's run is the parallel proof.
           - os: macos-latest
             features: "--features word-assist"
-            cargo_test_args: "-- --test-threads=1 --nocapture"
+            cargo_test_args: ""
           # macOS Intel (hosted x86_64 image; macos-13 is retired).
           - os: macos-15-intel
             features: ""
             cargo_test_args: ""
           - os: macos-15-intel
             features: "--features word-assist"
-            cargo_test_args: "-- --test-threads=1 --nocapture"
+            cargo_test_args: ""
     runs-on: ${{ matrix.os }}
     # 45m was exceeded by the cold-cache macOS --features word-assist builds
     # on the first run (both legs cancelled at 45m24s in run 40115931743 —
@@ -87,6 +94,9 @@ jobs:
     # cold-cache worst case headroom; warm-cache legs stay far under it.
     timeout-minutes: 60
     # Phase tracing for the e2e harness (only the e2e binary reads it).
+    # Kept from the 9e81ed0 diagnostic: env-gated, silent on passing
+    # runs, and if a leg ever hangs again the trace code is already in
+    # place (add --nocapture to see the lines).
     env:
       WA_E2E_TRACE: "1"
     steps:
