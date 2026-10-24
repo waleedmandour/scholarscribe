@@ -29,6 +29,13 @@ word-addin/*.json text eol=lf
 src/lib/references.json text eol=lf
 docs/NETWORK_SURFACE.json text eol=lf
 
+# The tauri JS/Rust parity gate (scripts/check-tauri-parity.mjs) parses this
+# file's text; a Windows autocrlf checkout once turned it into CRLF and made
+# every crate version "absent" (word-assist-ci run 40113154808, 2026-10-24).
+# Byte-stable LF on every OS, belt-and-braces with the parser-side
+# normalisation introduced in the same fix.
+src-tauri/Cargo.lock text eol=lf
+
 # Release-time artifact that must not churn by platform.
 THIRD_PARTY_LICENSES.md text eol=lf
 
