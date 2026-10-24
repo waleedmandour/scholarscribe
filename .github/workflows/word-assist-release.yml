@@ -139,6 +139,9 @@ jobs:
         working-directory: src-tauri
         run: |
           cargo install cargo-cyclonedx --locked --quiet
+          # NOTE: cargo cyclonedx (v0.5.x) does not accept --locked
+          # ("unexpected argument", verified locally against 0.5.9); it
+          # reads the committed Cargo.lock via cargo metadata as-is.
           cargo cyclonedx --format json --features word-assist
           mv ./scholarscribe.cdx.json ../staging/sbom-word-assist-${{ matrix.platform }}-${{ matrix.arch }}.cdx.json
 

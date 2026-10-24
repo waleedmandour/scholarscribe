@@ -94,19 +94,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libdbus-1-dev
 
+      # NOTE: cargo fmt does not accept --locked (it never resolves the
+      # dependency graph); verified locally against cargo 1.99.1.
       - name: cargo fmt check
         working-directory: src-tauri
         run: cargo fmt -- --check
 
       - name: cargo clippy (strict, ${{ matrix.features || 'default' }})
         working-directory: src-tauri
-        run: cargo clippy ${{ matrix.features }} --all-targets -- -D warnings
+        run: cargo clippy --locked ${{ matrix.features }} --all-targets -- -D warnings
 
       - name: cargo test (${{ matrix.features || 'default' }})
         working-directory: src-tauri
         shell: bash
         run: |
-          cargo test ${{ matrix.features }} 2>&1 | tee test-output.txt
+          cargo test --locked ${{ matrix.features }} 2>&1 | tee test-output.txt
           exit ${PIPESTATUS[0]}
 
       - name: Upload cargo test log on failure (test output only)
@@ -126,11 +128,11 @@ jobs:
         if: matrix.features == ''
         working-directory: src-tauri
         run: |
-          if cargo tree -i rcgen; then
+          if cargo tree --locked -i rcgen; then
             echo "::error::rcgen resolved in the DEFAULT build — the word-assist feature is leaking"
             exit 1
           fi
-          if cargo tree -i x509-parser; then
+          if cargo tree --locked -i x509-parser; then
             echo "::error::x509-parser resolved in the DEFAULT build — the word-assist feature is leaking"
             exit 1
           fi
@@ -147,7 +149,7 @@ jobs:
       - name: cargo check default build (feature stays opt-in)
         if: matrix.features != ''
         working-directory: src-tauri
-        run: cargo check
+        run: cargo check --locked
 
   node:
     strategy:
