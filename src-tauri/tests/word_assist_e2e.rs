@@ -65,6 +65,24 @@ fn captured_logs() -> Vec<String> {
     LOGS.lock().unwrap_or_else(|e| e.into_inner()).clone()
 }
 
+// -------------------------------------------------------- phase tracing
+
+/// One eprintln per harness phase when WA_E2E_TRACE=1 (CI sets it). libtest
+/// only reports "over 60 seconds" per STARTED test; without these lines a
+/// hung leg cannot name the phase (both macos +feat legs in run 40122758526
+/// hung 47-53m with ZERO completed tests: build 3-7m, then silence).
+fn trace_enabled() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var("WA_E2E_TRACE").as_deref() == Ok("1"))
+}
+
+fn trace(msg: &str) {
+    if trace_enabled() {
+        // stderr under --nocapture reaches the runner log unbuffered.
+        eprintln!("wa-e2e-trace: {msg}");
+    }
+}
+
 // --------------------------------------------------------------- helpers
 
 fn test_limits() -> NetLimits {
@@ -101,13 +119,19 @@ async fn spawn_server(
     let settings = base_settings(tier1, model);
     // Isolated TLS key entry — same credential-isolation ruling as
     // new_state above (see start_with_limits_isolated).
-    scholarscribe_lib::assist::server::start_with_limits_isolated(
+    trace(&format!(
+        "spawning server dir={} (cert chain + bind)",
+        dir.display()
+    ));
+    let handle = scholarscribe_lib::assist::server::start_with_limits_isolated(
         settings,
         state,
         dir.to_path_buf(),
         limits,
     )
-    .await
+    .await?;
+    trace(&format!("server listening on port {}", handle.port));
+    Ok(handle)
 }
 
 fn new_state(dir: &std::path::Path) -> Arc<AssistState> {
@@ -120,6 +144,7 @@ fn new_state(dir: &std::path::Path) -> Arc<AssistState> {
     state
         .attach_token_store_isolated(dir)
         .expect("token store attach");
+    trace(&format!("state ready dir={}", dir.display()));
     state
 }
 
@@ -156,14 +181,21 @@ impl Client {
     }
 
     async fn connect(&self) -> tokio_rustls::client::TlsStream<TcpStream> {
+        trace(&format!(
+            "connecting 127.0.0.1:{} (tcp + TLS handshake)",
+            self.port
+        ));
         let tcp = TcpStream::connect(("127.0.0.1", self.port))
             .await
             .expect("tcp connect");
         let name = ServerName::try_from("localhost".to_string()).expect("dns name");
-        self.connector
+        let tls = self
+            .connector
             .connect(name, tcp)
             .await
-            .expect("tls connect")
+            .expect("tls connect");
+        trace(&format!("TLS established 127.0.0.1:{}", self.port));
+        tls
     }
 
     /// One request over a fresh connection (Connection: close semantics).

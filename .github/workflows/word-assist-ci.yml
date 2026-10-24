@@ -46,29 +46,49 @@ jobs:
           # comparable across platforms.
           - os: ubuntu-latest
             features: ""
+            cargo_test_args: ""
           - os: ubuntu-latest
             features: "--features word-assist"
+            cargo_test_args: ""
           # Windows x64: the primary Word Assist platform (owner QA host).
+          # STAYS PARALLEL: the parallel run is the exact contamination
+          # scenario the e2e credential-isolation fix must prove itself
+          # against.
           - os: windows-latest
             features: ""
+            cargo_test_args: ""
           - os: windows-latest
             features: "--features word-assist"
+            cargo_test_args: ""
           # macOS Apple Silicon.
           - os: macos-latest
             features: ""
+            cargo_test_args: ""
+          # macOS +feat: e2e serial with --nocapture (diagnostic, run
+          # 40122758526: parallel e2e hung 47-53m with zero completed
+          # tests — libtest only warned "over 60 seconds" for the 3-4
+          # started tests). Serialization + WA_E2E_TRACE phase lines make
+          # the runner log name the exact blocked test and phase. Remove
+          # once the root cause is fixed and proven.
           - os: macos-latest
             features: "--features word-assist"
+            cargo_test_args: "-- --test-threads=1 --nocapture"
           # macOS Intel (hosted x86_64 image; macos-13 is retired).
           - os: macos-15-intel
             features: ""
+            cargo_test_args: ""
           - os: macos-15-intel
             features: "--features word-assist"
+            cargo_test_args: "-- --test-threads=1 --nocapture"
     runs-on: ${{ matrix.os }}
     # 45m was exceeded by the cold-cache macOS --features word-assist builds
     # on the first run (both legs cancelled at 45m24s in run 40115931743 —
     # rcgen/x509-parser/ring all compile from scratch). 60m gives the
     # cold-cache worst case headroom; warm-cache legs stay far under it.
     timeout-minutes: 60
+    # Phase tracing for the e2e harness (only the e2e binary reads it).
+    env:
+      WA_E2E_TRACE: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -117,7 +137,7 @@ jobs:
         working-directory: src-tauri
         shell: bash
         run: |
-          cargo test --locked ${{ matrix.features }} 2>&1 | tee test-output.txt
+          cargo test --locked ${{ matrix.features }} ${{ matrix.cargo_test_args }} 2>&1 | tee test-output.txt
           exit ${PIPESTATUS[0]}
 
       - name: Upload cargo test log on failure (test output only)
