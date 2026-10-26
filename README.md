@@ -17,7 +17,7 @@ ScholarScribe helps researchers who are writing their own manuscripts to:
 - **Convert Word to LaTeX** *(new in v2.2.1 r3)*, with a `.docx` loaded in the Text Cleaner, the "Convert to LaTeX (.tex)" action produces a compilable LaTeX article through a deterministic structural mapping: Title and Heading 1 to 6 styles become `\title`, `\section`, `\subsection`, `\subsubsection`, and `\paragraph`; bulleted paragraphs become `itemize` lists; bold and italic runs become `\textbf` and `\emph`; tables become `tabular` grids; special characters are LaTeX-escaped. Unknown styles and merged or nested table constructs are reported in a warnings card, never silently dropped. No LLM, no network: a pure, auditable local transformation.
 - **Convert pasted reference lists to BibTeX** *(new in v2.2.1 r4)*, paste references in your venue's style (APA 7th, MLA 9th, Chicago 17th, Vancouver, or plain with auto-detect) in the Citation Manager and ScholarScribe converts them to BibTeX, offers the `.bib` for download, and auto-validates the result against your draft. The heuristic parser tolerates mixed formats and flags entries where fields could not be extracted.
 - **Check spelling, grammar, and style offline** *(new in v2.2.1 r5)*, the Language Check tab flags issues in your draft and proposes one click corrections, powered by the embedded harper engine. The Grammarly job with the opposite trust model: your text is analyzed in memory on your machine, never uploaded. Five English dialects, a personal dictionary, and per-rule settings.
-- **Word Assist inside Microsoft Word** *(feature branch, opt-in)*, the Word Assist tab starts a loopback listener on 127.0.0.1 and serves a task-pane add-in that reads live Word text while Word Assist is on and flags grammar issues as you type. Tier 0 runs offline through the same engine as Language Check; optional whole-sentence rewrites come from your local Ollama model and pass six validation rules (citations, numbers, URLs, math and quotes are untouchable) before Word sees them. Pairing uses a one-time code; a SHA-256 hash-chained ledger records accepted counts (never text) so you can acknowledge the assistance in a disclosure statement. Nothing is installed system-wide without your explicit action.
+- **Word Assist inside Microsoft Word** *(feature branch, opt-in)*, the Word Assist tab starts a loopback listener on 127.0.0.1 and serves a task-pane add-in that reads live Word text while Word Assist is on and flags grammar issues as you type. Tier 0 runs offline through the same engine as Language Check; optional whole-sentence rewrites come from your local Ollama model and pass six validation rules (citations, numbers, URLs, math and quotes are untouchable) before Word sees them. Pairing uses a one-time code; a SHA-256 hash-chained ledger records accepted counts (never text) so you can acknowledge the assistance in a disclosure statement. Nothing is installed system-wide without your explicit action. A dedicated illustrated user guide for the add-in (`ScholarScribe-Word-Assist-User-Guide.pdf`) is attached to the [v2.3.0-pre release](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.3.0-pre).
 - **Two `.docx` modes**: extract text only (loses formatting, runs all cleaners), or clean in place (preserves all tables, images, hyperlinks, headers/footers, styles, track changes).
 - **Validate citations** against your `.bib` file (or against a pasted reference list converted to BibTeX), lists undefined citations, unused references, and broken in-text citations. Reduces the risk of fabricated references.
 - **See document statistics**, word count, section count, citation count, reading time, and comparison with common journal targets.
@@ -155,7 +155,7 @@ Then compare the printed digest with the matching line in `CHECKSUMS.txt`. If th
 
 When you first launch ScholarScribe, an **interactive 6-step welcome tour** appears automatically: Welcome → Privacy → Install a model → Writing Provenance (new in 2.1.0, with the step-by-step walkthrough) → the tools at a glance (grouped into 7 workflow phases) → Ethical use. You can dismiss it and re-open it any time from the sidebar footer ("✦ Walk me through the app") or the About tab.
 
-See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases).
+See **[`USER_GUIDE.md`](USER_GUIDE.md)** for a focused 2-page walkthrough. The longer reference manual is in **[`USER_MANUAL.md`](USER_MANUAL.md)**. A polished PDF copy of the user guide is attached to every [release](https://github.com/waleedmandour/scholarscribe/releases). The Word Assist add-in ships its own guide: the illustrated **Word Assist user guide (PDF)** is attached to the [v2.3.0-pre pre-release](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.3.0-pre).
 
 ---
 
@@ -247,6 +247,16 @@ Checking runs in the app process: no helper program, no local socket, no new net
 > release, so no precision, recall, or error-rate figure appears here or
 > in the app. See `docs/RELEASE_PLAN_v0.1.md` for exactly what is and is
 > not validated.
+
+> **Fixed in v2.3.0-pre:** accepting the disclosure dialog now persists
+> your consent. In the first preview (`word-assist-v0.1.0`) no code path
+> ever wrote the opt-in flag, so every enable attempt failed with
+> "Word Assist is not opted in. Enable it from the Word Assist tab (the
+> disclosure dialog)." If you still see that message, update the app and
+> accept the disclosure once. The rebuild carries the **main app
+> version**; the add-in artifacts ship as assets of the same release,
+> together with the dedicated [**Word Assist user guide
+> (PDF)**](https://github.com/waleedmandour/scholarscribe/releases/tag/v2.3.0-pre).
 
 - **What it is**: a task-pane add-in inside Microsoft Word, served by a
   loopback listener in ScholarScribe (`127.0.0.1:38080` by default, TLS
@@ -557,6 +567,7 @@ scholarscribe/
 │   ├── ETHICS.md               Full ethical-use policy
 │   ├── PROVENANCE_SPEC.md      Writing Provenance specification & limitations (v2.1.0)
 │   ├── NETWORK_SURFACE.json    Machine-readable host list (cross-checked in CI)
+│   ├── WORD_ASSIST_INSTALL.md  Word Assist per-OS install walkthrough (certificate trust, manifest sideload, pairing)
 │   ├── AUDIT.md / DECISIONS.md / FOR_EDITORS.md   Audit, decision log, editor guidance
 │   └── release-notes/          Per-release notes
 ├── scripts/                    CI gates (references, network surface, svelte mount, tauri parity) + release helpers
