@@ -1,14 +1,29 @@
 # ScholarScribe. Word Assist release workflow — DRAFT (v0.1 work order A5).
 #
+# OWNER RULING (2026-10-26): the ScholarScribe app and the Word Assist
+# add-in are NOT separately versioned. Word Assist previews ship as
+# PRE-RELEASES CARRYING THE MAIN APP VERSION, and the Word Assist add-in
+# artifacts ride along as release assets. The old separate scheme
+# (tag word-assist-v0.1.0, app version overridden to 0.1.0 by
+# src-tauri/tauri.wordassist.conf.json) is retired: the overlay is now an
+# intentionally empty {} and the build reports the app version.
+#
 # NOT WIRED TO ANYTHING the owner has not seen: this file is additive, and
 # the owner reviews it before the first real tag push. The app's own
-# release.yml is untouched; its trigger (`v*`) cannot fire from a
-# word-assist tag.
+# release.yml is untouched except for a skip-guard on the exact tag below;
+# its trigger (`v*`) cannot fire from a word-assist tag.
 #
-# Trigger: tags word-assist-v* (default posture: word-assist-v0.1.0), or
-# workflow_dispatch with dry_run=true (default) — dry-run builds and
-# uploads ARTIFACTS ONLY, no release, no publish, proving the pipeline
-# before Stage C.
+# Triggers:
+#   - tags word-assist-v*            — legacy plugin-versioned family
+#                                      (word-assist-v0.1.0 already shipped)
+#   - tag  v2.3.0-pre (EXACT)        — the app-versioned Word Assist
+#                                      pre-release. Listed EXPLICITLY (not
+#                                     a pattern like v*-pre) so an app-only
+#                                      pre-release pushed from main can
+#                                      never accidentally route here.
+#                                      release.yml skip-guards the same tag.
+#   - branches word-assist-rc-*      — pipeline dry runs (artifacts only)
+#   - workflow_dispatch, dry_run=true (default) — artifacts only
 #
 # Builds: Windows x64 + macOS arm64 + macOS x64 (native on macos-15-intel,
 # no cross-compile), all with --features word-assist, UNSIGNED (owner
@@ -18,8 +33,11 @@
 # Permissions: workflow-level read-only; `contents: write` exists ONLY on
 # the publish job, and only when dry_run is false.
 #
-# Assets: renamed with OS and architecture, plus SHA256SUMS and SBOMs
-# (CycloneDX for npm and cargo).
+# Assets: app installers named with the app identity
+# (ScholarScribe-<tag>-<os>-<arch>.* for app-versioned tags; legacy
+# Word-Assist-* naming kept for word-assist-v* tags), plus the Word Assist
+# add-in artifacts (sideloadable manifest + add-in dist zip with the
+# install guide), SHA256SUMS and SBOMs (CycloneDX for npm and cargo).
 
 name: Word Assist Release (draft)
 
@@ -33,6 +51,9 @@ on:
       - word-assist-rc-*
     tags:
       - "word-assist-v*"
+      # The app-versioned Word Assist pre-release (owner ruling: no app /
+      # plugin version mixing). EXACT tag, not a pattern — see header.
+      - "v2.3.0-pre"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -53,6 +74,10 @@ permissions:
   contents: read
 
 env:
+  # Intentionally an EMPTY overlay ({}) since 2026-10-26: the Word Assist
+  # build keeps the main app version from tauri.conf.json. The previous
+  # "version": "0.1.0" override mixed the add-in's version into the app
+  # installers. The overlay stays as the pipeline's feature-build hook.
   TAURI_CONFIG_OVERLAY: src-tauri/tauri.wordassist.conf.json
 
 jobs:
@@ -115,19 +140,27 @@ jobs:
         shell: bash
         run: |
           # P5: the banner reflects the hard gate below — anything that is
-          # not a word-assist-v* tag push is a dry run by construction.
+          # not a publish-family tag push is a dry run by construction.
           if [ "${{ github.ref_type }}" != "tag" ]; then
-            echo "DRY RUN (no tag): artifacts go to this workflow run only; publishing requires a word-assist-v* tag push."
+            echo "DRY RUN (no tag): artifacts go to this workflow run only; publishing requires a word-assist-v* tag or the listed app-versioned tag (v2.3.0-pre)."
           elif [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "DRY RUN: artifacts go to this workflow run only; no release is created."
           else
             echo "PUBLISH MODE: artifacts will be attached to the pre-release."
           fi
 
-      - name: Stage renamed assets (OS + architecture in the name)
+      - name: Stage renamed assets (release identity + OS + architecture)
         shell: bash
         run: |
           mkdir -p staging
+          # Asset naming follows the release identity (owner ruling: do not
+          # mix the app and the add-in): app-versioned tags ship the
+          # installers under the APP name; legacy word-assist-v* tags keep
+          # the historical Word-Assist-* names.
+          case "$GITHUB_REF_NAME" in
+            word-assist-v*) PREFIX="Word-Assist" ;;
+            *)              PREFIX="ScholarScribe" ;;
+          esac
           # Tauri writes bundles under target/release/bundle. Copy every
           # installer with a deterministic name; keep the original ext.
           find src-tauri/target/release/bundle -type f \( -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 |
@@ -137,7 +170,7 @@ jobs:
               case "$base" in
                 *.app.tar.gz) ext="app.tar.gz" ;;
               esac
-              cp "$f" "staging/Word-Assist-${GITHUB_REF_NAME#refs/tags/}-${{ matrix.platform }}-${{ matrix.arch }}.$ext"
+              cp "$f" "staging/${PREFIX}-${GITHUB_REF_NAME#refs/tags/}-${{ matrix.platform }}-${{ matrix.arch }}.$ext"
             done
           ls -la staging/
 
@@ -158,12 +191,13 @@ jobs:
           if-no-files-found: error
 
   publish:
-    # Publishes ONLY on a word-assist-v* TAG push, never in dry-run, never
+    # Publishes ONLY on a publish-family TAG push, never in dry-run, never
     # from a branch push, never from workflow_dispatch (dispatch always runs
     # on a branch ref, so github.ref_type is 'branch' there — see the
     # trigger walk-through in the delivery README). This is the single job
-    # holding contents: write.
-    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'word-assist-v') && inputs.dry_run != true
+    # holding contents: write. Publish families: legacy word-assist-v* tags
+    # and the explicitly listed app-versioned tag(s) (v2.3.0-pre).
+    if: github.ref_type == 'tag' && (startsWith(github.ref_name, 'word-assist-v') || github.ref_name == 'v2.3.0-pre') && inputs.dry_run != true
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -183,6 +217,25 @@ jobs:
           path: artifacts/
           merge-multiple: true
 
+      - name: Stage the Word Assist add-in artifacts (manifest + dist + guide)
+        shell: bash
+        run: |
+          # The add-in artifacts ride along with the app release (owner
+          # ruling: one pre-release, app version, plugin artifacts inside).
+          # The manifest here carries the {PORT} placeholder — Word needs a
+          # port-filled manifest, which the app's Word Assist tab exports
+          # ("Export manifest file…"); the template + the full add-in dist
+          # are shipped for transparency, offline review, and sideloading
+          # without rebuilding.
+          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          mkdir -p addin-stage/ScholarScribe-Word-Assist
+          cp -r word-addin/dist/. addin-stage/ScholarScribe-Word-Assist/
+          cp docs/WORD_ASSIST_INSTALL.md addin-stage/ScholarScribe-Word-Assist/
+          (cd addin-stage && zip -qr "../addin-dist.zip" ScholarScribe-Word-Assist)
+          cp addin-dist.zip "artifacts/ScholarScribe-Word-Assist-addin-${TAG}.zip"
+          cp word-addin/dist/manifest.xml "artifacts/ScholarScribe-Word-Assist-manifest-${TAG}.xml"
+          ls -la artifacts/
+
       - name: Generate npm SBOM (platform-independent, once)
         run: |
           npm ci --no-audit --no-fund
@@ -199,10 +252,53 @@ jobs:
       - name: Create the pre-release and upload assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           TAG="${GITHUB_REF_NAME#refs/tags/}"
+          # Release identity follows the tag family (owner ruling: the app
+          # and its Word Assist add-in are not version-mixed).
+          case "$TAG" in
+            word-assist-v*)
+              TITLE="Word Assist ${TAG#word-assist-v} (Preview)"
+              cat > notes.md <<'EOF'
+          PREVIEW: Word Assist v0.1 release candidate assets. Unsigned build; see docs/RELEASE_PLAN_v0.1.md for what is and is not validated per platform. Windows SmartScreen / macOS Gatekeeper will warn because the binaries are unsigned.
+          EOF
+              ;;
+            *)
+              TITLE="ScholarScribe ${TAG} (Pre-release · includes Word Assist)"
+              cat > notes.md <<'EOF'
+          PRE-RELEASE of the ScholarScribe desktop app that INCLUDES the Word Assist preview (an opt-in, local-only grammar assistant for Microsoft Word).
+
+          ## What changed
+
+          - **Fixed**: accepting the Word Assist disclosure now persists your consent. In the previous preview (word-assist-v0.1.0) no code path ever wrote the opt-in flag, so every enable attempt failed with "Word Assist is not opted in. Enable it from the Word Assist tab (the disclosure dialog)." A regression gate (`scripts/check-wa-consent.mjs`) now pins the consent path in CI.
+          - **Release identity**: this preview replaces the separately-versioned `word-assist-v0.1.0` scheme. The release carries the **main app version**; the Word Assist add-in artifacts ship as assets of the same release. The app build no longer overrides its version with the add-in's.
+
+          ## Assets
+
+          - `ScholarScribe-<tag>-windows-x64.(msi|exe)`, `ScholarScribe-<tag>-macos-*.dmg` — the desktop app installers (built with the Word Assist feature compiled in; the feature stays opt-in at runtime).
+          - `ScholarScribe-Word-Assist-addin-<tag>.zip` — the Word Assist add-in (task pane client, sideloadable manifest template, install guide `WORD_ASSIST_INSTALL.md` inside).
+          - `ScholarScribe-Word-Assist-manifest-<tag>.xml` — the add-in manifest template alone ({PORT} placeholder; Word needs the port-filled manifest the app's Word Assist tab exports).
+          - `SHA256SUMS` + CycloneDX SBOMs — digests and build inventory.
+
+          ## Using Word Assist
+
+          1. Install and open the app → **Word Assist** tab → read and accept the disclosure → Enable.
+          2. Trust the local CA certificate (the tab shows the exact per-OS commands; no administrator rights needed).
+          3. In the app, click **Export manifest file…** and sideload it in Word (shared-folder catalog on Windows, `wef` folder on macOS) — full steps: `WORD_ASSIST_INSTALL.md` (also inside the add-in zip).
+          4. Generate a pairing code in the app, type it into the Word pane, and type a sentence with a grammar error.
+
+          ## Caveats
+
+          - UNSIGNED build: Windows SmartScreen / macOS Gatekeeper will warn — that is the OS working as intended.
+          - Platform validation: Windows QA pending (owner QA matrix `docs/QA_v0.1.md`); macOS builds unvalidated.
+          - Grammar checking is provisional (local harper engine, no accuracy claims); spelling/clarity ship disabled; AI rewrites ship disabled.
+          - Microsoft 365 Word desktop required for the annotation APIs (not Word 2019/2021 perpetual, not Word for the web).
+          EOF
+              ;;
+          esac
           gh release create "$GITHUB_REF_NAME" \
-            --title "Word Assist ${GITHUB_REF_NAME#refs/tags/} (Preview)" \
-            --notes "PREVIEW: Word Assist v0.1 release candidate assets. Unsigned build; see docs/RELEASE_PLAN_v0.1.md for what is and is not validated per platform. Windows SmartScreen / macOS Gatekeeper will warn because the binaries are unsigned." \
+            --title "$TITLE" \
+            --notes-file notes.md \
             --prerelease
           gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber

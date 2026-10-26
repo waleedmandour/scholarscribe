@@ -34,6 +34,16 @@ permissions:
 
 jobs:
   build:
+    # SKIP-GUARD (2026-10-26): the tag v2.3.0-pre is the app-versioned Word
+    # Assist pre-release, published by word-assist-release.yml, whose build
+    # passes --features word-assist and attaches the Word Assist add-in
+    # artifacts. This workflow builds the DEFAULT config (no feature) — if
+    # it also ran for that tag, both pipelines would race to create the same
+    # release and the assets would NOT contain Word Assist. Every other tag
+    # (stable v*, -rN, and app-only -pre tags) keeps the historical behavior
+    # unchanged. Extend the two comparisons below if a future Word Assist
+    # preview ships under a new app-versioned tag.
+    if: github.ref_name != 'v2.3.0-pre' && inputs.tag != 'v2.3.0-pre'
     strategy:
       fail-fast: false
       matrix:

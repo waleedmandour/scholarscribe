@@ -69,6 +69,34 @@ artifact of the feature compiles only with the feature enabled.
   listener and the add-in's office.js CDN fetch (`addin-webview` class)
   are documented and CI-enforced.
 
+### Fixed
+
+- Word Assist tab: accepting the disclosure now persists the master
+  opt-in (`word_assist_enabled`). No code path ever wrote the flag, so
+  every enable attempt failed with "Word Assist is not opted in. Enable
+  it from the Word Assist tab (the disclosure dialog)." — the feature
+  was unreachable even in a correctly built installer. The consent write
+  lives in the disclosure acceptance path only (`persistSettings(true)`);
+  a plain "Save settings" can never flip the opt-in. A static regression
+  gate (`scripts/check-wa-consent.mjs`, dependency-free, wired into the
+  npm test chain) pins all three properties of the consent path.
+
+### Release identity (owner ruling 2026-10-26)
+
+- The ScholarScribe app and the Word Assist add-in are not separately
+  versioned. Word Assist previews ship as pre-releases carrying the main
+  app version (this tree: 2.3.0, tag `v2.3.0-pre`), and the Word Assist
+  add-in artifacts (sideloadable manifest template + add-in dist zip
+  with the install guide) are attached to the same release.
+- `src-tauri/tauri.wordassist.conf.json` no longer overrides the app
+  version with the add-in's 0.1.0 (the overlay is now intentionally
+  empty) — app installers built with the feature report the app version.
+- `word-assist-release.yml` gained the explicit `v2.3.0-pre` tag trigger,
+  ships installers under the app identity (`ScholarScribe-<tag>-*`), and
+  stages the add-in artifacts; `release.yml` skip-guards the same tag so
+  exactly one pipeline publishes it (the default-config build must not
+  race the feature build for the same release).
+
 ## [2.2.1] - 2026-10-13 (stable)
 
 Graduation of the v2.2.1 line from the r2 through r5 pre-releases to the
