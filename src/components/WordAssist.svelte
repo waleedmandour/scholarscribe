@@ -104,12 +104,22 @@
 
   async function acceptDisclosure() {
     disclosureOpen = false;
-    await persistSettings();
+    // The acceptance IS the consent act (ruling 5): persistSettings writes
+    // the master opt-in here and only here. Omitting this write made every
+    // enable fail with "Word Assist is not opted in." — the flag was never
+    // set to true by any code path (fixed 2026-10-26).
+    await persistSettings(true);
     await enable();
   }
 
-  async function persistSettings() {
+  async function persistSettings(optIn = false) {
     const s = await api.settingsGet();
+    if (optIn) {
+      // The persisted master opt-in (persistence.rs: "the disclosure dialog
+      // on the Word Assist tab is the only code path that sets it to true").
+      // word_assist_enable re-checks this flag before binding the listener.
+      s.word_assist_enabled = true;
+    }
     s.word_assist_strictness = strictness;
     // H8: Tier 1 stays OFF until the user explicitly picks a model.
     // An empty model name is not "last used chat model" any more — the

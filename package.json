@@ -1,6 +1,6 @@
 {
   "name": "scholarscribe",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "tauri": "tauri",
     "addin:build": "tsc -p word-addin/tsconfig.json",
     "addin:test": "tsc -p word-addin/tsconfig.test.json && node --test \"word-addin/.test-out/test/*.test.js\"",
-    "test": "node scripts/check-references.mjs && node scripts/check-network-surface.mjs && node scripts/cross-verify-fixture.mjs && node scripts/check-svelte-mount.mjs && node scripts/check-tauri-parity.mjs && node scripts/check-addin-dist.mjs && node scripts/check-addin-manifest.mjs && node scripts/check-eval-freeze.mjs && node scripts/test-parity-crlf.mjs && node scripts/check-workflow-shells.mjs"
+    "test": "node scripts/check-references.mjs && node scripts/check-network-surface.mjs && node scripts/cross-verify-fixture.mjs && node scripts/check-svelte-mount.mjs && node scripts/check-tauri-parity.mjs && node scripts/check-addin-dist.mjs && node scripts/check-addin-manifest.mjs && node scripts/check-eval-freeze.mjs && node scripts/test-parity-crlf.mjs && node scripts/check-workflow-shells.mjs && node scripts/check-wa-consent.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
